@@ -1,0 +1,50 @@
+local g
+local bootaddress, biosaddress = ...
+local function boot(address, mode)
+    local function getFile(fs, path)
+        local file, err = fs.open(path)
+        if not file then
+            return nil, err
+        end
+        local buffer = ""
+        while true do
+            local read = fs.read(file, math.huge)
+            if not read then
+                break
+            end
+            buffer = buffer .. read
+        end
+        fs.close(file)
+        return buffer
+    end
+
+    local bootdevice = component.proxy(address)
+    local data
+
+    if mode == "openOS" then
+        computer.getBootAddress = function() return address end
+        computer.setBootAddress = function() end
+        data = getFile(bootdevice, "init.lua")
+    elseif mode == "mineOS" then
+        local code = apis.getBiosKey()
+        g = component.proxy(component.list("eeprom")())
+        g.getData = function() return address end
+        g.setData = function() end
+        data = getFile(bootdevice, "OS.lua")
+    end
+
+    return data
+end
+local function menager(address)
+    local proxy = component.proxy(address)
+    if proxy.type ~= "filesystem" then
+        error("uniLoader worked only filesystem")
+    end
+    if proxy.exists("/init.lua") then
+        return boot(address, "openOS")
+    elseif proxy.exists("/OS.lua") then
+        return boot(address, "mineOS")
+    end
+end
+
+return menager(bootaddress)
