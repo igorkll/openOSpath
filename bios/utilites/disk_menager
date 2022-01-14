@@ -1,0 +1,39 @@
+local function format(fs, path)
+    local files = fs.list(path)
+    for i = 1, #files do
+        local file = path..files[i]
+        if apis.fs.isDirectory(file) then
+            format(file)
+        end
+        fs.remove(file)
+    end
+end
+local names, addresses, types = apis.parseComponents("filesystem")
+
+local strs = {"filesystems", "back"}
+for i = 1, #names do
+    strs[#strs + 1] = names[i]
+end
+local select = apis.select(strs)
+
+if select == 1 then
+    return
+else
+    select = select - 1
+    local address = addresses[select]
+    local fs = component.proxy(address)
+
+    local mode = apis.select({"control", "back", "format", "change label"})
+    if mode == 1 then
+        return
+    elseif mode == 2 then
+        if apis.enterPassword("FORMATER") and apis.yesno("ВЫ УВЕРЕННЫ ФОРМАТИРОВАТЬ ДИСК "..address:sub(1, 5).."?") then
+            format(fs, "/")
+        end
+    elseif mode == 3 then
+        local input = apis.inputScreen("new label или exit для отмены. диск "..address:sub(1, 5))
+        if input ~= "exit" then
+            fs.setLabel(input)
+        end
+    end
+end

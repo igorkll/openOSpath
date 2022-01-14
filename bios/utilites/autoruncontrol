@@ -1,0 +1,41 @@
+if not apis.enterPassword() then
+    return
+end
+local select = apis.select({"autorun control", "back", "remove", "upload"})
+
+------------------------------------------------------------
+
+local function minifuckloader()
+    apis.clear()
+    apis.setText("fuckLoader press insert or center mouse button, or press enter to exit", 1)
+    local buffer = ""
+    while true do
+        local eventName, uuid, str, char = computer.pullSignal()
+        if uuid == apis.keyboard then
+            if eventName == "key_down" then
+                if char == 28 then
+                    return
+                end
+            elseif eventName == "clipboard" then
+                buffer = buffer .. str
+                if unicode.sub(str, unicode.len(str), unicode.len(str)) ~= "\n" then
+                    return buffer
+                end
+            end
+        end
+    end
+end
+
+if select == 1 then
+    return
+elseif select == 2 then
+    apis.fs.remove(apis.autorunpath)
+elseif select == 3 then
+    local code = minifuckloader()
+    if code then
+        apis.savefile(apis.autorunpath, code)
+        apis.splash("код БЫЛ устоновлен")
+    else
+        apis.splash("код НЕ был устоновлен")
+    end
+end

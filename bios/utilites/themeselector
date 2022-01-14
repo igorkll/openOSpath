@@ -1,0 +1,20 @@
+local select = apis.select({"SELECT THEME", "back", "white", "black", "matrix", "blaster", "warning"})
+if select == 1 then
+    return
+elseif select == 2 then
+    apis.back = 0xFFFFFF
+    apis.fore = 0x000000
+elseif select == 3 then
+    apis.back = 0x000000
+    apis.fore = 0xFFFFFF
+elseif select == 4 then
+    apis.back = 0x000000
+    apis.fore = 0x00FF00
+elseif select == 5 then
+    apis.back = 0x000000
+    apis.fore = 0xFFFF00
+elseif select == 6 then
+    apis.back = 0x000000
+    apis.fore = 0xFF0000
+end
+apis.saveTheme()

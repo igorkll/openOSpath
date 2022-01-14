@@ -1,0 +1,20 @@
+while true do
+    local input = apis.inputScreen("чтобы выйти набирите exit")
+    if input == "exit" then
+        return
+    else
+        local code, err = load(input, "=lua")
+        if not code then
+            apis.splash("load err: "..err or "unkown")
+        else
+            local ok, err = xpcall(code, debug.traceback)
+            if not ok then
+                apis.splash("run err: "..err or "unkown")
+            else
+                if err then
+                    apis.splash("out: "..tostring(err))
+                end
+            end
+        end
+    end
+end
