@@ -14,8 +14,38 @@ do
 end
 
 local fs = require("filesystem")
-if fs.exists("/autorun.lua") then os.execute("/autorun.lua") end
-if fs.exists("/.autorun.lua") then os.execute("/.autorun.lua") end
+
+-----------------------------------
+
+local autorunspath = "/autoruns"
+local systemautoruns = fs.concat(autorunspath, "system")
+local userautoruns = fs.concat(autorunspath, "user")
+
+if fs.exists("/start.lua") then 
+  os.execute("/start.lua")
+elseif fs.exists("/.start.lua") then 
+  os.execute("/.start.lua")
+elseif fs.exists("/autorun.lua") then 
+  os.execute("/autorun.lua")
+elseif fs.exists("/.autorun.lua") then 
+  os.execute("/.autorun.lua")
+end
+
+-----------------------------------
+
+if fs.exists(systemautoruns) then
+    for data in fs.list(systemautoruns) do
+        os.execute(fs.concat(systemautoruns, data))
+    end
+end
+
+if fs.exists(userautoruns) then
+    for data in fs.list(userautoruns) do
+        os.execute(fs.concat(userautoruns, data))
+    end
+end
+
+-----------------------------------
 
 while true do
   local result, reason = xpcall(require("shell").getShell(), function(msg)

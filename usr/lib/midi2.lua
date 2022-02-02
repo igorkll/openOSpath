@@ -308,7 +308,7 @@ function lib.create(filepath, instruments, notemode, pitch, speed, noteduraction
             if hasEvent then
                 local delay = time.calcDelay(tick, lastTick) / obj.speed
                 -- delay % 0.05 == 0 doesn't seem to work
-                if math.floor(delay * 100 + 0.5) % 5 == 0 then
+                if math.floor(delay * 100 + 0.5) % 5 == 0 or true then
                     os.sleep(delay)
                 else
                     -- Busy idle otherwise, because a sleep will take up to 50ms.

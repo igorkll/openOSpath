@@ -1,4 +1,5 @@
 local fs = require("filesystem")
+local computer = require("computer")
 
 ---------------------------------------
 
@@ -9,7 +10,8 @@ lib.tracepath = function(path)
 end
 
 lib.getFile = function(path)
-    local file = io.open(path)
+    local file, err = io.open(path)
+    if not file then return nil, err end
     local data = file:read("*a")
     file:close()
     return data
@@ -17,7 +19,8 @@ end
 
 lib.saveFile = function(path, data)
     lib.tracepath(fs.path(path))
-    local file = fs.open(path, "w")
+    local file, err = fs.open(path, "w")
+    if not file then return nil, err end
     file:write(data)
     file:close()
 end
@@ -80,6 +83,20 @@ lib.saveconfig = function(path, tab)
         str = str..key.." = \""..tostring(value).."\"\n"
     end
     lib.saveFile(path, str)
+end
+
+lib.isOnline = function(nikname)
+    local ok, err = computer.addUser(nikname)
+    if not ok and err == "player must be online" then
+        return false
+    elseif ok then
+        computer.removeUser(nikname)
+        return true
+    elseif not ok and err == "user exists" then
+        computer.removeUser(nikname)
+        local ok, err = computer.addUser(nikname)
+        --спрашиваеться как в такой ситуации добавь игрока обратно если он не онлайн
+    end
 end
 
 

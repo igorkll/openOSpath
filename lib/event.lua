@@ -39,13 +39,28 @@ local function checkThread()
   return false
 end
 
-local superCount = 0
-local smallCount = 0
+--local old = require("process").info().data.signal
+--require("process").info().data.signal = function(...) old(...) os.exit() end
+
+event.hookCount = 0
+event.superHookCount = 0
 
 local _pullSignal = computer.pullSignal
 setmetatable(handlers, {__call=function(_,...)return _pullSignal(...)end})
 computer.pullSignal = function(seconds) -- dispatch
   checkArg(1, seconds, "number", "nil")
+  
+  if not checkThread() then
+    if event.hookCount > 0 then
+      event.hookCount = 0
+      event.push("interrupted", lastInterrupt)
+    end
+    if event.superHookCount > 0 then       
+      event.superHookCount = 0
+      require("process").info().data.signal("interrupted", 0)
+    end
+  end
+
   seconds = seconds or math.huge
   local uptime = computer.uptime
   local deadline = uptime() + seconds
@@ -57,7 +72,8 @@ computer.pullSignal = function(seconds) -- dispatch
         if event.superHook then 
           if not checkThread() then
             require("process").info().data.signal("interrupted", 0)
-            os.exit()
+          else
+            event.superHookCount = event.superHookCount + 1
           end
         end
         return
@@ -65,6 +81,8 @@ computer.pullSignal = function(seconds) -- dispatch
       if event.hook then 
         if not checkThread() then
           event.push("interrupted", lastInterrupt) 
+        else
+          event.hookCount = event.hookCount + 1
         end
       end
     end

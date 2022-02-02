@@ -70,7 +70,7 @@ function process.load(path, env, init, name)
           buffer[#buffer + 1] = data
         end
         local str = table.concat(buffer)
-        return load("local function mainchunk(...)\n"..str.."\nend\nmainchunk(...)\nos.exit()", "=" .. filename, ...)
+        return load("local function mainchunk(...) "..str.."\nend\nlocal out = {mainchunk(...)}\nos.exit()\nreturn table.unpack(out)", "=" .. filename, ...)
       end
       return assert(loadfile2(program, "bt", env))(...)
     end
