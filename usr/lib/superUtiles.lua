@@ -10,7 +10,7 @@ lib.tracepath = function(path)
 end
 
 lib.getFile = function(path)
-    local file, err = io.open(path)
+    local file, err = io.open(path, "rb")
     if not file then return nil, err end
     local data = file:read("*a")
     file:close()
@@ -19,7 +19,7 @@ end
 
 lib.saveFile = function(path, data)
     lib.tracepath(fs.path(path))
-    local file, err = fs.open(path, "w")
+    local file, err = io.open(path, "wb")
     if not file then return nil, err end
     file:write(data)
     file:close()
