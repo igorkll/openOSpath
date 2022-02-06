@@ -62,17 +62,12 @@ lib.getInput = function(num)
 end
 
 lib.setInput = function(num, state)
-    lib.raw_send("getInput", num, state)
+    lib.raw_send("setInput", num, state)
 end
 
 lib.getActiveEffects = function()
     local _, out = lib.raw_send("getActiveEffects")
     return out
-end
-
-lib.getActiveEffects = function()
-    local _, out1, out2 = lib.raw_send("getActiveEffects")
-    return out1, out2
 end
 
 lib.getMaxActiveInputs = function()
@@ -81,7 +76,7 @@ lib.getMaxActiveInputs = function()
 end
 
 lib.getSafeActiveInputs = function()
-    local _, out = lib.raw_send("getMaxActiveInputs")
+    local _, out = lib.raw_send("getSafeActiveInputs")
     return out
 end
 
@@ -105,6 +100,11 @@ lib.getHunger = function()
     return out1, out2
 end
 
+lib.getAge = function()
+    local _, out = lib.raw_send("getAge")
+    return out
+end
+
 lib.getHealth = function()
     local _, out = lib.raw_send("getHealth")
     return out
@@ -112,6 +112,11 @@ end
 
 lib.getPowerState = function()
     local _, out1, out2 = lib.raw_send("getPowerState")
+    return out1, out2
+end
+
+lib.saveConfiguration = function()
+    local _, out1, out2 = lib.raw_send("saveConfiguration")
     return out1, out2
 end
 

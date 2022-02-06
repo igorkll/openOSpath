@@ -46,8 +46,7 @@ local function drawtext(gpu, color, posX, posY, text, simple)
         gpu.setForeground(color)
         local _, _, back = gpu.get(posX, posY)
         gpu.setBackground(back)
-        term.setCursor(posX, posY)
-        print(text)
+        gpu.set(posX, posY, text)
     end
     gpu.setBackground(oldb)
     gpu.setForeground(oldf)
@@ -166,12 +165,7 @@ return {create = function(customX, customY)
         end
     end
 
-    local oldtime = 0
     lib.interrupt = function(...)
-        local name = ...
-        if name == "interrupted" then
-            lib.exit(true)
-        end
         if lib.cursor then
             lib.cursor.insertEvent(...)
         end
@@ -312,7 +306,7 @@ return {create = function(customX, customY)
         lib.cursor = obj
         return obj
     end
-    if not component.proxy(lib.screen).setTouchModeInverted then
+    if math.floor(computer.getDeviceInfo()[lib.screen].width) == 1 then
         lib.createCursor()
     end
 
@@ -497,11 +491,7 @@ return {create = function(customX, customY)
             obj.touch = touch or true
             obj.mode = mode or 0
             obj.callbacks = {callback}
-            if obj.mode ~= 2 then
-                obj.value = math.floor(map(value or obj.min or 0, obj.min, obj.max, 0, obj.sizeX - 1))
-            else
-                obj.value = math.floor(map(value or obj.max or 0, obj.max, obj.min, 0, obj.sizeX - 1))
-            end
+            obj.value = math.floor(map(value or obj.min or 0, obj.min, obj.max, 0, obj.sizeX - 1))
 
             if autolabel then
                 local label = scene.createLabel(obj.posX + obj.sizeX, obj.posY, labelsize, 1, ((text and text..":") or "")..tostring(math.floor(value / 0.1) * 0.1), obj.back, obj.fore)
@@ -521,7 +511,11 @@ return {create = function(customX, customY)
                     lib.gpu.set(obj.posX + obj.value, obj.posY, "#")
                 elseif obj.mode == 1 or obj.mode == 2 then
                     lib.gpu.fill(obj.posX, obj.posY, 1, obj.sizeX, " ")
-                    lib.gpu.set(obj.posX, (obj.posY + (obj.sizeX - 1)) - obj.value, "#")
+                    if obj.mode == 1 then
+                        lib.gpu.set(obj.posX, (obj.posY + (obj.sizeX - 1)) - obj.value, "#")
+                    else
+                        lib.gpu.set(obj.posX, obj.posY + obj.value, "#")
+                    end
                 end
 
                 lib.gpu.setBackground(oldb)
@@ -529,42 +523,26 @@ return {create = function(customX, customY)
             end
 
             obj.getState = function()
-                if obj.mode ~= 2 then
-                    return map(obj.value, 0, obj.sizeX - 1, obj.min, obj.max)
-                else
-                    return map(obj.value, 0, obj.sizeX - 1, obj.max, obj.min)
-                end
+                return map(obj.value, 0, obj.sizeX - 1, obj.min, obj.max)
             end
 
             obj.setState = function(new)
                 local old = obj.getState()
-                if obj.mode ~= 2 then
-                    obj.value = math.floor(map(new, obj.min, obj.max, 0, obj.sizeX - 1))
-                else
-                    obj.value = math.floor(map(new, obj.max, obj.min, 0, obj.sizeX - 1))
-                end
+                obj.value = math.floor(map(new, obj.min, obj.max, 0, obj.sizeX - 1))
                 obj.draw()
                 return old
             end
 
             obj.getValue = function()
-                if obj.mode ~= 2 then
-                    return obj.value
-                else
-                    return map(obj.value, 0, obj.sizeX - 1, obj.sizeX - 1, 0)
-                end
+                return obj.value
             end
 
             obj.setValue = function(new)
-                if not new or new < 0 or new > obj.sizeX - 1 then
+                if new < 0 or new > obj.sizeX - 1 then
                     return nil
                 end
                 local old = obj.value
-                if obj.mode ~= 2 then
-                    obj.value = new
-                else
-                    obj.value = map(new, 0, obj.sizeX - 1, obj.sizeX - 1, 0)
-                end
+                obj.value = new
                 obj.draw()
                 return old
             end
@@ -581,7 +559,11 @@ return {create = function(customX, customY)
                         if obj.mode == 0 then
                             value = (touchX - (obj.posX - 1)) - 1
                         elseif obj.mode == 1 or obj.mode == 2 then
-                            value = obj.sizeX - (touchY - (obj.posY - 1))
+                            if obj.mode == 1 then
+                                value = obj.sizeX - (touchY - (obj.posY - 1))
+                            else
+                                value = touchY - obj.posY
+                            end
                         end
                         obj.value = value
                         obj.draw()
@@ -610,13 +592,16 @@ return {create = function(customX, customY)
             obj.datalist = {}
             obj.maxstrs = obj.sizeY * (obj.sizeY / 2)
             obj.autoscroll = autoscroll or true
+            obj.autodraw = true
             local function drawData()
                 obj.draw()
             end
             obj.seekbar = scene.createSeekBar((posX + sizeX) - 1, posY, sizeY, seek_back, seek_fore, 1, #obj.datalist, 1, true, 2, drawData)
+            obj.strs = {}
 
             obj.draw = function()
                 if lib.getScene() ~= scene then return end
+                obj.strs = {}
                 local oldb = lib.gpu.setBackground(obj.back)
                 local oldf = lib.gpu.setForeground(obj.fore)
                 lib.gpu.fill(obj.posX, obj.posY, obj.sizeX, obj.sizeY, " ")
@@ -628,6 +613,7 @@ return {create = function(customX, customY)
                         local posY = (obj.posY + obj.sizeY) - i
                         if posY >= obj.posY then
                             lib.gpu.set(obj.posX, posY, data)
+                            obj.strs[posY] = data
                         else
                             return
                         end
@@ -658,7 +644,7 @@ return {create = function(customX, customY)
                 end
                 obj.seekbar.max = #obj.datalist
                 if obj.autoscroll then obj.seekbar.setValue(obj.sizeY - 1) end
-                obj.draw()
+                if obj.autodraw then obj.draw() end
             end
 
             obj.setpos = function(num)
@@ -667,10 +653,14 @@ return {create = function(customX, customY)
 
             obj.insertEvent = function(...)
                 local eventName, uuid, touchX, touchY, value = ...
+                obj.touchInfo = nil
+                if (eventName == "touch" or eventName == "drag" or eventName == "drop") and uuid == lib.screen then
+                    obj.touchInfo = {...}
+                end
                 if eventName ~= "scroll" or uuid ~= lib.screen then
                     return
                 end
-                if touchX >= obj.posX and touchX < (obj.posX + obj.sizeX) then
+                if touchX >= obj.posX and touchX < (obj.posX + obj.sizeX) + 1 then
                     if touchY >= obj.posY and touchY < (obj.posY + obj.sizeY) then
                         obj.seekbar.setValue(obj.seekbar.getValue() - value)
                         obj.draw()
@@ -795,6 +785,9 @@ return {create = function(customX, customY)
     
         local gpu = lib.gpu
         local depth = lib.gpu.getDepth()
+        local rx, ry = lib.gpu.getResolution()
+        if posY + sizeY > (ry + 1) then posY = posY - (sizeY - 1) end
+        if posX + sizeX > (rx + 1) then posX = posX - (sizeX - 1) end
     
         local oldb = gpu.getBackground()
         local oldf = gpu.getForeground()
@@ -838,7 +831,7 @@ return {create = function(customX, customY)
             local tab = {event.pull(0.3)}
             local eventName, uuid, x, y, button = table.unpack(tab or {})
             lib.interrupt(table.unpack(tab or {}))
-            if eventName == "touch" and uuid == lib.screen and button == 0 then
+            if eventName == "touch" and uuid == lib.screen then
                 if button ~= 0 and skip then
                     if duplicateEvent then event.push(table.unpack(tab)) end
                     break
@@ -951,6 +944,7 @@ return {create = function(customX, customY)
         lib.scenes[lib.selected] = nil
         lib.select(oldselect or 0)
     end
+    lib.splash = lib.splas
 
     lib.menu = function(label, strs, num)
         local oldScene = lib.getScene()
@@ -969,7 +963,7 @@ return {create = function(customX, customY)
         local select = num or 1
         while true do
             term.clear()
-            local startpos = (select // ry) * ry
+            local startpos = math.floor(select / ry) * ry
             if startpos == 0 then
                 invert()
                 setText(label, 1)

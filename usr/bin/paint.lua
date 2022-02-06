@@ -7,9 +7,10 @@ local keyboard = require("keyboard")
 
 ------------------------------------------
 
-local args = shell.parse(...)
+local args, options = shell.parse(...)
 local standertX = 32
 local standertY = 16
+local readonly = false
 local rx, ry = gui.gpu.getResolution()
 local path
 local selectcolor = 1
@@ -53,6 +54,7 @@ local function loadimage(path)
     file:close()
     drawzone.sizeX = #image[1]
     drawzone.sizeY = #image
+    readonly = fs.get(path).isReadOnly() or options.r
 end
 
 local function saveimage(path)
@@ -73,6 +75,49 @@ end
 local function getInImage(image, posX, posY)
     local line = image[posY]
     return line:sub(posX, posX)
+end
+
+local function resizeImage(image, newX, newY)
+    local sizeY = #image
+    local sizeX = #image[1] or 0
+
+    local mainString = ""
+    for i = 1, sizeX do
+        mainString = mainString .. " "
+    end
+
+    if newY > sizeY then
+        local newCreate = newY - sizeY
+        for i = 1, newCreate do
+            image[#image + 1] = mainString
+        end
+    elseif newY < sizeY then
+        local newCreate = sizeY - newY
+        for i = 1, newCreate do
+            image[#image] = nil
+        end
+    end
+    sizeY = newY
+
+    if newX > sizeX then
+        for cy = 1, sizeY do
+            local str = image[cy]
+            local newCreate = newX - #str
+            for i = 1, newCreate do
+                str = str .. " "
+            end
+            image[cy] = str
+        end
+    elseif newX < sizeX then
+        for cy = 1, sizeY do
+            local str = image[cy]
+            str = str:sub(1, newX)
+            image[cy] = str
+        end
+    end
+
+    drawzone.sizeX = newX
+    drawzone.sizeY = newY
 end
 
 ------------------------------------------
@@ -117,25 +162,31 @@ local function ioMenager(selected)
         gui.select(oldscene)
 
         createImage(sizeX, sizeY)
-        imagepath = nil
+        if not options.f then imagepath = nil end
     elseif selected == "open" or selected == "save as" or (selected == "save" and not imagepath) then
-        local old = gui.getScene()
-        gui.select(0)
+        if not options.f then
+            local old = gui.getScene()
+            gui.select(0)
 
-        local input = io.read()
-        if input then
-            local path = shell.resolve(input)
-            local func = (selected == "open" and loadimage) or saveimage
-            local ok, err = pcall(func, path)
-            if not ok then
-                gui.splas(err or "unkown")
-            else
-                imagepath = path
+            local input = io.read()
+            if input then
+                local path = shell.resolve(input)
+                local func = (selected == "open" and loadimage) or saveimage
+                local ok, err = pcall(func, path)
+                if not ok then
+                    gui.splas(err or "unkown")
+                else
+                    imagepath = path
+                    if selected ~= "open" and not options.r then readonly = false end
+                end
             end
-        end
 
-        gui.select(old)
+            gui.select(old)
+        else
+            gui.splash("fixed mode anable")
+        end
     elseif selected == "save" then
+        if readonly then gui.splash("read only") return end
         local ok, err = pcall(saveimage, imagepath)
         if not ok then gui.splas(err or "unkown")end
     end
@@ -148,9 +199,9 @@ local filebutton = main.createButton(1, 1, 6, 1, "file", nil, nil, false, nil, n
     end
 end)
 local editbutton = main.createButton(7, 1, 6, 1, "edit", nil, nil, false, nil, nil, nil, function()
-    local selected = gui.context(true, 7, 2, {"fill", "full fill"}, true)
+    local selected = gui.context(true, 7, 2, {"fill", "full fill", "resize"}, true)
     if selected then
-        if selected == "fill" or "full fill" then
+        if selected == "fill" or selected == "full fill" then
             for cy = 1, #image do
                 for cx = 1, #image[1] do
                     if selected == "full fill" or getInImage(image, cx, cy) == " " then
@@ -158,6 +209,25 @@ local editbutton = main.createButton(7, 1, 6, 1, "edit", nil, nil, false, nil, n
                     end
                 end
             end
+        elseif selected == "resize" then
+            local oldscene = gui.getScene()
+            gui.select(0)
+
+            local sizeX = tonumber(io.read() or "")
+            if not sizeX then 
+                gui.splas("input error")
+                gui.select(oldscene)
+                return 
+            end
+            local sizeY = tonumber(io.read() or "")
+            if not sizeY then 
+                gui.splas("input error")
+                gui.select(oldscene)
+                return 
+            end
+
+            gui.select(oldscene)
+            resizeImage(image, sizeX, sizeY)
         end
         gui.redraw()
     end
