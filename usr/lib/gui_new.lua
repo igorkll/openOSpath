@@ -4,15 +4,11 @@ local term = require("term")
 local unicode = require("unicode")
 local thread = require("thread")
 local computer = require("computer")
+local keyboard = require("keyboard")
 
 --------------------------------------------
 
-local keys = {}
-keys.up = 200
-keys.down = 208
-keys.left = 203
-keys.right = 205
-keys.enter = 28
+local keys = keyboard.keys
 
 local function map(value, low, high, low_2, high_2)
     local relative_value = (value - low) / (high - low)
@@ -209,6 +205,10 @@ return {create = function(customX, customY)
 
     lib.select = function(num)
         checkArg(1, num, "number", "table")
+        if lib.cursor then
+            lib.cursor.posX = 1
+            lib.cursor.posY = 1
+        end
         if type(num) ~= "number" then
             for i = 1, #lib.scenes do
                 if lib.scenes[i] == num then
@@ -270,6 +270,10 @@ return {create = function(customX, customY)
             local rx, ry = lib.gpu.getResolution()
             if code == keys.enter then
                 touchIn(lib.screen, obj.posX, obj.posY)
+                return
+            end
+            if code == keys.tab then
+                touchIn(lib.screen, obj.posX, obj.posY, 1)
                 return
             end
             local tx, ty = obj.posX, obj.posY
