@@ -2,7 +2,6 @@ local gui = require("gui_new").create(50, 16)
 local event = require("event")
 local component = require("component")
 local computer = require("computer")
-gui.useCursor(true)
 
 ------------------------------------------------------------------------------------------
 
