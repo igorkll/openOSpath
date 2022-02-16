@@ -42,3 +42,4 @@
 /etc/oppm.cfg
 /init.lua
 /autoruns/system/screenConfig.lua
+/usr/bin/back.lua
