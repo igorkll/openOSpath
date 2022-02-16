@@ -59,5 +59,5 @@ end
 local maxgpu = getMax("gpu")
 local maxscreen = getMax("screen")
 setGS(maxscreen, maxgpu)
-assert(su.saveFile(screenpath, maxscreen))
-assert(su.saveFile(gpupath, maxgpu))
+su.saveFile(screenpath, maxscreen)
+su.saveFile(gpupath, maxgpu)
