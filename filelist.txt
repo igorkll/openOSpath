@@ -43,3 +43,4 @@
 /init.lua
 /autoruns/system/screenConfig.lua
 /usr/bin/back.lua
+/usr/lib/back.lua
