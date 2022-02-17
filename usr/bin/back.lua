@@ -5,8 +5,8 @@ local args = shell.parse(...)
 
 ------------------------------------------
 
-if not programm_loaded then
-    programm_loaded = {}
+if not _G.programm_loaded then
+    _G.programm_loaded = {}
 end
 
 local function printUsage()
