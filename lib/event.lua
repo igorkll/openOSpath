@@ -79,11 +79,7 @@ computer.pullSignal = function(seconds) -- dispatch
         return
       end
       if event.hook then 
-        if not checkThread() then
-          event.push("interrupted", lastInterrupt) 
-        else
-          event.hookCount = event.hookCount + 1
-        end
+        event.push("interrupted", lastInterrupt) 
       end
     end
 
