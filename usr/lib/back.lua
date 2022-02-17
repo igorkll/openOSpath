@@ -5,7 +5,7 @@ local shell = require("shell")
 
 ------------------------------------------
 
-if not programm_loaded then programm_loaded = {} end
+if not _G.programm_loaded then _G.programm_loaded = {} end
 
 ------------------------------------------
 
