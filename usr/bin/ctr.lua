@@ -2,7 +2,7 @@ local gui = require("gui_new").create()
 local event = require("event")
 local component = require("component")
 
-local modem = component.isAvailable("modem") and component.modem
+local modem = component.modem
 
 ----------------------------------------------
 
@@ -15,12 +15,8 @@ end
 local side = "front"
 local function send(...)
     if port ~= 0 then
-        if modem then
-            if not port then splas() return end
-            modem.broadcast(port, "robotCommand",  ...)
-        else
-            gui.splas("нету мадема")
-        end
+        if not port then splas() return end
+        modem.broadcast(port, "robotCommand",  ...)
     else
         local command, arg1 = ...
         local robot = require("robot")
