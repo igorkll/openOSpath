@@ -99,6 +99,10 @@ lib.isOnline = function(nikname)
     end
 end
 
+lib.modProgramm = function(str)
+    return "local function mainchunk(...) "..str.."\nend\nlocal out = {mainchunk(...)}\nos.exit()\nreturn table.unpack(out)"
+end
+
 
 --находиться ли в таблице по числовому индексу
 --получения значения из таблицы по имени
