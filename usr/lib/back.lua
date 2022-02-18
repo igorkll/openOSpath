@@ -1,5 +1,6 @@
 local thread = require("thread")
 local shell = require("shell")
+local su = require("superUtiles")
 
 --сорян за говно код
 
@@ -53,9 +54,13 @@ end
 function lib.load(path, name, ...)
     checkArg(1, path, "string")
     checkArg(2, name, "string")
-    if programm_loaded[name] then return "this name exists" end
+    if programm_loaded[name] then return nil, "this name exists" end
 
-    local func, err = loadfile(path)
+    local data, err = su.getFile(path)
+    if not data then return nil, err end
+    data = su.modProgramm(data)
+
+    local func, err = load(data)
     if not func then return nil, err end
     os.setenv("_", path)
     local th = thread.create(func, ...)
@@ -66,9 +71,25 @@ function lib.load(path, name, ...)
 end
 
 function lib.loadData(func, name, ...)
-    checkArg(1, func, "string")
+    checkArg(1, func, "function")
     checkArg(2, name, "string")
-    if programm_loaded[name] then return "this name exists" end
+    if programm_loaded[name] then return nil, "this name exists" end
+
+    local th = thread.create(func, ...)
+    th:detach()
+    programm_loaded[name] = th
+
+    return th
+end
+
+function lib.loadSimpleData(data, name, ...)
+    checkArg(1, data, "string")
+    checkArg(2, name, "string")
+    if programm_loaded[name] then return nil, "this name exists" end
+
+    data = su.modProgramm(data)
+    local func, err = load(data)
+    if not func then return nil, err end
 
     local th = thread.create(func, ...)
     th:detach()

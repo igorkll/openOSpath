@@ -1,5 +1,6 @@
 local thread = require("thread")
 local shell = require("shell")
+local su = require("superUtiles")
 
 local args = shell.parse(...)
 
@@ -32,7 +33,9 @@ if args[1] == "load" then
     end
 
     local path = shell.resolve(args[2])
-    local func = assert(loadfile(path))
+    local data = assert(su.getFile(path))
+    data = su.modProgramm(data)
+    local func = assert(load(data))
     os.setenv("_", path)
     local th = thread.create(func, table.unpack(programmArgs))
     th:detach()
