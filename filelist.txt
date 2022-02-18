@@ -48,3 +48,4 @@
 /etc/oppm.cfg
 /etc/filesystem.cfg
 /autoruns/system/screenConfig.lua
+/usr/lib/archlib2.lua
