@@ -19,5 +19,6 @@ elseif args[1] == "unpack" then
     local data = su.getFile(file)
     arch.unpack(dir, data)
 else
-    error("unsuported mode")
+    print("arch pack directory outputfile")
+    print("arch unpack inputfile outputdirectory")
 end
