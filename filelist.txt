@@ -49,4 +49,4 @@
 /etc/filesystem.cfg
 /autoruns/system/screenConfig.lua
 /usr/lib/archlib2.lua
-/usr/lib/arch.lua
+/usr/bin/arch.lua
