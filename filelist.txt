@@ -50,3 +50,4 @@
 /autoruns/system/screenConfig.lua
 /usr/lib/archlib2.lua
 /usr/bin/arch.lua
+/lib/serialization.lua
