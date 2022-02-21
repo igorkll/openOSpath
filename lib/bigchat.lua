@@ -19,6 +19,8 @@ event.timer(4, openPorts, math.huge)
 local messagebuffer = {}
 local life = {}
 
+local noAddress
+
 local function raw_send(...)
     for address in component.list("modem") do
         local modem = component.proxy(address)
@@ -32,9 +34,12 @@ local function raw_send(...)
         end
     end
     for address in component.list("tunnel") do
-        local tunnel = component.proxy(address)
-        tunnel.send(...)
+        if address ~= noAddress then
+            local tunnel = component.proxy(address)
+            tunnel.send(...)
+        end
     end
+    noAddress = nil
 end
 
 local function cleanBuffer()
@@ -61,6 +66,7 @@ local function listen(_, this, _, port, _, messagetype, code, ...)
         return
     end
     addcode(code)
+    noAddress = this
     raw_send("bigchat", code, ...)
     event.push("big_chat", ...)
 end
