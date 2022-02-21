@@ -7,7 +7,7 @@ local appkey = "distfs"
 local function create(index, folder, readonly)
     local appindex = index
     local readonly = readonly or false
-    local proxyFS = require("proxyFS").createFS(folder)
+    local proxyFS = require("proxyFS").createFS(folder, index)
 
     local files = {}
 
@@ -23,7 +23,7 @@ local function create(index, folder, readonly)
         bigchat.send(appkey, appindex, "readonly")
     end
 
-    local function listen(eventName, key, index, command, data, data2, data3)
+    local function listen(eventName, key, index, command, data, data2, data3, data4)
         if type(key) == "string" and type(index) == "string" and type(command) == "string" then
             if eventName == "big_chat" and key == appkey and index == appindex then
                 if command == "open" then
@@ -63,7 +63,12 @@ local function create(index, folder, readonly)
                     local file = files[data]
                     local out
                     if file then
-                        out = file:seek(data2)
+                        if data2 then
+                            out = file:seek(data2, data3, data4)
+                        else
+                            file:seek("cur", 1)
+                            out = file:seek("cur", -1)
+                        end
                     end
                     backresult(out)
                 elseif command == "rename" then
