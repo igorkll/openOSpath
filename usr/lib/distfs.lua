@@ -129,7 +129,7 @@ local function connect(index, folder)
     end
 
     local function getResult()
-        local eventName, key, index, command, data, data2, data3 = event.pull(0.5, "big_chat", appkey, appindex)
+        local eventName, key, index, command, data, data2, data3 = event.pull(4, "big_chat", appkey, appindex)
         if eventName == "big_chat" and key == appkey and index == appindex then
             if command == "return" or "nup" then
                 return data, data2, data3
