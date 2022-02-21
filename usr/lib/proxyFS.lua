@@ -26,9 +26,10 @@ lib.rePath = function(path, fspath)
     return new
 end
 
-lib.createFS = function(path, label)
+lib.createFS = function(path, label, classic)
     local path = path
     local label = label or "sandbox"
+    local classic = classic or false
     local obj = {}
 
     obj.open = function(...)
@@ -54,7 +55,15 @@ lib.createFS = function(path, label)
     obj.list = function(...)
         local data = table.pack(...)
         data[1] = lib.rePath(path, data[1])
-        return fs.list(table.unpack(data))
+        if not classic then
+            return fs.list(table.unpack(data))
+        else
+            local tab = {}
+            for data in fs.list(table.unpack(data)) do
+                tab[#tab + 1] = data
+            end
+            return tab
+        end
     end
     obj.makeDirectory = function(...)
         local data = table.pack(...)
