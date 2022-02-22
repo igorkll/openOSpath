@@ -44,7 +44,7 @@ end
 
 local function cleanBuffer()
     for key, value in pairs(life) do
-        if computer.uptime() - value > 8 then
+        if computer.uptime() - value > 16 then
             messagebuffer[key] = nil
             life[key] = nil
         end

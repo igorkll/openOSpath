@@ -1,0 +1,137 @@
+local component = require("component")
+local event = require("event")
+local serialization = require("serialization")
+local su = require("superUtiles")
+local computer = require("computer")
+
+-------------------------------------------
+
+local noAddress
+local function raw_send(devices, name, code, data)
+    local noAddress2 = noAddress
+    noAddress = nil
+    for i = 1, #devices do
+        local device = devices[i]
+        local proxy = component.proxy(device[1])
+        if proxy.type == "modem" then
+            local strength = device[3]
+            local oldStrength
+            if proxy.isWireless() then
+                if strength then
+                    oldStrength = proxy.getStrength()
+                    proxy.setStrength(strength)
+                end
+            end
+
+            proxy.broadcast(device[2], "network", name, code, data)
+
+            if oldStrength then proxy.setStrength(oldStrength) end
+        elseif proxy.type == "tunnel" then
+            if proxy.address ~= noAddress2 then
+                proxy.send("network", name, code, data)
+            end
+        else
+            error("unsupported device")
+        end
+    end
+end
+
+local function isType(data, target)
+    return type(data) == target
+end
+
+-------------------------------------------
+
+local lib = {}
+
+lib.networks = {}
+
+function lib.create(devices, name, resend)
+    checkArg(1, devices, "table")
+    checkArg(2, name, "string")
+    local obj = {}
+    obj.devices = devices
+    obj.name = name
+    obj.resend = resend
+    obj.listens = {}
+    obj.timers = {}
+
+    --------------------------------------------------
+
+    for i = 1, #devices do
+        local device = devices[i]
+        local proxy = component.proxy(device[1])
+        if proxy.type == "modem" then
+            device.isOpen = proxy.open(device[2])
+        end
+    end
+
+    --------------------------------------------------
+
+    local messagebuffer = {}
+    local life = {}
+
+    local function cleanBuffer()
+        for key, value in pairs(life) do
+            if computer.uptime() - value > 16 then
+                messagebuffer[key] = nil
+                life[key] = nil
+            end
+        end
+    end
+    obj.timers[#obj.timers + 1] = event.timer(1, cleanBuffer, math.huge)
+
+    local function addcode(code)
+        local index = su.generateRandomID()
+        messagebuffer[index] = code or su.generateRandomID()
+        life[index] = computer.uptime()
+        return messagebuffer[index]
+    end
+
+    local function listen(_, this, _, port, _, messagetype, name, code, data)
+        if not obj.resend then return end
+        if not isType(messagetype, "string") or not isType(name, "string") or not isType(code, "string") then return end
+        if su.inTable(messagebuffer, code) then return end
+        local ok = false
+        for i = 1, #devices do
+            local device = devices[i]
+            if device[1] == this and (port == 0 or device[2] == port) then
+                ok = true
+            end
+        end
+        if not ok then return end
+        addcode(code)
+        noAddress = this
+        raw_send(obj.devices, obj.name, code, data)
+        local out = serialization.unserialize(data)
+        event.push("network_message", obj.name, table.unpack(out))
+    end
+    event.listen("modem_message", listen)
+    obj.listens[#obj.listens + 1] = {"modem_message", listen}
+
+    --------------------------------------------------
+
+    function obj.send(...)
+        local data = serialization.serialize({...})
+        raw_send(obj.devices, obj.name, addcode(), data)
+    end
+
+    lib.networks[#lib.networks + 1] = obj
+    local thisIndex = #lib.networks
+
+    function obj.kill()
+        for i = 1, #obj.timers do event.cancel(obj.timers[i]) end
+        for i = 1, #obj.listens do event.ignore(table.unpack(obj.listens[i])) end
+        for i = 1, #devices do
+            local device = devices[i]
+            if device["isOpen"] then
+                component.proxy(device[1]).close(device[2])
+            end
+        end
+        table.remove(lib.networks, thisIndex)
+    end
+
+    return obj
+end
+
+return lib
