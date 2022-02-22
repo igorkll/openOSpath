@@ -1,28 +1,6 @@
 -- called from /init.lua
 local raw_loadfile = ...
 
-do
-local buffer = {}
-
-local oldPull = computer.pullSignal
-local oldPush = computer.pushSignal
-
-function computer.pullSignal(timeout)
-    if #buffer == 0 then
-        return oldPull(timeout)
-    else
-        local data = buffer[1]
-        table.remove(buffer, 1)
-        return table.unpack(data)
-    end
-end
-
-function computer.pushSignal(...)
-    table.insert(buffer, {...})
-    return true
-end
-end
-
 _G._OSVERSION = "OpenOS 1.7.5"
 
 -- luacheck: globals component computer unicode _OSVERSION
