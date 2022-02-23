@@ -89,7 +89,22 @@ function lib.create(devices, name, resend)
     end
 
     local function listen(_, this, _, port, _, messagetype, name, code, data)
-        if not obj.resend then return end
+        for i = 1, #devices do
+            local device = devices[i]
+            if device[1] == this then
+                if device["resend"] == nil then
+                    if obj.resend then
+                        break
+                    else
+                        return
+                    end
+                elseif device["resend"] == true then
+                    break
+                elseif device["resend"] == false then
+                    return
+                end
+            end
+        end
         if not isType(messagetype, "string") or not isType(name, "string") or not isType(code, "string") then return end
         if su.inTable(messagebuffer, code) then return end
         local ok = false
@@ -132,6 +147,42 @@ function lib.create(devices, name, resend)
     end
 
     return obj
+end
+
+function lib.getDevices(tunnels, modems, wiredModems, wirelessModems, modemsPort, modemsStrength)
+    if not modemsPort then modemsPort = 88 end
+    if not modemsStrength then modemsStrength = math.huge end
+
+    ------------------------------------------------------
+
+    local devices = {}
+
+    if tunnels then
+        for address in component.list("tunnel") do
+            devices[#devices + 1] = {address}
+        end
+    end
+    if wiredModems then
+        for address in component.list("modem") do
+            if component.invoke(address, "isWired") and not component.invoke(address, "isWireless") then
+                devices[#devices + 1] = {address, modemsPort, modemsStrength}
+            end
+        end
+    end
+    if wirelessModems then
+        for address in component.list("modem") do
+            if not component.invoke(address, "isWired") and component.invoke(address, "isWireless") then
+                devices[#devices + 1] = {address, modemsPort, modemsStrength}
+            end
+        end
+    end
+    if modems then
+        for address in component.list("modem") do
+            devices[#devices + 1] = {address, modemsPort, modemsStrength}
+        end
+    end
+
+    return devices
 end
 
 return lib
