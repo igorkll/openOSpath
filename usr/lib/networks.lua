@@ -185,4 +185,12 @@ function lib.getDevices(tunnels, modems, wiredModems, wirelessModems, modemsPort
     return devices
 end
 
+function lib.getNetwork(name)
+    for i = 1, #lib.networks do
+        if lib.networks[i].name == name then
+            return lib.networks[i]
+        end
+    end
+end
+
 return lib
