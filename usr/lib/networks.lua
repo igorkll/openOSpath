@@ -7,7 +7,7 @@ local computer = require("computer")
 -------------------------------------------
 
 local noAddress
-local function raw_send(devices, name, code, data, obj, isResend)
+local function raw_send(devices, name, code, data, obj, isResend, port)
     local noAddress2 = noAddress
     noAddress = nil
     for i = 1, #devices do
@@ -23,6 +23,9 @@ local function raw_send(devices, name, code, data, obj, isResend)
         end
         local proxy = component.proxy(device[1])
         if proxy.type == "modem" then
+            if isResend and proxy.address == noAddress2 and device[2] == port and (not proxy.isWireless() or device[3] == 0) then
+                goto skip
+            end
             local strength = device[3]
             local oldStrength
             if proxy.isWireless() then
@@ -36,7 +39,7 @@ local function raw_send(devices, name, code, data, obj, isResend)
 
             if oldStrength then proxy.setStrength(oldStrength) end
         elseif proxy.type == "tunnel" then
-            if proxy.address ~= noAddress2 then
+            if isResend and proxy.address ~= noAddress2 then
                 proxy.send("network", name, code, data)
             end
         else
@@ -112,7 +115,7 @@ function lib.create(devices, name, resend)
         if not ok then return end
         addcode(code)
         noAddress = this
-        raw_send(obj.devices, obj.name, code, data, obj, true)
+        raw_send(obj.devices, obj.name, code, data, obj, true, port)
         local out = serialization.unserialize(data)
         event.push("network_message", obj.name, table.unpack(out))
     end
