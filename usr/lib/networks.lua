@@ -121,7 +121,7 @@ function lib.create(devices, name, resend)
 
     function obj.send(...)
         local data = serialization.serialize({...})
-        raw_send(obj.devices, obj.name, addcode(), data)
+        raw_send(obj.devices, obj.name, addcode(), data, obj)
     end
 
     lib.networks[#lib.networks + 1] = obj
