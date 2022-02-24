@@ -98,7 +98,7 @@ function lib.create(devices, name, resend)
 
     local function listen(_, this, _, port, _, messagetype, name, code, data)
         if not isType(messagetype, "string") or not isType(name, "string") or not isType(code, "string") then return end
-        if su.inTable(messagebuffer, code) then return end
+        if su.inTable(messagebuffer, code) or name ~= obj.name then return end
         local ok = false
         for i = 1, #obj.devices do
             local device = obj.devices[i]
