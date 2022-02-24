@@ -7,17 +7,19 @@ local computer = require("computer")
 -------------------------------------------
 
 local noAddress
-local function raw_send(devices, name, code, data, obj)
+local function raw_send(devices, name, code, data, obj, isResend)
     local noAddress2 = noAddress
     noAddress = nil
     for i = 1, #devices do
         local device = devices[i]
-        if device["resend"] == nil then
-            if not obj.resend then
+        if isResend then
+            if device["resend"] == nil then
+                if not obj.resend then
+                    goto skip
+                end
+            elseif device["resend"] == false then
                 goto skip
             end
-        elseif device["resend"] == false then
-            goto skip
         end
         local proxy = component.proxy(device[1])
         if proxy.type == "modem" then
@@ -110,7 +112,7 @@ function lib.create(devices, name, resend)
         if not ok then return end
         addcode(code)
         noAddress = this
-        raw_send(obj.devices, obj.name, code, data, obj)
+        raw_send(obj.devices, obj.name, code, data, obj, true)
         local out = serialization.unserialize(data)
         event.push("network_message", obj.name, table.unpack(out))
     end
