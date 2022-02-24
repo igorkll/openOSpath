@@ -7,11 +7,18 @@ local computer = require("computer")
 -------------------------------------------
 
 local noAddress
-local function raw_send(devices, name, code, data)
+local function raw_send(devices, name, code, data, obj)
     local noAddress2 = noAddress
     noAddress = nil
     for i = 1, #devices do
         local device = devices[i]
+        if device["resend"] == nil then
+            if not obj.resend then
+                goto skip
+            end
+        elseif device["resend"] == false then
+            goto skip
+        end
         local proxy = component.proxy(device[1])
         if proxy.type == "modem" then
             local strength = device[3]
@@ -33,6 +40,7 @@ local function raw_send(devices, name, code, data)
         else
             error("unsupported device")
         end
+        ::skip::
     end
 end
 
@@ -58,8 +66,8 @@ function lib.create(devices, name, resend)
 
     --------------------------------------------------
 
-    for i = 1, #devices do
-        local device = devices[i]
+    for i = 1, #obj.devices do
+        local device = obj.devices[i]
         local proxy = component.proxy(device[1])
         if proxy.type == "modem" then
             device.isOpen = proxy.open(device[2])
@@ -89,35 +97,20 @@ function lib.create(devices, name, resend)
     end
 
     local function listen(_, this, _, port, _, messagetype, name, code, data)
-        for i = 1, #devices do
-            local device = devices[i]
-            if device[1] == this then
-                if device["resend"] == nil then
-                    if obj.resend then
-                        break
-                    else
-                        return
-                    end
-                elseif device["resend"] == true then
-                    break
-                elseif device["resend"] == false then
-                    return
-                end
-            end
-        end
         if not isType(messagetype, "string") or not isType(name, "string") or not isType(code, "string") then return end
         if su.inTable(messagebuffer, code) then return end
         local ok = false
-        for i = 1, #devices do
-            local device = devices[i]
+        for i = 1, #obj.devices do
+            local device = obj.devices[i]
             if device[1] == this and (port == 0 or device[2] == port) then
                 ok = true
+                break
             end
         end
         if not ok then return end
         addcode(code)
         noAddress = this
-        raw_send(obj.devices, obj.name, code, data)
+        raw_send(obj.devices, obj.name, code, data, obj)
         local out = serialization.unserialize(data)
         event.push("network_message", obj.name, table.unpack(out))
     end
@@ -137,8 +130,8 @@ function lib.create(devices, name, resend)
     function obj.kill()
         for i = 1, #obj.timers do event.cancel(obj.timers[i]) end
         for i = 1, #obj.listens do event.ignore(table.unpack(obj.listens[i])) end
-        for i = 1, #devices do
-            local device = devices[i]
+        for i = 1, #obj.devices do
+            local device = obj.devices[i]
             if device["isOpen"] then
                 component.proxy(device[1]).close(device[2])
             end
