@@ -53,6 +53,11 @@ function lib.loadimage(path)
         gpu.setBackground(oldb)
     end
 
+    function obj.getSize()
+        local image = obj.image
+        return #image[1] or 0, #image
+    end
+
     return obj
 end
 
