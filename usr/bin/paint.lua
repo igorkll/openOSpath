@@ -4,6 +4,7 @@ local su = require("superUtiles")
 local fs = require("filesystem")
 local shell = require("shell")
 local keyboard = require("keyboard")
+local colorPic = require("colorPic")
 
 ------------------------------------------
 
@@ -15,7 +16,7 @@ local rx, ry = gui.gpu.getResolution()
 local path
 local selectcolor = 1
 if args[1] then path = shell.resolve(args[1]) end
-local colors = {0xF0F0F0, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xDEDE6C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C, 0x999999, 0x4C99B2, 0xB266E5, 0x3366CC, 0x9F664C, 0x57A64E, 0xCC4C4C, 0x191919}
+local colors = colorPic.getColorIndex()
 --local colors = {0xFFFFFF, 0xFFFF00, 0x770066, 0x00FFFF, 0xFFFF00, 0x00FF00, 0x992288, 0xAAAAAA, 0x999999, 0x00FF66, 0xFF00FF, 0x0000FF, 0x550000, 0x44FF44, 0xFF0000, 0x000000}
 local bytes = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"}
 local drawzoneindex = su.generateRandomID()
