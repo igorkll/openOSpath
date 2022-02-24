@@ -39,7 +39,7 @@ local function raw_send(devices, name, code, data, obj, isResend, port)
 
             if oldStrength then proxy.setStrength(oldStrength) end
         elseif proxy.type == "tunnel" then
-            if isResend and proxy.address ~= noAddress2 then
+            if not isResend or proxy.address ~= noAddress2 then
                 proxy.send("network", name, code, data)
             end
         else
