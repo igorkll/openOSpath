@@ -12,7 +12,6 @@ local appkey = "distfs2"
 local lib = {}
 
 lib.hosts = {}
-lib.connects = {}
 
 function lib.create(network, index, folder, readonly)
     local obj = {}
@@ -127,11 +126,10 @@ function lib.create(network, index, folder, readonly)
     return obj
 end
 
-function lib.connect(network, index, folder)
+function lib.getDistFs(network, index)
     local obj = {}
     obj.network = network
     obj.index = index
-    obj.folder = folder
 
     -----------------------------------
 
@@ -163,12 +161,22 @@ function lib.connect(network, index, folder)
 
     -----------------------------------
 
+    return obj, pfs
+end
+
+function lib.connect(network, index, folder)
+    local obj, pfs = lib.getDistFs(network, index)
+    obj.folder = folder
     fs.mount(pfs, obj.folder)
+    return obj, pfs
+end
 
-    -----------------------------------
-
-    table.insert(lib.connects, obj)
-    return obj
+function lib.getFs(name)
+    for i = 1, #lib.hosts do
+        if lib.hosts[i].index == name then
+            return lib.hosts[i]
+        end
+    end
 end
 
 return lib
