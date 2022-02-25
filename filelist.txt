@@ -10,6 +10,7 @@
 /lib/tty.lua
 /lib/event.lua
 /autoruns/system/screenConfig.lua
+/autoruns/system/modVersion.lua
 /version.cfg
 /usr/lib/gui_new.lua
 /usr/lib/env.lua
