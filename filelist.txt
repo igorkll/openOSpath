@@ -48,3 +48,4 @@
 /usr/lib/distComponent.lua
 /usr/midi/midi1.mid
 /usr/midi/midi2.mid
+/usr/bin/update.lua
