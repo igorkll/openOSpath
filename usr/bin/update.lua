@@ -49,12 +49,14 @@ local inData = assert(serialization.unserialize(assert(su.getFile("/version.cfg"
 
 if outData.version > inData.version then
     print("ваша версия "..tostring(inData.version)..", продолжив бедет устоновленна "..tostring(outData.version))
-elseif outData.version == inData.version then
+elseif outData.version <= inData.version then
     print("у вас устоновленна актуальная версия ("..tostring(inData.version).."), обновления имеет смысл только если файлы поврежденны")
-else
-    print("ваша версия ("..tostring(inData.version).."), выше опубликованной("..tostring(outData.version)..")")
-    return
 end
+
+print("информациа о обновлении:")
+print(outData.info or "отсутствует")
+print("информациа о устоновленной версии:")
+print(inData.info or "отсутствует")
 
 --------------------------------------------------
 
