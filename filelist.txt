@@ -52,3 +52,4 @@
 /autoruns/system/modVersion.lua
 /etc/filesystem.cfg
 /etc/profile.lua
+/etc/motd
