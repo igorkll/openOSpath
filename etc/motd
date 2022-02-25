@@ -1,0 +1,50 @@
+local component = require("component")
+local computer = require("computer")
+local unicode = require("unicode")
+local tty = require("tty")
+local term = require("term")
+
+if not term.isAvailable() then return end
+local gpu = term.gpu()
+local rx, ry = gpu.getResolution()
+
+------------------------------------
+
+local f = io.open("/usr/misc/greetings.txt")
+local lines = {_OSVERSION .. " (" .. math.floor(computer.totalMemory() / 1024) .. "k RAM)"}
+local greeting = ""
+if f then
+    local greetings = {}
+      pcall(function()
+      for line in f:lines() do table.insert(greetings, line) end
+    end)
+    f:close()
+    greeting = greetings[math.random(1, math.max(#greetings, 1))] or ""
+end
+local width = math.min(unicode.len(greeting), (tty.getViewport() or math.huge) - 5)
+local maxLine = unicode.len(lines[1])
+while unicode.len(greeting) > 0 do
+    local si, ei = unicode.sub(greeting, 1, width):find("%s%S*$")
+    local line = unicode.len(greeting) <= width and greeting or unicode.sub(greeting, 1, si or width)
+    lines[#lines + 1] = line
+    maxLine = math.max(maxLine, unicode.len(line))
+    greeting = unicode.sub(greeting, unicode.len(line) + 1)
+end
+
+if gpu.getDepth() == 8 then
+    gpu.setBackground(0x777777)
+    gpu.setForeground(0xFFFFFF)
+else
+    gpu.setBackground(0xA5A5A5)
+    gpu.setForeground(0)
+end
+
+gpu.fill(1, 1, rx, #lines + 2, " ")
+print(string.rep("-", rx))
+for _,line in ipairs(lines) do
+    print(line)
+end
+print(string.rep("-", rx))
+
+gpu.setBackground(0)
+gpu.setForeground(0xFFFFFF)
