@@ -48,3 +48,4 @@
 /boot/90_filesystem.lua
 /boot/00_base.lua
 /boot/92_keyboard.lua
+/usr/bin/appMarket.lua
