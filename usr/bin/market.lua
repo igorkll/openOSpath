@@ -8,6 +8,7 @@ local process = require("process")
 local unicode = require("unicode")
 local originalInterrupt = process.info().data.signal
 local gui = require("gui_new").create()
+gui.colorfilter = false
 if not component.isAvailable("internet") then
     print("internet card is not found")
     print("press enter to continue...")
@@ -92,11 +93,22 @@ end)
 
 local drawIndex = su.generateRandomID()
 main = gui.createScene()
-main.createDrawZone(1, 1, rx, ry, function() end, drawIndex)
-main.createButton(1, ry - 2, rx, 3, "back", nil, nil, nil, nil, nil, nil, function()
+main.createDrawZone(1, 1, rx - 1, ry, function() end, drawIndex)
+local depth, back, fore = gui.gpu.getDepth()
+if depth == 8 then
+    fore = 0xFFFFFF
+    back = 0xAAAAAA
+elseif depth == 4 then
+    fore = 0
+    back = 0xA5A5A5
+else
+    fore = 0xFFFFFF
+    back = 0
+end
+main.createButton(1, ry, rx, 1, "back", back, fore, nil, nil, nil, nil, function()
     gui.select(startZone)
 end)
-local logZone = main.createLogZone(1, 1, rx, ry - 3, nil, nil, nil, nil, false)
+local logZone = main.createLogZone(1, 1, rx, ry - 1, nil, nil, nil, nil, false)
 logZone.autodraw = false
 
 gui.select(startZone)
