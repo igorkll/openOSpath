@@ -11,7 +11,6 @@ local rx, ry = gpu.getResolution()
 ------------------------------------
 
 local f = io.open("/usr/misc/greetings.txt")
-local lines = {_OSVERSION .. " (" .. math.floor(computer.totalMemory() / 1024) .. "k RAM)"}
 local greeting = ""
 if f then
     local greetings = {}
@@ -21,15 +20,11 @@ if f then
     f:close()
     greeting = greetings[math.random(1, math.max(#greetings, 1))] or ""
 end
-local width = math.min(unicode.len(greeting), (tty.getViewport() or math.huge) - 5)
-local maxLine = unicode.len(lines[1])
-while unicode.len(greeting) > 0 do
-    local si, ei = unicode.sub(greeting, 1, width):find("%s%S*$")
-    local line = unicode.len(greeting) <= width and greeting or unicode.sub(greeting, 1, si or width)
-    lines[#lines + 1] = line
-    maxLine = math.max(maxLine, unicode.len(line))
-    greeting = unicode.sub(greeting, unicode.len(line) + 1)
-end
+
+----------------------------------------------------------
+
+local oldb = gpu.getBackground()
+local oldf = gpu.getBackground()
 
 if gpu.getDepth() == 8 then
     gpu.setBackground(0x777777)
@@ -39,12 +34,18 @@ else
     gpu.setForeground(0)
 end
 
-gpu.fill(1, 1, rx, #lines + 2, " ")
-print(string.rep("-", rx))
-for _,line in ipairs(lines) do
-    print(line)
-end
-print(string.rep("-", rx))
+----------------------------------------------------------
 
-gpu.setBackground(0)
-gpu.setForeground(0xFFFFFF)
+local function proPrint(str)
+    print(str .. string.rep(" ", rx - (unicode.len(str) % rx)))
+end
+
+term.write(string.rep("-", rx))
+proPrint(_OSVERSION .. " (" .. math.floor(computer.totalMemory() / 1024) .. "k RAM)")
+proPrint(greeting)
+term.write(string.rep("-", rx))
+
+----------------------------------------------------------
+
+gpu.setBackground(oldb)
+gpu.setForeground(oldf)
