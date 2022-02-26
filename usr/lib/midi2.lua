@@ -2,6 +2,16 @@ local thread = require("thread")
 
 -------------------------------------------------------
 
+local count = 0
+local function interrupt()
+  count = count + 1
+  if count % 1024 == 0 then
+    os.sleep()
+  end
+end
+
+-------------------------------------------------------
+
 local lib = {}
 
 function lib.create(filepath, instruments, notemode, pitch, speed, noteduraction)
@@ -114,6 +124,7 @@ function lib.create(filepath, instruments, notemode, pitch, speed, noteduraction
         local totalLength = 0
         local tracks = {}
         while true do
+            interrupt()            
             local id, size = readChunkInfo()
             if not id then
                 break
@@ -164,6 +175,7 @@ function lib.create(filepath, instruments, notemode, pitch, speed, noteduraction
                 end
     
                 while offset < size do
+                    interrupt()                    
                     cursor = cursor + readVariableLength()
                     totalLength = math.max(totalLength, cursor)
                     local test = parseVarInt(read())
