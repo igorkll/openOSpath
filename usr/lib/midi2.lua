@@ -342,6 +342,9 @@ function lib.create(filepath, instruments, notemode, pitch, speed, noteduraction
                                 channels.n = channels.n + 1
                                 channels[channel] = instruments[1 + ((channels.n - 1) % #instruments)]
                             end
+                            if not duration then duration = 0 end
+                            if not note then note = 1 end
+                            if not channel then channel = "nil" end
                             if channels[channel] and channels[channel](beepableFrequency(note), duration / obj.noteduraction) then
                                 break
                             end
