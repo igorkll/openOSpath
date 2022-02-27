@@ -66,6 +66,7 @@ function lib.create(devices, name, resend)
     obj.devices = devices
     obj.name = name
     obj.resend = resend
+    obj.renil = true
     obj.listens = {}
     obj.timers = {}
 
@@ -105,8 +106,9 @@ function lib.create(devices, name, resend)
         if not isType(messagetype, "string") or not isType(name, "string") or not isType(code, "string") then return end
         if su.inTable(messagebuffer, code) or name ~= obj.name then return end
         local ok = false
+        local device
         for i = 1, #obj.devices do
-            local device = obj.devices[i]
+            device = obj.devices[i]
             if device[1] == this and (port == 0 or device[2] == port) then
                 ok = true
                 break
@@ -114,8 +116,17 @@ function lib.create(devices, name, resend)
         end
         if not ok then return end
         addcode(code)
-        noAddress = this
-        raw_send(obj.devices, obj.name, code, data, obj, true, port)
+        local function resendPack()
+            noAddress = this
+            raw_send(obj.devices, obj.name, code, data, obj, true, port)
+        end
+        if device["resend"] == nil then
+            if obj.resend then
+                resendPack()
+            end
+        elseif device["resend"] == true then
+            resendPack()
+        end
         local out = serialization.unserialize(data)
         event.push("network_message", obj.name, table.unpack(out))
     end
@@ -125,7 +136,25 @@ function lib.create(devices, name, resend)
     --------------------------------------------------
 
     function obj.send(...)
-        local data = serialization.serialize({...})
+        local tbl = {...}
+        local tbl2 = {}
+        if obj.renil then
+            local num = 0
+            for i, data in pairs(tbl) do
+                local raz = i - num
+                num = i
+                if raz > 1 then
+                    raz = raz - 1
+                    for i = 1, raz do
+                        table.insert(tbl2, false)
+                    end
+                end
+                table.insert(tbl2, data)
+            end
+        else
+            tbl2 = tbl
+        end
+        local data = serialization.serialize(tbl2)
         raw_send(obj.devices, obj.name, addcode(), data, obj)
     end
 

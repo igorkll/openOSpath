@@ -13,16 +13,30 @@ local lib = {}
 
 lib.hosts = {}
 
-function lib.create(network, index, folder, readonly)
+function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFiles)
     local obj = {}
     obj.network = network
     obj.index = index
     obj.folder = folder
     obj.readonly = readonly
     obj.openFiles = {}
+    obj.maxSize = maxSize
+    obj.freeSize = freeSize
+    obj.maxFiles = maxFiles
     obj.proxyFS = proxyFS.createFS(obj.folder, index, true)
 
     -----------------------------------
+
+    local function openFileAllow(isWrite)
+        local tfs = fs.get(obj.folder)
+        if #obj.openFiles >= obj.maxFiles then return false end
+        if isWrite then
+            local ok1 = not obj.maxSize or (tfs.spaceUsed() <= obj.maxSize)
+            local ok2 = not obj.freeSize or (tfs.spaseTotal() - tfs.spaceUsed() > obj.freeSize)
+            return ok1 and ok2
+        end
+        return true
+    end
 
     local function send(...)
         obj.network.send(appkey, obj.index, ...)
@@ -47,7 +61,9 @@ function lib.create(network, index, folder, readonly)
             local arg = {...}
             if command == "open" then
                 local path, mode = arg[1], arg[2]
-                if obj.readonly and mode:sub(1, 1) == "w" then returnValue(nil, "filesystem is readonly") return end
+                local isWrite = mode:sub(1, 1) == "w"
+                if obj.readonly and isWrite then returnValue(nil, "filesystem is readonly") return end
+                if not openFileAllow(isWrite) then returnValue(nil, "open in not allow") return end
 
                 local file, err = obj.proxyFS.open(path, mode)
                 if not file then returnValue(nil, err) return end
@@ -69,7 +85,10 @@ function lib.create(network, index, folder, readonly)
             elseif command == "write" then
                 local index, data = arg[1], arg[2]
                 local file = obj.openFiles[index]
+                
                 if not file then returnValue(nil, "file is not open") return end
+                if not openFileAllow(true) then returnValue(nil, "write in not allow") return end
+
                 returnValue(file:write(data))
             elseif command == "seek" then
                 local index, data1, data2 = arg[1], arg[2], arg[3]
