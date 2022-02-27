@@ -12,6 +12,7 @@ local appkey = "distfs2"
 local lib = {}
 
 lib.hosts = {}
+lib.connects = {}
 
 function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFiles)
     local obj = {}
@@ -29,7 +30,7 @@ function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFile
 
     local function openFileAllow(isWrite)
         local tfs = fs.get(obj.folder)
-        if #obj.openFiles >= obj.maxFiles then return false end
+        if obj.maxFiles and #obj.openFiles >= obj.maxFiles then return false end
         if isWrite then
             local ok1 = not obj.maxSize or (tfs.spaceUsed() <= obj.maxSize)
             local ok2 = not obj.freeSize or (tfs.spaseTotal() - tfs.spaceUsed() > obj.freeSize)
@@ -85,7 +86,7 @@ function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFile
             elseif command == "write" then
                 local index, data = arg[1], arg[2]
                 local file = obj.openFiles[index]
-                
+
                 if not file then returnValue(nil, "file is not open") return end
                 if not openFileAllow(true) then returnValue(nil, "write in not allow") return end
 
@@ -187,6 +188,7 @@ function lib.connect(network, index, folder)
     local obj, pfs = lib.getDistFs(network, index)
     obj.folder = folder
     fs.mount(pfs, obj.folder)
+    table.insert(lib.connects, {obj, pfs})
     return obj, pfs
 end
 
