@@ -95,10 +95,10 @@ lib.createFS = function(path, label, classic)
 
     obj.isReadOnly = function() return false end
 
-    obj.read = function(...) return fs.read(...) end
-    obj.close = function(...) return fs.close(...) end
-    obj.seek = function(...) return fs.seek(...) end
-    obj.write = function(...) return fs.write(...) end
+    obj.read = function(file, ...) return file:read(...) end
+    obj.close = function(file, ...) return file:close(...) end
+    obj.seek = function(file, ...) return file:seek(...) end
+    obj.write = function(file, ...) return file:write(...) end
 
     return obj
 end
