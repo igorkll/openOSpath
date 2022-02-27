@@ -87,13 +87,18 @@ lib.createFS = function(path, label, classic)
         return fs.size(table.unpack(data))
     end
 
-    obj.spaseTotal = function() return math.huge end
-    obj.spaseUsed = function() return 0 end
+    obj.spaceTotal = function()
+        return fs.get(path).spaceTotal()
+    end
+    obj.spaceUsed = function()
+        return fs.get(path).spaceUsed()
+    end
 
     obj.getLabel = function() return label end
     obj.setLabel = function(new) local old = label; label = new; return old end
-
-    obj.isReadOnly = function() return false end
+    obj.isReadOnly = function() 
+        return fs.get(path).isReadOnly()
+    end
 
     obj.read = function(file, ...) return file:read(...) end
     obj.close = function(file, ...) return file:close(...) end
