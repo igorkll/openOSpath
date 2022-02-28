@@ -1,5 +1,6 @@
 local fs = require("filesystem")
 local computer = require("computer")
+local unicode = require("unicode")
 
 ---------------------------------------
 
@@ -103,8 +104,42 @@ lib.modProgramm = function(str)
     return "local function mainchunk(...) "..str.."\nend\nlocal out = {mainchunk(...)}\nos.exit()\nreturn table.unpack(out)"
 end
 
+lib.split = function(str, sep)
+    local parts, count = {}, 1
+    local i = 1
+    while true do
+        if i > #str then break end
+        local char = str:sub(i, #sep + (i - 1))
+        if not parts[count] then parts[count] = "" end
+        if char == sep then
+            count = count + 1
+            i = i + #sep
+        else
+            parts[count] = parts[count] .. str:sub(i, i)
+            i = i + 1
+        end
+    end
+    if str:sub(#str - (#sep - 1), #str) == sep then table.insert(parts, "") end
+    return parts
+end
 
---находиться ли в таблице по числовому индексу
---получения значения из таблицы по имени
+lib.splitText = function(str, sep)
+    local parts, count = {}, 1
+    local i = 1
+    while true do
+        if i > unicode.len(str) then break end
+        local char = unicode.sub(str, i, unicode.len(sep) + (i - 1))
+        if not parts[count] then parts[count] = "" end
+        if char == sep then
+            count = count + 1
+            i = i + unicode.len(sep)
+        else
+            parts[count] = parts[count] .. unicode.sub(str, i, i)
+            i = i + 1
+        end
+    end
+    if unicode.sub(str, unicode.len(str) - (unicode.len(sep) - 1), unicode.len(str)) == sep then table.insert(parts, "") end
+    return parts
+end
 
 return lib
