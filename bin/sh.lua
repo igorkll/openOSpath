@@ -4,6 +4,7 @@ local text = require("text")
 local sh = require("sh")
 local event = require("event")
 local term = require("term")
+local keyboard = require("keyboard")
 
 ----------------------------------
 
@@ -15,7 +16,7 @@ shell.prime()
 
 if #args == 0 then
     local function shortcut(_, uuid, _, code)
-        if uuid == term.keyboard() and code == 29 then
+        if uuid == term.keyboard() and code == 31 and keyboard.isControlDown() then
             event.push("interrupted", 1)
             event.push("clipboard", uuid, "shortcut\n", "system")
         end
