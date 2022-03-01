@@ -4,15 +4,13 @@ local event = require("event")
 
 ---------------------------------------------
 
-local gpu = term.gpu()
-local screen = term.screen()
-local keyboard = term.keyboard()
-
 local function invert()
+    local gpu = term.gpu()
     gpu.setForeground(gpu.setBackground(gpu.getForeground()))
 end
 
 local function setColor(back, fore)
+    local gpu = term.gpu()
     gpu.setBackground(back or 0xFFFFFF)
     gpu.setForeground(fore or 0)
 end
@@ -23,6 +21,7 @@ local function clear(back, fore)
 end
 
 local function setText(text, posY)
+    local gpu = term.gpu()
     local rx, ry = gpu.getResolution()
     gpu.set(math.ceil((rx / 2) - (unicode.len(text) / 2)), posY, text)
 end
@@ -32,11 +31,16 @@ end
 local lib = {}
 
 function lib.setStandart()
+    local gpu = term.gpu()
     gpu.setBackground(0)
     gpu.setForeground(0xFFFFFF)
 end
 
 function lib.menu(label, strs, num, back, fore)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+
     local rx, ry = gpu.getResolution()
     local select = num or 1
     local posY = ((ry // 2) - (#strs // 2) - 1)
@@ -100,9 +104,13 @@ function lib.yesno(label)
 end
 
 function lib.splash(str)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+
     clear()
     gpu.set(1, 1, str)
-    gpu.set(1, 2, "press enter to continue...")
+    gpu.set(1, 2, "press enter or touch to continue...")
     while true do
         local eventName, uuid, _, code = event.pull()
         if eventName == "key_down" and uuid == keyboard then
