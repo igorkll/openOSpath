@@ -47,23 +47,22 @@ end
 ---------------------------------------------
 
 local screenpath = "/etc/screen.cfg"
-local gpupath = "/etc/gpu.cfg"
 
 local function reconnect()
-    if fs.exists(screenpath) and fs.exists(gpupath) then
+    local maxgpu = getMax("gpu")
+
+    if fs.exists(screenpath) then
         local screen = component.proxy(assert(su.getFile(screenpath)))
-        local gpu = component.proxy(assert(su.getFile(gpupath)))
+        local gpu = component.proxy(maxgpu)
         if screen and gpu then
             setGS(screen.address, gpu.address)
             return
         end
     end
 
-    local maxgpu = getMax("gpu")
     local maxscreen = getMax("screen")
     setGS(maxscreen, maxgpu)
     su.saveFile(screenpath, maxscreen)
-    su.saveFile(gpupath, maxgpu)
 end
 
 reconnect()
