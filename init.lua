@@ -16,6 +16,7 @@ end
 -----------------------------------
 
 local fs = require("filesystem")
+local term = require("term")
 
 local autorunspath = "/autoruns"
 local systemautoruns = fs.concat(autorunspath, "system")
@@ -63,6 +64,6 @@ while true do
         io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
         io.write("Press any key to continue.\n")
         os.sleep(0.5)
-        require("event").pull("key")
+        require("event").pull("key_down", term.keyboard())
     end
 end
