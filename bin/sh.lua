@@ -66,6 +66,6 @@ local function func(...)
     end
 end
 local tbl = {pcall(func, ...)}
-if not tbl[1] then print(tbl[2] or "unkown") end
 if shortcut then event.ignore("key_down", shortcut) end
+if not tbl[1] then error(tbl[2] or "unkown") end
 return table.unpack(tbl, 2)
