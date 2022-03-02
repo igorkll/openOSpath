@@ -24,12 +24,12 @@ function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFile
     obj.maxSize = maxSize
     obj.freeSize = freeSize
     obj.maxFiles = maxFiles
-    obj.proxyFS = proxyFS.createFS(obj.folder, index, true)
+    obj.proxyFS = (type(obj.folder) == "table" and obj.folder) or proxyFS.createFS(obj.folder, index, true)
 
     -----------------------------------
 
     local function openFileAllow(isWrite)
-        local tfs = fs.get(obj.folder)
+        local tfs = (type(obj.folder) == "table" and obj.folder) or fs.get(obj.folder)
         if obj.maxFiles and #obj.openFiles >= obj.maxFiles then return false end
         if isWrite then
             local ok1 = not obj.maxSize or (tfs.spaceUsed() <= obj.maxSize)
