@@ -3,7 +3,7 @@ local serialization = {}
 local count = 0
 local function interrupt()
     count = count + 1
-    if count % 16 == 0 then
+    if count % 1024 == 0 then
         os.sleep(0.1)
     end
 end
