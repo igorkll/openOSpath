@@ -1,3 +1,4 @@
+if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end --зашита от моих биосов(они усторели и удин удаляет setArchitecture а другой заставляет его выдать ошибку)
 do
     local addr, invoke = computer.getBootAddress(), component.invoke
     local function loadfile(file)
