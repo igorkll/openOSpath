@@ -1,4 +1,5 @@
 local fs = require("filesystem")
+local unicode = require("unicode")
 
 ------------------------------------------
 
@@ -19,10 +20,9 @@ lib.getPathValue = function(path)
 end
 
 lib.rePath = function(path, fspath)
+    path = fs.canonical(path)
     local new = fs.concat(path, fspath)
-    if lib.getPathValue(new) < lib.getPathValue(path) then
-        new = path
-    end
+    if unicode.sub(new, 1, unicode.len(path)) ~= path then error("out side in box") return end
     return new
 end
 
