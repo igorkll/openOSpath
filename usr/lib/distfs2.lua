@@ -28,8 +28,13 @@ function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFile
 
     -----------------------------------
 
+    local function getFS()
+        return (type(obj.folder) == "table" and obj.folder) or fs.get(obj.folder)
+    end
+    if getFS().isReadOnly() then obj.readonly = true end
+
     local function openFileAllow(isWrite)
-        local tfs = (type(obj.folder) == "table" and obj.folder) or fs.get(obj.folder)
+        local tfs = getFS()
         if obj.maxFiles and #obj.openFiles >= obj.maxFiles then return false end
         if isWrite then
             local ok1 = not obj.maxSize or (tfs.spaceUsed() <= obj.maxSize)
@@ -96,10 +101,10 @@ function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFile
                 local file = obj.openFiles[index]
                 if not file then returnValue(nil, "file is not open") return end
                 returnValue(file:seek(data1, data2))
-            elseif command == "spaseUsed" then
-                returnValue(0)
-            elseif command == "spaseTotal" then
-                returnValue(math.huge)
+            elseif command == "spaceUsed" then
+                returnValue(getFS().spaseUsed())
+            elseif command == "spaceTotal" then
+                returnValue(getFS().spaseTotal())
             elseif command == "size" then
                 local path = arg[1]
                 returnValue(obj.proxyFS.size(path))
