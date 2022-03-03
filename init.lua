@@ -22,6 +22,8 @@ do --для таблиц в event
     end
 end
 
+-----------------------------------
+
 do
     local addr, invoke = computer.getBootAddress(), component.invoke
     local function loadfile(file)
@@ -41,6 +43,7 @@ end
 
 local fs = require("filesystem")
 local term = require("term")
+local event = require("event")
 
 local autorunspath = "/autoruns"
 local systemautoruns = fs.concat(autorunspath, "system")
@@ -84,10 +87,15 @@ while true do
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
     end)
-    if not result then
+    if not result and term.isAvailable() then
         io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
-        io.write("Press any key to continue.\n")
+        io.write("Press enter key to continue.\n")
         os.sleep(0.5)
-        require("event").pull("key_down", term.keyboard())
+        while true do
+            local _, uuid, _, code = event.pull("key_down")
+            if term.keyboard() and uuid == term.keyboard() and code == 28 then
+                break
+            end
+        end
     end
 end
