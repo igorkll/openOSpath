@@ -1,4 +1,27 @@
 if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end --зашита от моих биосов(они усторели и удин удаляет setArchitecture а другой заставляет его выдать ошибку)
+
+do --для таблиц в event
+    local buffer = {}
+
+    local oldPull = computer.pullSignal
+    local oldPush = computer.pushSignal
+
+    function computer.pullSignal(timeout)
+        if #buffer == 0 then
+            return oldPull(timeout)
+        else
+            local data = buffer[1]
+            table.remove(buffer, 1)
+            return table.unpack(data)
+        end
+    end
+
+    function computer.pushSignal(...)
+        table.insert(buffer, {...})
+        return true
+    end
+end
+
 do
     local addr, invoke = computer.getBootAddress(), component.invoke
     local function loadfile(file)
