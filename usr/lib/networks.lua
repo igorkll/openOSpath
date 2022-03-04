@@ -151,6 +151,7 @@ function lib.create(devices, name, resend)
                 end
                 table.insert(tbl2, data)
             end
+            if tbl2[1] == nil then tbl2[1] = false end
         else
             tbl2 = tbl
         end
