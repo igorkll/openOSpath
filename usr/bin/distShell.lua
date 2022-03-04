@@ -59,7 +59,7 @@ elseif args[1] == "send" then
         return "no this network"
     end
     network.send(appName, args[3], "call", args[4], table.unpack(args, 5))
-    local _, _, _, _, _, tbl = event.pull(2, "network_message", network.name, appName, args[3], "return")
+    local _, _, _, _, _, tbl = event.pull(4, "network_message", network.name, appName, args[3], "return")
     if tbl then
         if not options.q then print(serialization.serialize(tbl)) end
         return tbl
@@ -74,7 +74,7 @@ elseif args[1] == "shell" then
     end
     local function send(command, ...)
         network.send(appName, args[3], "call", command, ...)
-        local _, _, _, _, _, tbl = event.pull(2, "network_message", network.name, appName, args[3], "return")
+        local _, _, _, _, _, tbl = event.pull(4, "network_message", network.name, appName, args[3], "return")
         if tbl then
             return tbl
         end
@@ -99,7 +99,7 @@ elseif args[1] == "sendFile" then
         return "no this network"
     end
     network.send(appName, args[3], "call", assert(su.getFile(shell.resolve(args[4]))), table.unpack(args, 5))
-    local _, _, _, _, _, tbl = event.pull(2, "network_message", network.name, appName, args[3], "return")
+    local _, _, _, _, _, tbl = event.pull(4, "network_message", network.name, appName, args[3], "return")
     if tbl then
         if not options.q then print(serialization.serialize(tbl)) end
         return tbl
