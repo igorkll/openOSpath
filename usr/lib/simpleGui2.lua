@@ -36,6 +36,7 @@ function lib.create(r, y)
     obj.gpu = gpu
     obj.screen = screen
     obj.keyboard = keyboard
+    obj.depth = depth
 
     ----------------------
 
@@ -73,6 +74,7 @@ function lib.create(r, y)
     ----------------------
 
     function obj.status(text, color)
+        if depth == 1 then color = nil end
         clear()
         setColor(obj.back, color or obj.main)
         setText(text, ry // 2)
@@ -138,6 +140,7 @@ function lib.create(r, y)
     end
 
     function obj.splash(str, color)
+        if depth == 1 then color = nil end
         clear()
         setColor(obj.back, color or obj.main)
         gpu.set(1, 1, str)
