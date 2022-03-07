@@ -10,11 +10,13 @@ local lib = {}
 
 function lib.create(r, y)
     local obj = {}
-    obj.back = 0xFFFFFF
-    obj.main = 0
-    obj.sub = 0x888888
+    obj.colors = {}
     obj.char = " "
     obj.reset = su.saveGpu()
+
+    obj.colors.back = 0xFFFFFF
+    obj.colors.main = 0
+    obj.colors.sub = 0x888888
 
     ----------------------
 
@@ -29,9 +31,9 @@ function lib.create(r, y)
     local depth = math.floor(gpu.getDepth())
 
     if depth == 1 then
-        obj.sub = 0
+        obj.colors.sub = 0
     end
-    obj.sub2 = obj.sub
+    obj.colors.sub2 = obj.colors.sub
 
     obj.gpu = gpu
     obj.screen = screen
@@ -63,7 +65,7 @@ function lib.create(r, y)
     end
 
     local function clear(b, f)
-        setColor(b or obj.back, f or obj.sub2)
+        setColor(b or obj.colors.back, f or obj.colors.sub2)
         fill()
     end
 
@@ -76,7 +78,7 @@ function lib.create(r, y)
     function obj.status(text, color)
         if depth == 1 then color = nil end
         clear()
-        setColor(obj.back, color or obj.main)
+        setColor(obj.colors.back, color or obj.colors.main)
         setText(text, ry // 2)
     end
 
@@ -89,12 +91,12 @@ function lib.create(r, y)
             local startpos = (select // ry) * ry
             local dy = posY
             if startpos == 0 then
-                setColor(obj.back, obj.main)
+                setColor(obj.colors.back, obj.colors.main)
                 setText(label, 1 + dy)
             else
                 dy = 0
             end
-            setColor(obj.back, obj.sub)
+            setColor(obj.colors.back, obj.colors.sub)
             for i = 1, #strs do
                 local pos = (i + 1 + dy) - startpos
                 if pos >= 1 and pos <= ry then
@@ -142,9 +144,9 @@ function lib.create(r, y)
     function obj.splash(str, color)
         if depth == 1 then color = nil end
         clear()
-        setColor(obj.back, color or obj.main)
+        setColor(obj.colors.back, color or obj.colors.main)
         gpu.set(1, 1, str)
-        setColor(obj.back, obj.main)
+        setColor(obj.colors.back, obj.colors.main)
         gpu.set(1, 2, "press enter or touch to continue...")
         while true do
             local eventName, uuid, _, code = event.pull()
@@ -160,7 +162,7 @@ function lib.create(r, y)
 
     function obj.inputZone(text)
         clear()
-        setColor(obj.back, obj.main)
+        setColor(obj.colors.back, obj.colors.main)
         term.setCursor(1, 1)
         term.write(text .. ": ")
         return io.read()
