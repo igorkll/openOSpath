@@ -51,25 +51,25 @@ function lib.create(r, y)
 
     ----------------------
 
-    local function invert()
+    function obj.invert()
         gpu.setForeground(gpu.setBackground(gpu.getForeground()))
     end
 
-    local function setColor(back, fore)
+    function obj.setColor(back, fore)
         gpu.setBackground(back or 0xFFFFFF)
         gpu.setForeground(fore or 0)
     end
 
-    local function fill()
+    function obj.fill()
         gpu.fill(1, 1, rx, ry, obj.char)
     end
 
-    local function clear(b, f)
-        setColor(b or obj.colors.back, f or obj.colors.sub2)
-        fill()
+    function obj.clear(b, f)
+        obj.setColor(b or obj.colors.back, f or obj.colors.sub2)
+        obj.fill()
     end
 
-    local function setText(text, posY)
+    function obj.setText(text, posY)
         gpu.set(math.ceil((rx / 2) - (unicode.len(text) / 2)), posY, text)
     end
 
@@ -77,9 +77,9 @@ function lib.create(r, y)
 
     function obj.status(text, color)
         if depth == 1 then color = nil end
-        clear()
-        setColor(obj.colors.back, color or obj.colors.main)
-        setText(text, ry // 2)
+        obj.clear()
+        obj.setColor(obj.colors.back, color or obj.colors.main)
+        obj.setText(text, ry // 2)
     end
 
     function obj.menu(label, strs, num)
@@ -87,22 +87,22 @@ function lib.create(r, y)
         local posY = ((ry // 2) - (#strs // 2) - 1)
         if posY < 0 then posY = 0 end
         while true do
-            clear()
+            obj.clear()
             local startpos = (select // ry) * ry
             local dy = posY
             if startpos == 0 then
-                setColor(obj.colors.back, obj.colors.main)
-                setText(label, 1 + dy)
+                obj.setColor(obj.colors.back, obj.colors.main)
+                obj.setText(label, 1 + dy)
             else
                 dy = 0
             end
-            setColor(obj.colors.back, obj.colors.sub)
+            obj.setColor(obj.colors.back, obj.colors.sub)
             for i = 1, #strs do
                 local pos = (i + 1 + dy) - startpos
                 if pos >= 1 and pos <= ry then
-                    if keyboard and select == i then invert() end
-                    setText(strs[i], pos)
-                    if keyboard and select == i then invert() end
+                    if keyboard and select == i then obj.invert() end
+                    obj.setText(strs[i], pos)
+                    if keyboard and select == i then obj.invert() end
                 end
             end
             local eventName, uuid, _, code, button = event.pull()
@@ -143,10 +143,10 @@ function lib.create(r, y)
 
     function obj.splash(str, color)
         if depth == 1 then color = nil end
-        clear()
-        setColor(obj.colors.back, color or obj.colors.main)
+        obj.clear()
+        obj.setColor(obj.colors.back, color or obj.colors.main)
         gpu.set(1, 1, str)
-        setColor(obj.colors.back, obj.colors.main)
+        obj.setColor(obj.colors.back, obj.colors.main)
         gpu.set(1, 2, "press enter or touch to continue...")
         while true do
             local eventName, uuid, _, code = event.pull()
@@ -161,8 +161,8 @@ function lib.create(r, y)
     end
 
     function obj.inputZone(text)
-        clear()
-        setColor(obj.colors.back, obj.colors.main)
+        obj.clear()
+        obj.setColor(obj.colors.back, obj.colors.main)
         term.setCursor(1, 1)
         term.write(text .. ": ")
         return io.read()
