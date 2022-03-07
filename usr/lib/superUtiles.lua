@@ -1,6 +1,7 @@
 local fs = require("filesystem")
 local computer = require("computer")
 local unicode = require("unicode")
+local term = require("term")
 
 ---------------------------------------
 
@@ -140,6 +141,25 @@ lib.splitText = function(str, sep)
     end
     if unicode.sub(str, unicode.len(str) - (unicode.len(sep) - 1), unicode.len(str)) == sep then table.insert(parts, "") end
     return parts
+end
+
+lib.saveGpu = function(gpu)
+    if not gpu then gpu = term.gpu() end
+    local vx, vy = gpu.getViewport()
+    local rx, ry = gpu.getResolution()
+    local back, isPalB = gpu.getBackground()
+    local fore, isPalF = gpu.getForeground()
+    local screen = gpu.getScreen()
+    local depth = gpu.getDepth()
+
+    return function()
+        if screen and gpu.getScreen() ~= screen then gpu.bind(screen) end
+        gpu.setResolution(rx, ry)
+        gpu.setViewport(vx, vy)
+        gpu.setDepth(depth)
+        gpu.setBackground(back, isPalB)
+        gpu.setForeground(fore, isPalF)
+    end
 end
 
 return lib
