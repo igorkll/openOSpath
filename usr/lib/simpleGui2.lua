@@ -133,11 +133,11 @@ function lib.create(r, y)
         end
     end
 
-    function obj.yesno(label, simple)
+    function obj.yesno(label, simple, num)
         if simple then
-            return obj.menu(label, {"no", "yes"}) == 2
+            return obj.menu(label, {"no", "yes"}, num) == 2
         else
-            return obj.menu(label, {"no", "no", "yes", "no"}) == 3
+            return obj.menu(label, {"no", "no", "yes", "no"}, num) == 3
         end
     end
 
@@ -145,9 +145,10 @@ function lib.create(r, y)
         if depth == 1 then color = nil end
         obj.clear()
         obj.setColor(obj.colors.back, color or obj.colors.main)
-        gpu.set(1, 1, str)
+        term.setCursor(1, 1)
+        print(str)
         obj.setColor(obj.colors.back, obj.colors.main)
-        gpu.set(1, 2, "press enter or touch to continue...")
+        print("press enter or touch to continue...")
         while true do
             local eventName, uuid, _, code = event.pull()
             if eventName == "key_down" and uuid == keyboard then
