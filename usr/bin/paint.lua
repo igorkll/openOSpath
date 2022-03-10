@@ -12,7 +12,7 @@ local args, options = shell.parse(...)
 local standertX = 32
 local standertY = 16
 local readonly = false
-local rx, ry = gui.gpu.getResolution()
+local rx, ry = gui.gpu.maxResolution()
 local path
 local selectcolor = 1
 if args[1] then path = shell.resolve(args[1]) end
