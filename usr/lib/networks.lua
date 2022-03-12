@@ -3,6 +3,7 @@ local event = require("event")
 local serialization = require("serialization")
 local su = require("superUtiles")
 local computer = require("computer")
+local bigModem = require("bigModem")
 
 -------------------------------------------
 
@@ -35,12 +36,12 @@ local function raw_send(devices, name, code, data, obj, isResend, port)
                 end
             end
 
-            proxy.broadcast(device[2], "network", name, code, data)
+            device.bigModem.broadcast(device[2], "network", name, code, data)
 
             if oldStrength then proxy.setStrength(oldStrength) end
         elseif proxy.type == "tunnel" then
             if not isResend or proxy.address ~= noAddress2 then
-                proxy.send("network", name, code, data)
+                device.bigModem.broadcast(0, "network", name, code, data)
             end
         else
             error("unsupported device")
@@ -66,15 +67,14 @@ function lib.create(devices, name, resend)
     obj.devices = devices
     obj.name = name
     obj.resend = resend
-    obj.renil = true
     obj.listens = {}
-    obj.timers = {}
 
     --------------------------------------------------
 
     for i = 1, #obj.devices do
         local device = obj.devices[i]
         local proxy = component.proxy(device[1])
+        device.bigModem = bigModem.create(device[1])
         if proxy.type == "modem" then
             device.isOpen = proxy.open(device[2])
         end
@@ -87,13 +87,13 @@ function lib.create(devices, name, resend)
 
     local function cleanBuffer()
         for key, value in pairs(life) do
-            if computer.uptime() - value > 16 then
+            if computer.uptime() - value > 8 then
                 messagebuffer[key] = nil
                 life[key] = nil
             end
         end
     end
-    obj.timers[#obj.timers + 1] = event.timer(1, cleanBuffer, math.huge)
+    obj.listens[#obj.listens + 1] = event.timer(1, cleanBuffer, math.huge)
 
     local function addcode(code)
         local index = su.generateRandomID()
@@ -102,14 +102,14 @@ function lib.create(devices, name, resend)
         return messagebuffer[index]
     end
 
-    local function listen(_, this, _, port, _, messagetype, name, code, data)
+    local function listen(_, this, _, port, _, objCode, messagetype, name, code, data)
         if not isType(messagetype, "string") or not isType(name, "string") or not isType(code, "string") then return end
-        if su.inTable(messagebuffer, code) or name ~= obj.name then return end
+        if su.inTable(messagebuffer, code) or name ~= obj.name or messagetype ~= "network" then return end
         local ok = false
         local device
         for i = 1, #obj.devices do
             device = obj.devices[i]
-            if device[1] == this and (port == 0 or device[2] == port) then
+            if device[1] == this and (port == 0 or device[2] == port) and device.bigModem.objCode == objCode then
                 ok = true
                 break
             end
@@ -128,34 +128,14 @@ function lib.create(devices, name, resend)
             resendPack()
         end
         local out = serialization.unserialize(data)
-        event.push("network_message", obj.name, table.unpack(out))
+        event.push("network_message", obj.name, su.unpack(out))
     end
-    event.listen("modem_message", listen)
-    obj.listens[#obj.listens + 1] = {"modem_message", listen}
+    table.insert(obj.listens, event.listen("big_message", listen))
 
     --------------------------------------------------
 
     function obj.send(...)
-        local tbl = {...}
-        local tbl2 = {}
-        if obj.renil then
-            local num = 0
-            for i, data in pairs(tbl) do
-                local raz = i - num
-                num = i
-                if raz > 1 then
-                    raz = raz - 1
-                    for i = 1, raz do
-                        table.insert(tbl2, false)
-                    end
-                end
-                table.insert(tbl2, data)
-            end
-            if tbl2[1] == nil then tbl2[1] = false end
-        else
-            tbl2 = tbl
-        end
-        local data = serialization.serialize(tbl2)
+        local data = serialization.serialize({...})
         raw_send(obj.devices, obj.name, addcode(), data, obj)
     end
 
@@ -163,10 +143,10 @@ function lib.create(devices, name, resend)
     local thisIndex = #lib.networks
 
     function obj.kill()
-        for i = 1, #obj.timers do event.cancel(obj.timers[i]) end
-        for i = 1, #obj.listens do event.ignore(table.unpack(obj.listens[i])) end
+        for i = 1, #obj.listens do event.cancel(obj.listens[i]) end
         for i = 1, #obj.devices do
             local device = obj.devices[i]
+            device.bigModem.kill()
             if device["isOpen"] then
                 component.proxy(device[1]).close(device[2])
             end

@@ -162,4 +162,70 @@ lib.saveGpu = function(gpu)
     end
 end
 
+function lib.toParts(str, max)
+    local strs = {}
+    local temp = ""
+    for i = 1, #str do
+        local char = str:sub(i, i)
+        temp = temp .. char
+        if #temp >= max then
+            table.insert(strs, temp)
+            temp = ""
+        end
+    end
+    table.insert(strs, temp)
+    return strs
+end
+
+function lib.simpleTableClone(tbl)
+    local newtbl = {}
+    for k, v in pairs(tbl) do
+        newtbl[k] = v
+    end
+    return newtbl
+end
+
+function lib.unpack(tbl, tstart, tend)
+    local size = 0
+    for key, value in pairs(tbl) do
+        if type(key) == "number" then
+            if key > size then size = key end
+        end
+    end
+
+    if not tstart then tstart = 1 end
+    if not tend then tend = size end
+
+    local code = "return "
+
+    for i = tstart, tend do
+        --local i2 = (i - tstart) + 1
+        if i == tend then
+            code = code .. "t[" .. tostring(i) .. "]"
+        else
+            code = code .. "t[" .. tostring(i) .. "], "
+        end
+    end
+
+    return assert(load(code, "=data", nil, {t = tbl}))()
+end
+
+function lib.tableLen(tbl)
+    local count = 0
+    for k, v in pairs(tbl) do
+        count = count + 1
+    end
+    return count
+end
+
+function lib.indexTableLen(tbl)
+    local size = 0
+    for key, value in pairs(tbl) do
+        if type(key) == "number" then
+            if key > size then size = key end
+        end
+    end
+    return size
+end
+
 return lib
