@@ -2,6 +2,7 @@ local fs = require("filesystem")
 local computer = require("computer")
 local unicode = require("unicode")
 local term = require("term")
+local process = require("process")
 
 ---------------------------------------
 
@@ -25,6 +26,7 @@ lib.saveFile = function(path, data)
     if not file then return nil, err end
     file:write(data)
     file:close()
+    return true
 end
 
 lib.generateRandomID = function(size)
@@ -102,7 +104,8 @@ lib.isOnline = function(nikname)
 end
 
 lib.modProgramm = function(str)
-    return "local function mainchunk(...) "..str.."\nend\nlocal out = {mainchunk(...)}\nos.exit()\nreturn table.unpack(out)"
+    return str
+    --return "local function mainchunk(...) "..str.."\nend\nlocal out = {mainchunk(...)}\nos.exit()\nreturn table.unpack(out)"
 end
 
 lib.split = function(str, sep)
@@ -226,6 +229,22 @@ function lib.indexTableLen(tbl)
         end
     end
     return size
+end
+
+function lib.execute(_ENV, path, ...)
+    local file, err = lib.getFile(path)
+    if not file then return nil, err end
+    file = lib.modProgramm(file)
+    local func, err = load(file, path, nil, _ENV)
+    if not func then return nil, err end
+
+    local killFunc = process.info().data.signal
+    process.info().data.signal = function() error("interrupted") end
+    os.setenv("_", path)
+    local out = {xpcall(func, debug.traceback, ...)}
+    process.info().data.signal = killFunc
+
+    return table.unpack(out)
 end
 
 return lib
