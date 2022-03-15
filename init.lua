@@ -76,15 +76,14 @@ for i = 1, 2 do os.sleep(0.2) end
 
 -----------------------------------
 
-if fs.exists("/start.lua") then --главная автозагрузка
-    os.execute("/start.lua")
-elseif fs.exists("/.start.lua") then
+if fs.exists("/.start.lua") then --главная автозагрузка
     os.execute("/.start.lua")
-elseif fs.exists("/autorun.lua") then
-    os.execute("/autorun.lua")
 elseif fs.exists("/.autorun.lua") then
     os.execute("/.autorun.lua")
 end
+
+if fs.exists("/autorun.lua") then os.execute("/autorun.lua") end
+if fs.exists("/start.lua") then os.execute("/start.lua") end
 
 -----------------------------------
 
