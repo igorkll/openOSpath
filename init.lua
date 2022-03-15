@@ -24,7 +24,7 @@ end
 
 -----------------------------------
 
-do
+do --активатор загрузчика
     local addr, invoke = computer.getBootAddress(), component.invoke
     local function loadfile(file)
         local handle = assert(invoke(addr, "open", file))
@@ -44,8 +44,11 @@ end
 local fs = require("filesystem")
 local term = require("term")
 local event = require("event")
+local component = require("component")
 
-local autorunspath = "/autoruns"
+-----------------------------------
+
+local autorunspath = "/autoruns" --блок упровления автозагрузкой
 local systemautoruns = fs.concat(autorunspath, "system")
 local userautoruns = fs.concat(autorunspath, "user")
 
@@ -55,7 +58,9 @@ local function list(path)
     return ipairs(tbl)
 end
 
-if fs.exists(systemautoruns) then
+-----------------------------------
+
+if fs.exists(systemautoruns) then --системная автозагрузка
     for _, data in list(systemautoruns) do
         os.execute(fs.concat(systemautoruns, data))
     end
@@ -63,7 +68,15 @@ end
 
 -----------------------------------
 
-if fs.exists("/start.lua") then
+_G.externalAutoruns = true --разришить автозогрузку с внешних насителей
+for address in component.list("filesystem") do
+    event.push("autorun", address) --инициирует автозагрузки
+end
+os.sleep(0.1)
+
+-----------------------------------
+
+if fs.exists("/start.lua") then --главная автозагрузка
     os.execute("/start.lua")
 elseif fs.exists("/.start.lua") then
     os.execute("/.start.lua")
@@ -75,7 +88,7 @@ end
 
 -----------------------------------
 
-if fs.exists(userautoruns) then
+if fs.exists(userautoruns) then --автозагрузка пользователя
     for _, data in list(userautoruns) do
         os.execute(fs.concat(userautoruns, data))
     end
@@ -83,7 +96,7 @@ end
 
 -----------------------------------
 
-while true do
+while true do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
     end)
