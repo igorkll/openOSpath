@@ -102,7 +102,7 @@ return {create = function(customX, customY)
     local function getColor(gpu, color)
         if not color then return nil end
         if not lib.colorfilter then return color end
-        local depth = gpu.getDepth()
+        local depth = math.floor(gpu.getDepth())
         if depth == 4 then
             if color == 0x00FFFF then
                 return 0x00AAFF
@@ -1014,6 +1014,21 @@ return {create = function(customX, customY)
         gpu.setForeground(oldf)
         lib.select(oldScene or 0)
         return strs[out], out
+    end
+    
+    function lib.status(text)
+        local gpu = lib.gpu
+        local depth = math.floor(gpu.getDepth())
+        local rx, ry = gpu.getResolution()
+        local oldf = gpu.setForeground(0)
+        local oldb = gpu.setBackground(0xFFFFFF)
+
+        local x, y = math.ceil((rx / 2) - (unicode.len(text) / 2)), ry // 2
+        gpu.fill(x - 1, y - 1, unicode.len(text) + 2, 3, "╳")
+        gpu.set(x, y, text)
+
+        gpu.setBackground(oldb)
+        gpu.setForeground(oldf)
     end
 
     return lib
