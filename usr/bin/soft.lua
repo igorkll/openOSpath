@@ -2,6 +2,7 @@ local gui = require("simpleGui2").create()
 local su = require("superUtiles")
 local fs = require("filesystem")
 local term = require("term")
+local component = require("component")
 
 -----------------------------------------
 
