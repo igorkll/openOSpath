@@ -21,6 +21,7 @@ computer.shutdown = function(reboot)
   shutdown(reboot)
 end
 
+--[[
 local w, h
 local screen = component.list("screen", true)()
 local gpu = screen and component.list("gpu", true)()
@@ -36,6 +37,7 @@ if gpu then
   gpu.setForeground(0xFFFFFF)
   gpu.fill(1, 1, w, h, " ")
 end
+]]
 
 -- Report boot progress if possible.
 local y = 1
@@ -45,6 +47,7 @@ local uptime = computer.uptime
 local pull = computer.pullSignal
 local last_sleep = uptime()
 local function status(msg)
+  --[[
   if gpu and false then
     gpu.set(1, y, msg)
     if y == h then
@@ -54,6 +57,7 @@ local function status(msg)
       y = y + 1
     end
   end
+  ]]
   -- boot can be slow in some environments, protect from timeouts
   if uptime() - last_sleep > 1 then
     local signal = table.pack(pull(0))
