@@ -5,15 +5,19 @@ local computer = require("computer")
 local fs = require("filesystem")
 local su = require("superUtiles")
 
+if not component.isAvailable("gpu") or not component.isAvailable("screen") then return end
+
 ---------------------------------------------
 
 local connectedScreen
 local connectedGpu
 local function setGS(screen, gpu)
-    component.invoke(gpu, "bind", screen)
     component.setPrimary("gpu", gpu)
-    term.bind(component.proxy(gpu))
     component.setPrimary("screen", screen)
+    component.invoke(gpu, "bind", screen)
+
+    term.bind(component.proxy(gpu))
+
     connectedScreen = screen
     connectedGpu = gpu
 end
@@ -65,4 +69,5 @@ local function reconnect()
     su.saveFile(screenpath, maxscreen)
 end
 
-reconnect()
+xpcall(reconnect, function(str) event.onError(str .. debug.traceback) end)
+term.clear()
