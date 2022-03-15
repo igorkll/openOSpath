@@ -72,7 +72,7 @@ _G.externalAutoruns = true --разришить автозогрузку с вн
 for address in component.list("filesystem") do
     event.push("autorun", address) --инициирует автозагрузки
 end
-os.sleep(0.1)
+for i = 1, 2 do os.sleep(0.2) end
 
 -----------------------------------
 
