@@ -7,7 +7,17 @@ local term = require("term")
 
 local softs = {}
 local strs = {}
-for proxy, path in fs.mounts() do
+for address in component.list("filesystem") do
+    local proxy = component.proxy(address)
+    local path
+    for lfs, lpath in fs.mounts() do
+        if lfs.address == proxy.address then
+            path = lpath
+            break
+        end
+    end
+    if not path then goto skip end
+
     local full_path = fs.concat(path, ".soft.lua")
     if fs.exists(full_path) then
         table.insert(softs, full_path)
@@ -18,8 +28,11 @@ for proxy, path in fs.mounts() do
             strs[#strs] = strs[#strs] .. ", info: " .. su.getFile(full_path)
         end
     end
+    ::skip::
 end
 table.insert(strs, "back")
+
+os.sleep(1)
 
 -----------------------------------------
 
