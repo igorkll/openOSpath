@@ -16,15 +16,18 @@ local function autorun(_, address)
     end
     if not name then return end
     if (not fs.exists("/etc/filesystem.cfg") or fs.isAutorunEnabled()) and (address ~= fs.get("/").address) and (tmp ~= address) and _G.externalAutoruns then
-        local file = shell.resolve(fs.concat(name, "autorun"), "lua") or shell.resolve(fs.concat(name, ".autorun"), "lua")
-        if file then
-            local run = {file, _ENV, proxy}
-            if pendingAutoruns then
-                table.insert(pendingAutoruns, run)
-            else
-                xpcall(shell.execute, event.onError, table.unpack(run))
+        local function run(file)
+            if file then
+                local run = {file, _ENV, proxy}
+                if pendingAutoruns then
+                    table.insert(pendingAutoruns, run)
+                else
+                    xpcall(shell.execute, event.onError, table.unpack(run))
+                end
             end
         end
+        run(shell.resolve(fs.concat(name, ".autorun"), "lua"))
+        run(shell.resolve(fs.concat(name, "autorun"), "lua"))
     end
 end
 
