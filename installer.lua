@@ -154,9 +154,9 @@ while true do
     -------------------------------
 
     local eventName, uuid, tx, ty = event.pull()
-    tx = math.floor(tx) --для precise режима
-    ty = math.floor(ty)
     if eventName == "touch" and uuid == term.screen() then
+        tx = math.floor(tx) --для precise режима
+        ty = math.floor(ty)
         if tx == (1 + addToPosX) then
             if ty == (0 + addToPosY) then
                 osUpdate = not osUpdate
