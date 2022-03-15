@@ -167,7 +167,7 @@ while true do
             elseif ty == (3 + addToPosY) then
                 installMod = not installMod
             end
-        elseif tx >= commitX1 and tx <= commitX2 and ty == 4 then
+        elseif tx >= commitX1 and tx <= commitX2 and ty == (4 + addToPosY) then
             installer()
         end
     elseif eventName == "key_down" and uuid == term.keyboard() then
