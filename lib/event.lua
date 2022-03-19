@@ -29,7 +29,7 @@ function event.register(key, callback, interval, times, opt_handlers)
 end
 
 event.hook = true
-event.superHook = true
+event.superHook = false
 
 local function checkThread()
   local out = require("thread").current()
