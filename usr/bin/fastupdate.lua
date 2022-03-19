@@ -9,6 +9,8 @@ if not component.isAvailable("internet") then
     return
 end
 local internet = component.internet
+local term = require("term")
+local thread = require("thread")
 
 --------------------------------------------------
 
@@ -46,6 +48,22 @@ local inData = assert(serialization.unserialize(assert(su.getFile("/version.cfg"
 --------------------------------------------------
 
 if outData.version > inData.version then
-    os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f && /tmp/getinstaller https://raw.githubusercontent.com/igorkll/openOSpath/main /")
+    if term.isAvailable() then
+        local gui = require("simpleGui2").create()
+
+        thread.create(function()
+            while true do
+                gui.status("работая с обновлениями")
+                os.sleep(2)
+                gui.status("пожалуйста, не выключайте устройство")
+                os.sleep(2)
+                gui.status("обновления устанавливаеться автоматически")
+                os.sleep(2)
+            end
+        end)
+    end
+    os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
+    os.execute("/tmp/getinstaller https://raw.githubusercontent.com/igorkll/openOSpath/main / -q")
     computer.shutdown(true)
 end
+os.exit()
