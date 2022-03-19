@@ -7,7 +7,9 @@ local robot = {}
 -- Functions
 
 local function interrupt()
-    os.sleep(0.1)
+    if not _G.robotInterruptOff then
+        os.sleep(0.1)
+    end
 end
 
 -------------------------------------------------------------------------------
