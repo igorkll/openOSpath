@@ -68,6 +68,12 @@ end
 
 -----------------------------------
 
+event.push("init") --подтверждает инициализацию системмы
+event.pull(1, "init")
+_G.runlevel = 1
+
+-----------------------------------
+
 _G.externalAutoruns = true --разришить автозогрузку с внешних насителей
 for address in component.list("filesystem") do
     event.push("autorun", address) --инициирует автозагрузки
