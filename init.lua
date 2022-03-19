@@ -95,7 +95,7 @@ end
 
 -----------------------------------
 
-while true do --запуск shell
+while _G.shellAllow do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
     end)
