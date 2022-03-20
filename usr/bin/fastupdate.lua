@@ -5,6 +5,7 @@ local unicode = require("unicode")
 local computer = require("computer")
 local serialization = require("serialization")
 local shell = require("shell")
+local fs = require("filesystem")
 if not component.isAvailable("internet") then
     print("internet card is not found")
     return
@@ -48,7 +49,11 @@ end
 local outData, inData
 if not options.f then
     outData = assert(serialization.unserialize(assert(getInternetFile(url .. versionPath))))
-    inData = assert(serialization.unserialize(assert(su.getFile(versionPath))))
+    if fs.exists(versionPath) then
+        inData = assert(serialization.unserialize(assert(su.getFile(versionPath))))
+    else
+        inData = {version = 0}
+    end
 end
 
 --------------------------------------------------

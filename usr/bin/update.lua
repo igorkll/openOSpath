@@ -4,17 +4,19 @@ local component = require("component")
 local unicode = require("unicode")
 local computer = require("computer")
 local serialization = require("serialization")
+local shell = require("shell")
+local fs = require("filesystem")
 if not component.isAvailable("internet") then
     print("internet card is not found")
-    print("press enter to continue...")
-    event.pull("key_down", gui.keyboard, nil, 28)
     return
 end
 local internet = component.internet
 
 --------------------------------------------------
 
-local url = "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+local args = shell.parse(...)
+local url = args[1] or systemCfg.updateRepo or "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+local versionPath = args[2] or "/version.cfg"
 
 --------------------------------------------------
 
@@ -42,8 +44,13 @@ end
 
 --------------------------------------------------
 
-local outData = assert(serialization.unserialize(assert(getInternetFile(url.."/version.cfg"))))
-local inData = assert(serialization.unserialize(assert(su.getFile("/version.cfg"))))
+local inData
+local outData = assert(serialization.unserialize(assert(getInternetFile(url .. versionPath))))
+if fs.exists(versionPath) then
+    inData = assert(serialization.unserialize(assert(su.getFile(versionPath))))
+else
+    inData = {version = 0}
+end
 
 --------------------------------------------------
 
@@ -64,6 +71,7 @@ print("продолжить? [Y/n]")
 local read = io.read()
 
 if read and read ~= "n" then
-    os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f && /tmp/getinstaller https://raw.githubusercontent.com/igorkll/openOSpath/main /")
+    os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
+    os.execute("/tmp/getinstaller " .. url .. " / -q")
     computer.shutdown(true)
 end
