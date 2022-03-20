@@ -75,10 +75,12 @@ function lib.create(r, y)
 
     ----------------------
 
-    function obj.status(text, color)
+    function obj.status(text, color, backColor)
         if depth == 1 then color = nil end
-        obj.clear()
-        obj.setColor(obj.colors.back, color or obj.colors.main)
+        if depth == 1 then backColor = nil end
+        local b, f = backColor or obj.colors.back, color or obj.colors.main
+        obj.clear(b, f)
+        obj.setColor(b, f)
         obj.setText(text, ry // 2)
     end
 
@@ -141,13 +143,14 @@ function lib.create(r, y)
         end
     end
 
-    function obj.splash(str, color)
+    function obj.splash(str, color, backColor)
         if depth == 1 then color = nil end
-        obj.clear()
-        obj.setColor(obj.colors.back, color or obj.colors.main)
+        if depth == 1 then backColor = nil end
+        local b, f = backColor or obj.colors.back, color or obj.colors.main
+        obj.clear(b, f)
+        obj.setColor(b, f)
         term.setCursor(1, 1)
         print(str)
-        obj.setColor(obj.colors.back, obj.colors.main)
         print("press enter or touch to continue...")
         while true do
             local eventName, uuid, _, code = event.pull()
