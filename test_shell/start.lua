@@ -34,6 +34,6 @@ end
 
 
 local gpu = term.gpu()
-gpu.setBackground(0x00FFFF)
+gpu.setBackground(0xFFFF00)
 gpu.setForeground(0)
 os.execute("edit -r /text.txt")
