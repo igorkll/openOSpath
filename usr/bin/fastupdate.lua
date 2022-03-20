@@ -82,8 +82,11 @@ if options.f or outData.version > inData.version then
             end
         end))
     end
+    local oldSuperHookState = event.superHook
+    event.superHook = false
     os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
     os.execute("/tmp/getinstaller " .. url .. " / -q")
+    event.superHook = oldSuperHookState
     isUpdate = true
 end
 for _, t in ipairs(threads) do t:kill() end
