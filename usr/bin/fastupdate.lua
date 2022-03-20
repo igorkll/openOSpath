@@ -4,6 +4,7 @@ local component = require("component")
 local unicode = require("unicode")
 local computer = require("computer")
 local serialization = require("serialization")
+local shell = require("shell")
 if not component.isAvailable("internet") then
     print("internet card is not found")
     return
@@ -14,7 +15,9 @@ local thread = require("thread")
 
 --------------------------------------------------
 
-local url = "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+local args, options = shell.parse(...)
+local url = args[1] or systemCfg.updateRepo or "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+local versionPath = args[2] or "/version.cfg"
 
 --------------------------------------------------
 
@@ -42,16 +45,21 @@ end
 
 --------------------------------------------------
 
-local outData = assert(serialization.unserialize(assert(getInternetFile(url.."/version.cfg"))))
-local inData = assert(serialization.unserialize(assert(su.getFile("/version.cfg"))))
+local outData, inData
+if not options.f then
+    outData = assert(serialization.unserialize(assert(getInternetFile(url .. versionPath))))
+    inData = assert(serialization.unserialize(assert(su.getFile(versionPath))))
+end
 
 --------------------------------------------------
 
-if outData.version > inData.version then
+local threads = {}
+local isUpdate = false
+if options.f or outData.version > inData.version then
     if term.isAvailable() then
         local gui = require("simpleGui2").create()
 
-        thread.create(function()
+        table.insert(threads, thread.create(function()
             while true do
                 gui.status("работая с обновлениями")
                 os.sleep(2)
@@ -60,10 +68,13 @@ if outData.version > inData.version then
                 gui.status("обновления устанавливаеться автоматически")
                 os.sleep(2)
             end
-        end)
+        end))
     end
     os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
-    os.execute("/tmp/getinstaller https://raw.githubusercontent.com/igorkll/openOSpath/main / -q")
-    computer.shutdown(true)
+    os.execute("/tmp/getinstaller " .. url .. " / -q")
+    isUpdate = true
 end
-os.exit()
+for _, t in ipairs(threads) do t:kill() end
+if isUpdate and not options.n then computer.shutdown(true) end
+if isUpdate then term.clear() end
+return isUpdate
