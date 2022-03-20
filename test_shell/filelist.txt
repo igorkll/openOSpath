@@ -1,0 +1,2 @@
+/start.lua
+/test_shell_version.cfg
