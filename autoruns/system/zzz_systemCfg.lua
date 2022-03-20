@@ -6,12 +6,16 @@ local component = require("component")
 
 ------------------------------------
 
-if not fs.exists("/etc/system.cfg") then
-    su.saveFile("/etc/system.cfg", serialization.serialize({superHook = true, hook = true, shellAllow = true, autoupdate = false}))
+function _G.saveSystemConfig()
+    su.saveFile("/etc/system.cfg", serialization.serialize({superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main"}))
 end
-local systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
+
+if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
+_G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
 
 ------------------------------------
+
+_G.updateRepo = systemCfg.updateRepo
 
 if systemCfg.autoupdate and component.isAvailable("internet") then
     os.execute("fastupdate")
