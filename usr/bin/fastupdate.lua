@@ -18,7 +18,7 @@ local thread = require("thread")
 
 local args, options = shell.parse(...)
 local url = args[1] or systemCfg.updateRepo or "https://raw.githubusercontent.com/igorkll/openOSpath/main"
-local versionPath = args[2] or "/version.cfg"
+local versionPath = args[2] or systemCfg.updateVersionCfg or "/version.cfg"
 
 --------------------------------------------------
 
@@ -65,13 +65,20 @@ if options.f or outData.version > inData.version then
         local gui = require("simpleGui2").create()
 
         table.insert(threads, thread.create(function()
+            local color = 0x5555FF
+            if gui.depth == 4 then color = 0x5544FF end
+
+            local function status(text, time)
+                local inTime = computer.uptime()
+                while computer.uptime() - inTime < time do
+                    gui.status(text .. ", ход устоновки: " .. tostring((_G.installedFiles and math.floor(su.mapClip(_G.installedFiles, 1, _G.installFiles, 0, 100))) or 0) .. "%", 0xFFFFFF, color)
+                    os.sleep(0.1)
+                end
+            end
+
             while true do
-                gui.status("работая с обновлениями")
-                os.sleep(2)
-                gui.status("пожалуйста, не выключайте устройство")
-                os.sleep(2)
-                gui.status("обновления устанавливаеться автоматически")
-                os.sleep(2)
+                status("работая с обновлениями", 2)
+                --status("пожалуйста, не выключайте устройство", 2)
             end
         end))
     end

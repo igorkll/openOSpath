@@ -5,10 +5,14 @@ local unicode = require("unicode")
 local computer = require("computer")
 local serialization = require("serialization")
 local internet = component.isAvailable("internet") and component.internet
+local shell = require("shell")
+local fs = require("filesystem")
 
 --------------------------------------------------
 
-local url = "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+local args, options = shell.parse(...)
+local url = args[1] or systemCfg.updateRepo or "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+local versionPath = args[2] or systemCfg.updateVersionCfg or "/version.cfg"
 
 --------------------------------------------------
 
@@ -36,11 +40,15 @@ end
 
 --------------------------------------------------
 
-local outData
+local inData, outData
 if internet then
-    outData = assert(serialization.unserialize(assert(getInternetFile(url.."/version.cfg"))))
+    outData = assert(serialization.unserialize(assert(getInternetFile(url .. versionPath))))
 end
-local inData = assert(serialization.unserialize(assert(su.getFile("/version.cfg"))))
+if fs.exists(versionPath) then
+    inData = assert(serialization.unserialize(assert(su.getFile(versionPath))))
+else
+    inData = {version = 0}
+end
 
 --------------------------------------------------
 
