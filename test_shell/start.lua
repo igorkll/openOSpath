@@ -1,3 +1,8 @@
+local term = require("term")
+local computer = require("computer")
+
+-------------------------------------
+
 local setCount = 0
 if systemCfg.autoupdate then
     systemCfg.autoupdate = false
@@ -13,6 +18,7 @@ if systemCfg.superHook then
 end
 if setCount > 0 then
     saveSystemConfig()
+    computer.shutdown(true)
 end
 
 -------------------------------------
@@ -26,8 +32,8 @@ end
 
 -------------------------------------
 
-local term = require("term")
+
 local gpu = term.gpu()
-gpu.setBackground(0xFFFFFF)
+gpu.setBackground(0xFF0000)
 gpu.setForeground(0)
 os.execute("edit -r /text.txt")
