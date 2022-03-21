@@ -158,11 +158,11 @@ lib.saveGpu = function(gpuAddress)
     local rx, ry = gpu.getResolution()
     local back, isPalB = gpu.getBackground()
     local fore, isPalF = gpu.getForeground()
-    --local screen = gpu.getScreen()
+    local screen = gpu.getScreen()
     local depth = gpu.getDepth()
 
     return function()
-        --if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
+        if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
         gpu.setResolution(rx, ry)
         gpu.setViewport(vx, vy)
         gpu.setDepth(depth)
