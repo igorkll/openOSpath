@@ -3,6 +3,7 @@ local computer = require("computer")
 local unicode = require("unicode")
 local term = require("term")
 local process = require("process")
+local component = require("component")
 
 ---------------------------------------
 
@@ -146,22 +147,44 @@ lib.splitText = function(str, sep)
     return parts
 end
 
-lib.saveGpu = function(gpu)
-    if not gpu then gpu = term.gpu() end
+lib.saveGpu = function(gpuAddress)
+    local gpu
+    if gpuAddress then
+        gpu = component.proxy(gpuAddress)
+    else
+        gpu = term.gpu()
+    end
     local vx, vy = gpu.getViewport()
     local rx, ry = gpu.getResolution()
     local back, isPalB = gpu.getBackground()
     local fore, isPalF = gpu.getForeground()
-    local screen = gpu.getScreen()
+    --local screen = gpu.getScreen()
     local depth = gpu.getDepth()
 
     return function()
-        if screen and gpu.getScreen() ~= screen then gpu.bind(screen) end
+        --if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
         gpu.setResolution(rx, ry)
         gpu.setViewport(vx, vy)
         gpu.setDepth(depth)
         gpu.setBackground(back, isPalB)
         gpu.setForeground(fore, isPalF)
+    end
+end
+
+function lib.reconnectGpu(gpuAddress, screen, reset)
+    local gpu
+    if gpuAddress then
+        gpu = component.proxy(gpuAddress)
+    else
+        gpu = term.gpu()
+    end
+    local reset1 = lib.saveGpu(gpuAddress)
+    local oldScreen = gpu.getScreen()
+    gpu.bind(screen, reset)
+    
+    return function()
+        if oldScreen and gpu.getScreen() ~= oldScreen then gpu.bind(oldScreen, false) end
+        reset1()
     end
 end
 
