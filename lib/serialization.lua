@@ -129,7 +129,7 @@ function serialization.serialize(value, pretty)
   recurse(value, 1)
   local result = table.concat(result_pack)
   if pretty then
-    local limit = type(pretty) == "number" and pretty or 10
+    local limit = type(pretty) == "number" and pretty or 32
     local truncate = 0
     while limit > 0 and truncate do
       interrupt()
