@@ -6,9 +6,13 @@ local robot = {}
 -------------------------------------------------------------------------------
 -- Functions
 
+local count = 0
+_G.robotInterruptAt = 1
+_G.robotInterruptOff = false
 local function interrupt()
-    if not _G.robotInterruptOff then
-        os.sleep(0.1)
+    count = count + 1
+    if not _G.robotInterruptOff and (count % _G.robotInterruptAt == 0) then
+        os.sleep()
     end
 end
 

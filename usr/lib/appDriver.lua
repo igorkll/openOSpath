@@ -3,6 +3,7 @@ local process = require("process")
 local event = require("event")
 local term = require("term")
 local su = require("superUtiles")
+local fs = require("filesystem")
 
 ----------------------------------------------
 
@@ -29,6 +30,7 @@ local lib = {}
 function lib.create(fullScreen)
     local app = {}
     app.path = getCurrentScriptPath()
+    app.folder = fs.path(app.path)
     app.threads = {}
     app.listens = {}
     if term.isAvailable() then app.isAvailable = true end
@@ -48,11 +50,10 @@ function lib.create(fullScreen)
 
     if app.isAvailable then
         app.resetGpu = su.saveGpu()
+        local gpu = term.gpu()
+        gpu.setBackground(0)
+        gpu.setForeground(0xFFFFFF)
         if fullScreen then
-            local gpu = term.gpu()
-            local rx, ry = gpu.getResolution()
-            gpu.bind(term.screen())
-            gpu.setResolution(rx, ry)
             term.clear()
         end
     end
