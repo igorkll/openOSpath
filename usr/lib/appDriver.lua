@@ -31,15 +31,18 @@ function lib.create(fullScreen)
     local app = {}
     app.path = getCurrentScriptPath()
     app.folder = fs.path(app.path)
+    app.fullScreen = fullScreen
     app.threads = {}
     app.listens = {}
+    app.exitFuncs = {}
     if term.isAvailable() then app.isAvailable = true end
 
     function app.exit()
+        for _, func in ipairs(app.exitFuncs) do func() end
         for _, t in ipairs(app.threads) do t:kill() end
         for _, index in ipairs(app.listens) do event.cancel(index) end
         if app.resetGpu then app.resetGpu() end
-        if app.isAvailable and fullScreen then term.clear() end
+        if app.isAvailable and app.fullScreen then term.clear() end
         os.exit()
     end
 
@@ -53,7 +56,7 @@ function lib.create(fullScreen)
         local gpu = term.gpu()
         gpu.setBackground(0)
         gpu.setForeground(0xFFFFFF)
-        if fullScreen then
+        if app.fullScreen then
             term.clear()
         end
     end
