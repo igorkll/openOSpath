@@ -86,6 +86,11 @@ local function getCenter(maxpos, size)
     return (math.floor(maxpos / 2) - math.floor(size / 2)) + 1
 end
 
+local function orValue(value, standart)
+    if value == nil then return standart end
+    return value
+end
+
 --------------------------------------------
 
 return {create = function(customX, customY)
@@ -129,7 +134,6 @@ return {create = function(customX, customY)
 
     local maxX, maxY = lib.gpu.maxResolution()
     local oldrx, oldry = lib.gpu.getResolution()
-    local oldback, oldfore = lib.gpu.getBackground(), lib.gpu.getForeground()
     local rx, ry = customX or maxX, customY or maxY
     lib.rx = rx
     lib.ry = ry
@@ -137,8 +141,8 @@ return {create = function(customX, customY)
         if not lib.closeallow and bool then return end
         for i = 1, #lib.exitcallbacks do lib.exitcallbacks[i]() end
         lib.gpu.setResolution(oldrx, oldry)
-        lib.gpu.setBackground(oldback)
-        lib.gpu.setForeground(oldfore)
+        lib.gpu.setBackground(0)
+        lib.gpu.setForeground(0xFFFFFF)
         term.clear()
         os.exit()
     end
@@ -492,7 +496,7 @@ return {create = function(customX, customY)
             obj.fore = getColor(lib.gpu, fore) or 0x000000
             obj.min = min or 0
             obj.max = max or 1
-            obj.touch = touch or true
+            obj.touch = orValue(touch, true)
             obj.mode = mode or 0
             obj.callbacks = {callback}
             obj.value = math.floor(map(value or obj.min or 0, obj.min, obj.max, 0, obj.sizeX - 1))
@@ -503,6 +507,7 @@ return {create = function(customX, customY)
                     label.text = ((text and text..":") or "")..tostring(math.floor(value / 0.1) * 0.1)
                     label.draw()
                 end
+                obj.label = label
             end
 
             obj.draw = function()
@@ -595,7 +600,7 @@ return {create = function(customX, customY)
             obj.seekvalue = 0
             obj.datalist = {}
             obj.maxstrs = obj.sizeY * (obj.sizeY / 2)
-            obj.autoscroll = autoscroll or true
+            obj.autoscroll = orValue(autoscroll, true)
             obj.autodraw = true
             local function drawData()
                 obj.draw()
@@ -689,9 +694,7 @@ return {create = function(customX, customY)
             obj.wail = false
             obj.callbacks = {callback}
             local function input()
-                if obj.wail then
-                    return
-                end
+                if obj.wail then return end
                 obj.wail = true
                 local text = obj.button.text
                 obj.button.text = ""
@@ -704,10 +707,11 @@ return {create = function(customX, customY)
                     obj.value = out
 
                     obj.button.text = text
-                    obj.wail = false
                     obj.button.draw()
 
                     lib.redraw()
+
+                    obj.wail = false
 
                     for i = 1, #obj.callbacks do
                         obj.callbacks[i](obj.value)
