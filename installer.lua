@@ -46,7 +46,7 @@ end
 ------------------------------------------------------
 
 local osUpdate = _OSVERSION ~= "OpenOS 1.7.5"
-local installMyBios = component.list("robot")() or component.list("tablet")() --не component.isAvailable для совместимости со старыми openOS
+local installMyBios = not not component.list("robot")() or component.list("tablet")() --не component.isAvailable для совместимости со старыми openOS
 local installMod = true
 local changeLua = computer.getArchitecture and computer.getArchitecture() ~= "Lua 5.3"
 
