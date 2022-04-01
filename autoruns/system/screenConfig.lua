@@ -23,7 +23,7 @@ local function setGS(screen, gpu)
 end
 
 local function getDeviceLevel(address)
-    return tonumber(computer.getDeviceInfo()[address].width)
+    return tonumber(computer.getDeviceInfo()[address].width) or 0
 end
 
 local function getMax(filter)
@@ -53,6 +53,16 @@ end
 local screenpath = "/etc/screen.cfg"
 
 local function reconnect()
+    if computer.getBootScreen and computer.getBootGpu then
+        local screen = computer.getBootScreen()
+        local gpu = computer.getBootGpu()
+        if screen and gpu then
+            su.saveFile(screenpath, screen)
+            setGS(screen, gpu)
+            return
+        end
+    end
+
     local maxgpu = getMax("gpu")
 
     if fs.exists(screenpath) then
@@ -70,4 +80,4 @@ local function reconnect()
 end
 
 xpcall(reconnect, function(str) event.onError(str .. debug.traceback) end)
-term.clear()
+--term.clear()
