@@ -61,8 +61,8 @@ end
 local threads = {}
 local isUpdate = false
 if options.f or outData.version > inData.version then
-    if term.isAvailable() then
-        local gui = require("simpleGui2").create()
+    if term.isAvailable() and not options.t then
+        local gui = require("simpleGui2").create(50, 16)
 
         table.insert(threads, thread.create(function()
             local color = 0x5555FF
@@ -84,12 +84,15 @@ if options.f or outData.version > inData.version then
     end
     local oldSuperHookState = event.superHook
     event.superHook = false
+    su.saveFile("/free/flags/updateStart", "")
     os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
     os.execute("/tmp/getinstaller " .. url .. " / -q")
+    fs.remove("/free/flags/updateStart")
+    su.saveFile("/free/flags/updateEnd", "")
     event.superHook = oldSuperHookState
     isUpdate = true
 end
 for _, t in ipairs(threads) do t:kill() end
 if isUpdate and not options.n then computer.shutdown(true) end
-if isUpdate then term.clear() end
+if isUpdate and not options.t then term.clear() end
 return isUpdate
