@@ -61,10 +61,17 @@ end
 
 -----------------------------------
 
+fs.makeDirectory("/free/flags")
+
 if fs.exists(systemautoruns) then --системная автозагрузка
     for _, data in list(systemautoruns) do
         os.execute(fs.concat(systemautoruns, data))
     end
+end
+
+if fs.exists("/free/flags/updateEnd") then
+    if fs.exists("/afterUpdate.lua") then os.execute("/afterUpdate.lua") end
+    fs.remove("/free/flags/updateEnd")
 end
 
 -----------------------------------
