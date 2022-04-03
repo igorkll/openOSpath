@@ -17,8 +17,12 @@ _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.c
 
 _G.updateRepo = systemCfg.updateRepo
 
-if systemCfg.autoupdate and component.isAvailable("internet") then
-    os.execute("fastupdate")
+if component.isAvailable("internet") and (systemCfg.autoupdate or fs.exists("/free/flags/updateStart")) then
+    if fs.exists("/free/flags/updateStart") then
+        os.execute("fastupdate -f")
+    else
+        os.execute("fastupdate")
+    end
 end
 
 event.superHook = systemCfg.superHook
