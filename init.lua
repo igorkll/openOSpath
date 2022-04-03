@@ -72,6 +72,7 @@ end
 if fs.exists("/free/flags/updateEnd") then
     if fs.exists("/afterUpdate.lua") then os.execute("/afterUpdate.lua") end
     fs.remove("/free/flags/updateEnd")
+    computer.shutdown(true)
 end
 
 -----------------------------------
