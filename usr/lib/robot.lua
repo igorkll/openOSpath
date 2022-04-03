@@ -12,12 +12,14 @@ _G.robotInterruptOff = false
 local function interrupt()
     count = count + 1
     if not _G.robotInterruptOff and (count % _G.robotInterruptAt == 0) then
-        os.sleep()
+        os.sleep(_G.robotInterruptTime)
     end
 end
 
 -------------------------------------------------------------------------------
 -- General
+
+robot.component = component.robot
 
 function robot.name()
     return component.robot.name()
@@ -25,7 +27,11 @@ end
 
 function robot.level()
     if component.isAvailable("experience") then
-        return component.experience.level()
+        local level = 0
+        for address in component.list("experience") do
+            level = level + component.invoke(address, "level")
+        end
+        return level
     else
         return 0
     end
