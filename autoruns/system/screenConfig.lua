@@ -20,6 +20,11 @@ local function setGS(screen, gpu)
 
     connectedScreen = screen
     connectedGpu = gpu
+
+    local proxyScreen = component.proxy(screen)
+    if proxyScreen.setPrecise then pcall(proxyScreen.setPrecise, false) end
+
+    term.clear()
 end
 
 local function getDeviceLevel(address)
@@ -64,6 +69,7 @@ local function reconnect()
     end
 
     local maxgpu = getMax("gpu")
+    if not maxgpu then return end
 
     if fs.exists(screenpath) then
         local screen = component.proxy(assert(su.getFile(screenpath)))
@@ -75,9 +81,9 @@ local function reconnect()
     end
 
     local maxscreen = getMax("screen")
+    if not maxscreen then return end
     setGS(maxscreen, maxgpu)
     su.saveFile(screenpath, maxscreen)
 end
 
-xpcall(reconnect, function(str) event.onError(str .. debug.traceback) end)
---term.clear()
+xpcall(reconnect, function(str) event.onError(str) end)
