@@ -45,6 +45,7 @@ local fs = require("filesystem")
 local term = require("term")
 local event = require("event")
 local component = require("component")
+local computer = require("computer")
 
 -----------------------------------
 
@@ -68,9 +69,9 @@ end
 
 -----------------------------------
 
+_G.runlevel = 1
 event.push("init") --подтверждает инициализацию системмы
 event.pull(1, "init")
-_G.runlevel = 1
 
 -----------------------------------
 
@@ -101,6 +102,16 @@ end
 
 -----------------------------------
 
+local function waitFoEnter()
+    os.sleep(0.5)
+    while true do
+        local _, uuid, _, code = event.pull("key_down")
+        if term.keyboard() and uuid == term.keyboard() and code == 28 then
+            break
+        end
+    end
+end
+
 while _G.shellAllow do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
@@ -108,12 +119,9 @@ while _G.shellAllow do --запуск shell
     if not result and term.isAvailable() then
         io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
         io.write("Press enter key to continue.\n")
-        os.sleep(0.5)
-        while true do
-            local _, uuid, _, code = event.pull("key_down")
-            if term.keyboard() and uuid == term.keyboard() and code == 28 then
-                break
-            end
-        end
+        waitFoEnter()
     end
 end
+io.write("Shell is not allow, press enter key to reboot.\n")
+waitFoEnter()
+computer.shutdown(true)
