@@ -284,4 +284,30 @@ function lib.mapClip(value, low, high, low_2, high_2)
     return lib.constrain(lib.map(value, low, high, low_2, high_2), low_2, high_2)
 end
 
+function lib.selectColor(gpu, mainColor, miniColor, bw)
+    local depth = math.floor(gpu.getDepth())
+    if not miniColor then miniColor = mainColor end
+    if depth == 4 then
+        return miniColor
+    elseif depth == 1 then
+        return bw and 0xFFFFFF or 0x000000
+    end
+    return mainColor
+end
+
+function lib.xor(...)
+    local dat = {...}
+    local state = false
+    for i = 1, #dat do
+        if dat[i] then
+            state = not state
+        end
+    end
+    return state
+end
+
+function lib.floorAt(value, subValue)
+    return math.floor(value // subValue) * subValue
+end
+
 return lib
