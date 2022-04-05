@@ -102,7 +102,7 @@ return {create = function()
         return mainColor
     end
 
-    local function createThreadsMenager()
+    local function createThreadsMenager(scene)
         local mainObj = {}
         mainObj.timers = {}
         mainObj.listens = {}
@@ -153,7 +153,7 @@ return {create = function()
         function mainObj.createThread(func, ...)
             local obj = {}
             obj.thread = thread.create(func, ...)
-            obj.thread:suspend()
+            if scene and lib.scene ~= scene then obj.thread:suspend() end
 
             function obj.kill()
                 obj.thread:kill()
@@ -230,7 +230,7 @@ return {create = function()
             return x, y
         end
 
-        scene.threadsMenager = createThreadsMenager()
+        scene.threadsMenager = createThreadsMenager(scene)
         scene.timers = scene.threadsMenager.timers
         scene.listens = scene.threadsMenager.listens
         scene.threads = scene.threadsMenager.threads
@@ -672,10 +672,64 @@ return {create = function()
             return obj
         end
 
+        function scene.createInputbox(posX, posY, sizeX, sizeY, text, callback)
+            local obj = {}
+            obj.userInput = nil
+            obj.text = text
+            obj.viewData = true
+            obj.callback = callback
+
+            function obj.input()
+                if lib.scene ~= scene or lib.block then return end
+                scene.createThread(function()
+                    obj.button.text = ""
+                    obj.button.draw()
+                    term.setCursor(posX, posY)
+                    local read = term.read() --не io.read потому что он криво работает с патоками
+
+                    local function setText()
+                        if obj.userInput and obj.viewData then
+                            obj.button.text = obj.text .. ":" .. obj.userInput
+                        else
+                            obj.button.text = obj.text
+                        end
+                    end
+
+                    if not read then
+                        setText()
+                        lib.redraw()
+                        return
+                    end
+                    if unicode.sub(read, unicode.len(read), unicode.len(read)) == "\n" then --вдруг поведения билиотеки измениться
+                        read = unicode.sub(read, 1, unicode.len(read) - 1)
+                    end
+                    obj.userInput = read
+                    setText()
+                    lib.redraw()
+                    runCallback(obj.callback, obj.userInput)
+                end)
+            end
+
+            obj.button = scene.createButton(posX, posY, sizeX, sizeY, text, obj.input)
+
+            function obj.draw()
+                if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                obj.button.draw()
+            end
+
+            function obj.remove()
+                obj.button.remove()
+                table_remove(scene.objects, obj)
+            end
+
+            table.insert(scene.objects, obj)
+            return obj
+        end
+
         -------------------------------------
 
         function scene.draw()
-            if lib.block then return end --обработка заблокированного состояния gui
+            if lib.block or lib.scene ~= scene then return end --обработка заблокированного состояния gui
 
             lib.gpu.setResolution(scene.sizeX, scene.sizeY)
             lib.gpu.setBackground(scene.sceneColor)
@@ -703,7 +757,12 @@ return {create = function()
                 end
             end
         end
-        lib.scenes[sceneOrNumber].threadsMenager.killAll()
+        local scene = lib.scenes[sceneOrNumber]
+        scene.threadsMenager.killAll()
+        while true do
+            if not scene.objects[1] then break end
+            scene.objects[1].remove()
+        end
         table.remove(lib.scenes, sceneOrNumber)
     end
 
@@ -761,8 +820,9 @@ return {create = function()
     function lib.exit()
         pcall(component.invoke, lib.screen, "setPrecise", oldPreciseState)
         lib.threadsMenager.killAll()
-        for i = 1, #lib.scenes do
-            lib.scenes[i].threadsMenager.killAll()
+        while true do
+            if not lib.scenes[1] then break end
+            lib.scenes[1].remove()
         end
         for i, data in ipairs(lib.exitCallbacks) do data() end
         lib.reset_gpu()
