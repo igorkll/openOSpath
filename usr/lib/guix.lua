@@ -838,6 +838,7 @@ return {create = function()
                     break
                 end
             else
+                event.push("touch", lib.screen, touchX, touchY, 0, "context")
                 break
             end
         end
