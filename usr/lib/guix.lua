@@ -258,7 +258,11 @@ return {create = function()
             obj.invertBackColor = lib.selectColor(0x555555, 0x222222, false)
             obj.invertForeColor = 0xFFFFFF
 
+            obj.killed = false
+            obj.active = true
+
             function obj.draw()
+                if not obj.active or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 local back, fore = obj.backColor, obj.foreColor
@@ -275,6 +279,7 @@ return {create = function()
 
             --не table.insert чтоб не добовлять много скобок
             obj.listens[#obj.listens + 1] = scene.createListen("touch", function(_, uuid, posX, posY, button)
+                if not obj.active or obj.killed then return end
                 if lib.block then return end --для того чтобы временно преостановить обработку, наример для контекстного меню
                 if uuid == lib.screen and button == 0 and isZone(obj, posX, posY) then
                     if obj.mode == 0 then
@@ -315,6 +320,7 @@ return {create = function()
             end)
 
             obj.listens[#obj.listens + 1] = scene.createListen("drop", function(_, uuid, posX, posY, button)
+                if not obj.active or obj.killed then return end
                 if lib.block then return end
                 if uuid == lib.screen and button == 0 then
                     if obj.mode == 2 then
@@ -328,7 +334,17 @@ return {create = function()
                 end
             end)
 
+            function obj.move(posX, posY)
+                obj.posX = posX
+                obj.posY = posY
+            end
+
+            function obj.setActive(state)
+                obj.active = state
+            end
+
             function obj.remove()
+                obj.killed = true
                 for i = 1, #obj.listens do
                     obj.listens[i].kill()
                 end
@@ -353,7 +369,11 @@ return {create = function()
             obj.invertBackColor = lib.selectColor(0x555555, 0x222222, false)
             obj.invertForeColor = 0xFFFFFF
 
+            obj.active = true
+            obj.killed = false
+
             function obj.draw()
+                if not obj.active or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 local back, fore = obj.backColor, obj.foreColor
@@ -366,7 +386,17 @@ return {create = function()
                 lib.gpu.set(posX, posY, obj.text)
             end
 
+            function obj.move(posX, posY)
+                obj.posX = posX
+                obj.posY = posY
+            end
+
+            function obj.setActive(state)
+                obj.active = state
+            end
+
             function obj.remove()
+                obj.killed = true
                 table_remove(scene.objects, obj)
             end
 
@@ -412,6 +442,9 @@ return {create = function()
             obj.backColor = 0xFFFFFF
             obj.foreColor = 0x000000
 
+            obj.killed = false
+            obj.active = true
+
             if obj.mode == 0 then
                 obj.sizeX = obj.size --для обработки косаний
                 obj.sizeY = 1
@@ -436,7 +469,13 @@ return {create = function()
                 obj.value = convertPointerPos(value)
             end
 
+            function obj.move(posX, posY)
+                obj.posX = posX
+                obj.posY = posY
+            end
+
             function obj.draw()
+                if not obj.active or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 lib.gpu.setBackground(obj.backColor)
@@ -473,6 +512,7 @@ return {create = function()
             obj.listens = {}
 
             obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, posX, posY, button)
+                if not obj.active or obj.killed then return end
                 if lib.block then return end
                 if uuid ~= lib.screen or (button ~= 0 and eventName ~= "scroll") or not obj.touch then return end
                 if eventName == "scroll" and obj.scrollWheel then
@@ -527,7 +567,12 @@ return {create = function()
                 end
             end)
 
+            function obj.setActive(state)
+                obj.active = state
+            end
+
             function obj.remove()
+                obj.killed = true
                 for i = 1, #obj.listens do
                     obj.listens[i].kill()
                 end
@@ -557,6 +602,7 @@ return {create = function()
             obj.seekBar = scene.createSeekbar((obj.posX + obj.sizeX - 1), obj.posY, obj.sizeY, nil, function()
                 obj.draw()
             end, 2, 0, obj.sizeY - 1, 0, true, true)
+            table_remove(scene.objects, obj.seekBar)
             obj.seekBar.scrollWheel = false
             if obj.sizeY >= 4 then
                 obj.seekBar.scrollCount = 2
@@ -569,7 +615,11 @@ return {create = function()
             obj.strs = {}
             obj.screenStrs = {}
 
+            obj.killed = false
+            obj.active = true
+
             function obj.draw()
+                if not obj.active or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 lib.gpu.setBackground(obj.backColor)
@@ -633,6 +683,7 @@ return {create = function()
 
             obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, posX, posY, button)
                 if lib.block then return end
+                if not obj.active or obj.killed then return end
                 if uuid ~= lib.screen or (button ~= 0 and eventName ~= "scroll") or not obj.seekBar.touch then return end
                 if eventName == "scroll" then
                     if isZone(obj, posX, posY) then
@@ -660,7 +711,20 @@ return {create = function()
                 end
             end)
 
+            function obj.move(posX, posY)
+                obj.posX = posX
+                obj.posY = posY
+                obj.seekBar.posX = (obj.posX + obj.sizeX - 1)
+                obj.seekBar.posY = obj.posY
+            end
+
+            function obj.setActive(state)
+                obj.active = state
+                obj.seekBar.active = state
+            end
+
             function obj.remove()
+                obj.killed = true
                 for i = 1, #obj.listens do
                     obj.listens[i].kill()
                 end
@@ -678,13 +742,20 @@ return {create = function()
             obj.text = text
             obj.viewData = true
             obj.callback = callback
+            obj.used = false
+
+            obj.active = true
+            obj.killed = false
 
             function obj.input()
                 if lib.scene ~= scene or lib.block then return end
+                if not obj.active or obj.killed then return end
+                if obj.used then return end
                 scene.createThread(function()
+                    obj.used = true
                     obj.button.text = ""
                     obj.button.draw()
-                    term.setCursor(posX, posY)
+                    term.setCursor(obj.button.posX, obj.button.posY)
                     local read = term.read() --не io.read потому что он криво работает с патоками
 
                     local function setText()
@@ -698,6 +769,7 @@ return {create = function()
                     if not read then
                         setText()
                         lib.redraw()
+                        obj.used = false
                         return
                     end
                     if unicode.sub(read, unicode.len(read), unicode.len(read)) == "\n" then --вдруг поведения билиотеки измениться
@@ -706,19 +778,166 @@ return {create = function()
                     obj.userInput = read
                     setText()
                     lib.redraw()
+                    obj.used = false
                     runCallback(obj.callback, obj.userInput)
                 end)
             end
 
             obj.button = scene.createButton(posX, posY, sizeX, sizeY, text, obj.input)
+            table_remove(scene.objects, obj.button)
+
+            function obj.move(posX, posY)
+                obj.button.posX = posX
+                obj.button.posY = posY
+            end
 
             function obj.draw()
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if not obj.active or obj.killed then return end
                 obj.button.draw()
             end
 
+            function obj.setActive(state)
+                obj.active = state
+                obj.button.active = state
+            end
+
             function obj.remove()
+                obj.killed = true
                 obj.button.remove()
+                table_remove(scene.objects, obj)
+            end
+
+            table.insert(scene.objects, obj)
+            return obj
+        end
+
+        function scene.createDrawer(posX, posY, drawer)
+            local obj = {}
+            obj.posX = posX
+            obj.posY = posY
+            obj.drawer = drawer
+
+            obj.active = true
+            obj.killed = false
+
+            function obj.draw()
+                if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if not obj.active or obj.killed then return end
+
+                runCallback(obj.drawer, lib.gpu, obj.posX, obj.posY)
+            end
+
+            function obj.setActive(state)
+                obj.active = state
+            end
+
+            function obj.move(posX, posY)
+                obj.posX = posX
+                obj.posY = posY
+            end
+
+            function obj.remove()
+                obj.killed = true
+                table_remove(scene.objects, obj)
+            end
+
+            table.insert(scene.objects, obj)
+            return obj
+        end
+
+        function scene.createWindow(posX, posY, sizeX, sizeY)
+            local obj = {}
+            obj.userMove = false
+            obj.userClose = false
+            
+            obj.posX = posX
+            obj.posY = posY
+            obj.sizeX = sizeX
+            obj.sizeY = sizeY
+            obj.color = nil
+
+            obj.active = true
+            obj.killed = false
+            obj.objects = {}
+
+            function obj.attachObj(posX, posY, tbl)
+                table.insert(obj.objects, {posX, posY, tbl})
+                table_remove(scene.objects, tbl)
+            end
+
+            function obj.draw()
+                if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if not obj.active or obj.killed then return end
+
+                if obj.color then
+                    lib.gpu.setBackground(obj.color)
+                    lib.gpu.fill(obj.posX, obj.posY, obj.sizeX, obj.sizeY, " ")
+                end
+
+                for i = 1, #obj.objects do
+                    local nobj = obj.objects[i]
+                    local cobj = nobj[3]
+                    cobj.move(obj.posX + (nobj[1] - 1), obj.posY + (nobj[2] - 1))
+                    cobj.draw() --для того чтобы после отрисовки окна все его элементы перересовывались
+                end
+            end
+
+            function obj.setActive(state)
+                obj.active = state
+                for i = 1, #obj.objects do
+                    obj.objects[i][3].setActive(state)
+                end
+            end
+
+            function obj.move(posX, posY)
+                obj.posX = posX
+                obj.posY = posY
+            end
+
+            obj.listens = {}
+
+            obj.isPress = false
+            obj.pressX = -1
+            obj.pressY = -1
+
+            obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, touchX, touchY, button)
+                if lib.block then return end
+                if not obj.active or obj.killed then return end
+                if uuid ~= lib.screen or button ~= 0 then return end
+
+                if obj.userMove then
+                    if eventName == "drop" then
+                        obj.isPress = false
+                        return
+                    elseif eventName == "touch" then
+                        if isZone(obj, touchX, touchY) then
+                            obj.isPress = true
+                            obj.pressX = touchX
+                            obj.pressY = touchY
+                        end
+                    elseif eventName == "drag" then
+                        if obj.isPress then
+                            local dx = touchX - obj.pressX
+                            local dy = touchY - obj.pressY
+                            obj.pressX = touchX
+                            obj.pressY = touchY
+
+                            obj.move(obj.posX + dx, obj.posY + dy)
+                            lib.redraw()
+                        end
+                    end
+                end
+            end)
+
+            function obj.remove()
+                obj.killed = true
+                for i = 1, #obj.objects do
+                    obj.objects[i][3].remove()
+                end
+                for i = 1, #obj.listens do
+                    obj.listens[i].kill()
+                end
                 table_remove(scene.objects, obj)
             end
 
