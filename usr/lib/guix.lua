@@ -849,7 +849,6 @@ return {create = function()
         function scene.createWindow(posX, posY, sizeX, sizeY)
             local obj = {}
             obj.userMove = false
-            obj.userClose = false
             
             obj.posX = posX
             obj.posY = posY
@@ -1083,6 +1082,10 @@ return {create = function()
         end
         sizeY = #menuData.strs
 
+        local rx, ry = lib.gpu.getResolution()
+        if posX + (sizeX - 1) > rx then posX = posX - (sizeX - 1) end
+        if posY + (sizeY - 1) > ry then posY = posY - (sizeY - 1) end
+
         lib.gpu.setBackground(lib.selectColor(0xa0a0a0, 0x222222, false))
         lib.gpu.setForeground(lib.selectColor(0, nil, true))
         local char = " "
@@ -1109,15 +1112,15 @@ return {create = function()
 
         local out
         while true do
-            local _, _, touchX, touchY = event.pull("touch", lib.screen, nil, nil, 0)
-            if isZone({posX = posX, posY = posY, sizeX = sizeX, sizeY = sizeY}, touchX, touchY) then
+            local _, _, touchX, touchY, button = event.pull("touch", lib.screen)
+            if isZone({posX = posX, posY = posY, sizeX = sizeX, sizeY = sizeY}, touchX, touchY) and button == 0 then
                 local num = (touchY - posY) + 1
                 if menuData.on[num] then
                     out = num
                     break
                 end
             else
-                event.push("touch", lib.screen, touchX, touchY, 0, "context")
+                event.push("touch", lib.screen, touchX, touchY, button, "context")
                 break
             end
         end
