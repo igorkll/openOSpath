@@ -8,7 +8,6 @@ local shell = require("shell")
 local fs = require("filesystem")
 if not su.isInternet() then
     print("internet error")
-    return
 end
 local internet = component.internet
 
@@ -71,7 +70,8 @@ print("продолжить? [Y/n]")
 local read = io.read()
 
 if read and read ~= "n" then
-    os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
-    os.execute("/tmp/getinstaller " .. url .. " / -q")
+    --os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
+    --os.execute("/tmp/getinstaller " .. url .. " / -q")
+    os.execute("fastupdate -f -n " .. url .. " " .. versionPath)
     computer.shutdown(true)
 end
