@@ -15,13 +15,39 @@ _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.c
 
 ------------------------------------
 
+function _G.updateNoInternetScreen()
+    local gui = require("simpleGui2").create(50, 16)
+    local color = 0x5555FF
+    if gui.depth == 4 then color = 0x5544FF end
+
+    while true do
+        gui.status("при предидушем обновлениия произошла ошибка", 0xFFFFFF, color)
+        os.sleep(2)
+        gui.status("подлючите internet card, чтобы все исправить", 0xFFFFFF, color)
+        os.sleep(2)
+        gui.status("убедитесь что реальный пк подключен к интернету", 0xFFFFFF, color)
+        os.sleep(2)
+        gui.status("после испровления подключения перезагрузите", 0xFFFFFF, color)
+        os.sleep(2)
+    end
+end
+
+------------------------------------
+
 _G.updateRepo = systemCfg.updateRepo
 
-if component.isAvailable("internet") and (systemCfg.autoupdate or fs.exists("/free/flags/updateStart")) then
+local isInternet = su.isInternet()
+if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
     if fs.exists("/free/flags/updateStart") then
-        os.execute("fastupdate -f")
+        if isInternet then
+            os.execute("fastupdate -f")
+        else
+            _G.updateNoInternetScreen()
+        end
     else
-        os.execute("fastupdate")
+        if isInternet then
+            os.execute("fastupdate")
+        end
     end
 end
 
