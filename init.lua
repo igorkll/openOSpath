@@ -46,6 +46,7 @@ local term = require("term")
 local event = require("event")
 local component = require("component")
 local computer = require("computer")
+local su = require("superUtiles")
 
 -----------------------------------
 
@@ -69,10 +70,15 @@ if fs.exists(systemautoruns) then --системная автозагрузка
     end
 end
 
-if fs.exists("/free/flags/updateEnd") then
+if fs.exists("/free/flags/updateEnd") then --запуска файла дополнения обновления(для оболочек)
     local afterUpdate = false
     if fs.exists("/afterUpdate.lua") then
-        os.execute("/afterUpdate.lua")
+        local ok, err = sdofile("/afterUpdate.lua")
+        if not ok then
+            su.logTo("/free/logs/afterUpdateError.log", err or "unkown")
+            computer.shutdown(true)
+            return
+        end
         afterUpdate = true
     end
     fs.remove("/free/flags/updateEnd")
