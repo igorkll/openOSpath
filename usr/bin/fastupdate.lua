@@ -6,8 +6,8 @@ local computer = require("computer")
 local serialization = require("serialization")
 local shell = require("shell")
 local fs = require("filesystem")
-if not component.isAvailable("internet") then
-    print("internet card is not found")
+if not su.isInternet() then
+    print("internet error")
     return
 end
 local internet = component.internet
@@ -58,6 +58,15 @@ end
 
 --------------------------------------------------
 
+-- keys
+--f принудительно обновить
+--n не перезагружать
+--t не высвечевать прогресс на экран
+--a не использовать флаги системмы
+--r запрет перезагрузки в случаи ошибки
+--args
+--args[1] update repo, args[2] update version cfg path
+
 local threads = {}
 local isUpdate = false
 if options.f or outData.version > inData.version then
@@ -84,11 +93,23 @@ if options.f or outData.version > inData.version then
     end
     local oldSuperHookState = event.superHook
     event.superHook = false
-    su.saveFile("/free/flags/updateStart", "")
+    if not options.a then su.saveFile("/free/flags/updateStart", "") end
     os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
-    os.execute("/tmp/getinstaller " .. url .. " / -q")
-    su.saveFile("/free/flags/updateEnd", "")
-    fs.remove("/free/flags/updateStart")
+    local ok, err = pcall(dofile, "/tmp/getinstaller.lua", url, "/", "-q") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
+    if not ok then
+        if not err then err = "unkown" end
+        su.logTo("/free/logs/updateError.log", err)
+        if not options.n and not options.r then
+            computer.shutdown(true)
+        else
+            for _, t in ipairs(threads) do t:kill() end
+            return nil, err
+        end
+    end
+    if not options.a then
+        su.saveFile("/free/flags/updateEnd", "")
+        fs.remove("/free/flags/updateStart")
+    end
     event.superHook = oldSuperHookState
     isUpdate = true
 end

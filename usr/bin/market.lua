@@ -3,6 +3,9 @@ local su = require("superUtiles")
 local component = require("component")
 local fs = require("filesystem")
 local unicode = require("unicode")
+if not su.isInternet() then
+    print("internet error")
+end
 local internet = component.internet
 
 ----------------------------------
