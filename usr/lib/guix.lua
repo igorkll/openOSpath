@@ -48,6 +48,7 @@ return {create = function()
     lib.active = true
     lib.soundOn = true
     lib.block = false
+    lib.redrawAll = false
     lib.startTime = computer.uptime() --кастыль для исправления паразитных нажатий кнопок при переключении сцен
 
     --gpu params
@@ -244,6 +245,8 @@ return {create = function()
 
         function scene.createButton(posX, posY, sizeX, sizeY, text, callback, mode, state)
             local obj = {}
+            obj.subobjects = {}
+
             obj.posX = posX
             obj.posY = posY
             obj.sizeX = sizeX
@@ -261,8 +264,9 @@ return {create = function()
             obj.killed = false
             obj.active = true
 
-            function obj.draw()
-                if not obj.active or obj.killed then return end
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (not obj.active and not forceDraw) or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 local back, fore = obj.backColor, obj.foreColor
@@ -357,6 +361,8 @@ return {create = function()
 
         function scene.createLabel(posX, posY, sizeX, sizeY, text)
             local obj = {}
+            obj.subobjects = {}
+
             obj.posX = posX
             obj.posY = posY
             obj.sizeX = sizeX
@@ -372,8 +378,9 @@ return {create = function()
             obj.active = true
             obj.killed = false
 
-            function obj.draw()
-                if not obj.active or obj.killed then return end
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (not obj.active and not forceDraw) or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 local back, fore = obj.backColor, obj.foreColor
@@ -406,6 +413,8 @@ return {create = function()
 
         function scene.createSeekbar(posX, posY, size, text, callback, mode, min, max, value, touch, onlyIntegers)
             local obj = {}
+            obj.subobjects = {}
+
             obj.posX = posX
             obj.posY = posY
             obj.size = size
@@ -474,8 +483,9 @@ return {create = function()
                 obj.posY = posY
             end
 
-            function obj.draw()
-                if not obj.active or obj.killed then return end
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (not obj.active and not forceDraw) or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 lib.gpu.setBackground(obj.backColor)
@@ -585,6 +595,8 @@ return {create = function()
 
         function scene.createList(posX, posY, sizeX, sizeY, callback)
             local obj = {}
+            obj.subobjects = {}
+
             obj.posX = posX
             obj.posY = posY
             obj.sizeX = sizeX
@@ -603,6 +615,7 @@ return {create = function()
                 obj.draw()
             end, 2, 0, obj.sizeY - 1, 0, true, true)
             table_remove(scene.objects, obj.seekBar)
+            table.insert(obj.subobjects, obj.seekBar)
             obj.seekBar.scrollWheel = false
             if obj.sizeY >= 4 then
                 obj.seekBar.scrollCount = 2
@@ -618,8 +631,9 @@ return {create = function()
             obj.killed = false
             obj.active = true
 
-            function obj.draw()
-                if not obj.active or obj.killed then return end
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (not obj.active and not forceDraw) or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
 
                 lib.gpu.setBackground(obj.backColor)
@@ -640,7 +654,7 @@ return {create = function()
                     end
                 end
 
-                obj.seekBar.draw()
+                obj.seekBar.draw(forceDraw, forceDraw2)
             end
 
             function obj.reMatch()
@@ -738,6 +752,8 @@ return {create = function()
 
         function scene.createInputbox(posX, posY, sizeX, sizeY, text, callback)
             local obj = {}
+            obj.subobjects = {}
+
             obj.userInput = nil
             obj.text = text
             obj.viewData = true
@@ -785,16 +801,18 @@ return {create = function()
 
             obj.button = scene.createButton(posX, posY, sizeX, sizeY, text, obj.input)
             table_remove(scene.objects, obj.button)
+            table.insert(obj.subobjects, obj.button)
 
             function obj.move(posX, posY)
                 obj.button.posX = posX
                 obj.button.posY = posY
             end
 
-            function obj.draw()
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if not obj.active or obj.killed then return end
-                obj.button.draw()
+                if (not obj.active and not forceDraw) or obj.killed then return end
+                obj.button.draw(forceDraw, forceDraw2)
             end
 
             function obj.setActive(state)
@@ -814,6 +832,8 @@ return {create = function()
 
         function scene.createDrawer(posX, posY, drawer)
             local obj = {}
+            obj.subobjects = {}
+
             obj.posX = posX
             obj.posY = posY
             obj.drawer = drawer
@@ -821,9 +841,10 @@ return {create = function()
             obj.active = true
             obj.killed = false
 
-            function obj.draw()
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if not obj.active or obj.killed then return end
+                if (not obj.active and not forceDraw) or obj.killed then return end
 
                 runCallback(obj.drawer, lib.gpu, obj.posX, obj.posY)
             end
@@ -848,6 +869,8 @@ return {create = function()
 
         function scene.createWindow(posX, posY, sizeX, sizeY)
             local obj = {}
+            obj.subobjects = {}
+
             obj.userMove = false
             
             obj.posX = posX
@@ -858,16 +881,53 @@ return {create = function()
 
             obj.active = true
             obj.killed = false
+
+            obj.windowSelected = false
+
             obj.objects = {}
+
+            local function windowMenager(state)
+                if state == obj.windowSelected then return end
+                obj.windowSelected = state
+
+                for i, object in ipairs(scene.objects) do
+                    if not object.backToClassic or object == obj then goto continue end
+                    object.backToClassic()
+                    ::continue::
+                end
+                if state then
+                    --for i, object in ipairs(scene.objects) do
+                    --    if object ~= obj and (object.backToClassic or object.windowSelected) then return end
+                    --end
+                    for i, object in ipairs(scene.objects) do
+                        if object.backToClassic or object == obj then goto continue end
+                        object.oldState = object.active
+                        object.setActive(false)
+                        object.oldSetActive = object.setActive
+                        object.setActive = function(state)
+                            object.oldState = state
+                        end
+                        object.backToClassic = function()
+                            object.setActive = object.oldSetActive
+                            object.oldSetActive = nil
+                            object.setActive(object.oldState)
+                            object.backToClassic = nil
+                        end
+                        ::continue::
+                    end
+                end
+            end
 
             function obj.attachObj(posX, posY, tbl)
                 table.insert(obj.objects, {posX, posY, tbl})
                 table_remove(scene.objects, tbl)
+                table.insert(obj.subobjects, tbl)
             end
 
-            function obj.draw()
+            function obj.draw(forceDraw, forceDraw2)
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if not obj.active or obj.killed then return end
+                if (not obj.active and not forceDraw) or obj.killed then return end
 
                 if obj.color then
                     lib.gpu.setBackground(obj.color)
@@ -878,7 +938,7 @@ return {create = function()
                     local nobj = obj.objects[i]
                     local cobj = nobj[3]
                     cobj.move(obj.posX + (nobj[1] - 1), obj.posY + (nobj[2] - 1))
-                    cobj.draw() --для того чтобы после отрисовки окна все его элементы перересовывались
+                    cobj.draw(forceDraw, forceDraw2) --для того чтобы после отрисовки окна все его элементы перересовывались
                 end
             end
 
@@ -900,12 +960,22 @@ return {create = function()
             obj.pressX = -1
             obj.pressY = -1
 
-            obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, touchX, touchY, button)
+            obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, touchX, touchY, button, nik)
                 if lib.block then return end
                 if not obj.active or obj.killed then return end
-                if uuid ~= lib.screen or button ~= 0 then return end
+                if uuid ~= lib.screen or (button ~= 0 and eventName ~= "scroll") then return end
 
                 if obj.userMove then
+                    if eventName == "touch" or eventName == "drag" or eventName == "scroll" then
+                        if isZone(obj, touchX, touchY) then
+                            windowMenager(true)
+                        else
+                            if obj.windowSelected then
+                                windowMenager(false)
+                                event.push(eventName, uuid, touchX, touchY, button, nik)
+                            end
+                        end
+                    end
                     if eventName == "drop" then
                         obj.isPress = false
                         return
@@ -954,7 +1024,15 @@ return {create = function()
             term.clear()
 
             for i, data in ipairs(scene.objects) do
-                data.draw()
+                if data.windowSelected == nil then --нет not не подайдет, так как тогда false тоже вернет true
+                    data.draw(not not data.backToClassic, lib.redrawAll) --not not это чтоб boolean были а не таблицы
+                end
+            end
+
+            for i, data in ipairs(scene.objects) do
+                if data.windowSelected ~= nil then
+                    data.draw(not not data.backToClassic, lib.redrawAll) --not not это чтоб boolean были а не таблицы
+                end
             end
         end
 
