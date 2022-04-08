@@ -70,9 +70,16 @@ if fs.exists(systemautoruns) then --системная автозагрузка
 end
 
 if fs.exists("/free/flags/updateEnd") then
-    if fs.exists("/afterUpdate.lua") then os.execute("/afterUpdate.lua") end
+    local afterUpdate = false
+    if fs.exists("/afterUpdate.lua") then
+        os.execute("/afterUpdate.lua")
+        afterUpdate = true
+    end
     fs.remove("/free/flags/updateEnd")
-    computer.shutdown(true)
+    if afterUpdate then
+        computer.shutdown(true)
+    end
+    return
 end
 
 -----------------------------------
