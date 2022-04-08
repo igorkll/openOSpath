@@ -8,6 +8,7 @@ local shell = require("shell")
 local fs = require("filesystem")
 if not su.isInternet() then
     print("internet error")
+    return
 end
 local internet = component.internet
 
