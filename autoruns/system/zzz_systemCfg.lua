@@ -3,6 +3,8 @@ local su = require("superUtiles")
 local fs = require("filesystem")
 local event = require("event")
 local component = require("component")
+local term = require("term")
+local computer = require("computer")
 
 ------------------------------------
 
@@ -16,6 +18,9 @@ _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.c
 ------------------------------------
 
 function _G.updateNoInternetScreen()
+    event.superHook = false
+    if not term.isAvailable() then computer.shutdown(true) end
+
     local gui = require("simpleGui2").create(50, 16)
     local color = 0x5555FF
     if gui.depth == 4 then color = 0x5544FF end
