@@ -310,4 +310,30 @@ function lib.floorAt(value, subValue)
     return math.floor(value // subValue) * subValue
 end
 
+function lib.getInternetFile(url)
+    local handle, data, result, reason = component.internet.request(url), ""
+    if handle then
+        while true do
+            result, reason = handle.read(math.huge) 
+            if result then
+                data = data .. result
+            else
+                handle.close()
+                
+                if reason then
+                    return nil, reason
+                else
+                    return data
+                end
+            end
+        end
+    else
+        return nil, "unvalid address"
+    end
+end
+
+function lib.isInternet()
+    return component.isAvailable("internet") and pcall(function(url) assert(lib.getInternetFile(url)) end, "https://raw.githubusercontent.com/igorkll/openOSpath/main/null")
+end
+
 return lib
