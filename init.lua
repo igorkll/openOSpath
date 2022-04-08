@@ -78,8 +78,8 @@ if fs.exists("/free/flags/updateEnd") then
     fs.remove("/free/flags/updateEnd")
     if afterUpdate then
         computer.shutdown(true)
+        return
     end
-    return
 end
 
 -----------------------------------
