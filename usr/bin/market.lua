@@ -5,6 +5,7 @@ local fs = require("filesystem")
 local unicode = require("unicode")
 if not su.isInternet() then
     print("internet error")
+    return
 end
 local internet = component.internet
 
