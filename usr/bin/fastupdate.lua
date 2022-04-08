@@ -87,8 +87,8 @@ if options.f or outData.version > inData.version then
     su.saveFile("/free/flags/updateStart", "")
     os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
     os.execute("/tmp/getinstaller " .. url .. " / -q")
-    fs.remove("/free/flags/updateStart")
     su.saveFile("/free/flags/updateEnd", "")
+    fs.remove("/free/flags/updateStart")
     event.superHook = oldSuperHookState
     isUpdate = true
 end
