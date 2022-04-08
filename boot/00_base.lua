@@ -37,6 +37,15 @@ function xdofile(filename, ...)
   return xpcall(program, debug.traceback, ...)
 end
 
+function sdofile(filename, ...)
+  local program, reason = loadfile(filename)
+  if not program then
+    return nil, reason .. ':' .. filename    
+  end  
+  return pcall(program, ...)
+end
+
+
 function print(...)
   local args = table.pack(...)
   local stdout = io.stdout
