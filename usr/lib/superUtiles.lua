@@ -310,6 +310,15 @@ function lib.floorAt(value, subValue)
     return math.floor(value // subValue) * subValue
 end
 
+function lib.logTo(path, text)
+    lib.tracepath(fs.path(path))
+    local file, err = io.open(path, "ab")
+    if not file then return nil, err end
+    file:write(text .. "\n")
+    file:close()
+    return true
+end
+
 function lib.getInternetFile(url)
     local handle, data, result, reason = component.internet.request(url), ""
     if handle then
