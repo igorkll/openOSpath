@@ -9,7 +9,7 @@ local computer = require("computer")
 ------------------------------------
 
 function _G.saveSystemConfig()
-    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg"}))
+    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg"}))
 end
 
 if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
@@ -19,7 +19,7 @@ _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.c
 
 function _G.updateNoInternetScreen()
     event.superHook = false
-    if not term.isAvailable() then computer.shutdown(true) end
+    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown(true) end
 
     local gui = require("simpleGui2").create(50, 16)
     local color = 0x5555FF
