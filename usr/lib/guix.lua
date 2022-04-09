@@ -111,13 +111,13 @@ return {create = function()
 
         function mainObj.createTimer(time, callback)
             local obj = {}
-            obj.on = false
+            obj.on = not scene or lib.scene == scene
             obj.id = event.timer(time, function(...)
                 if not obj.on or lib.startTime > computer.uptime() then return end
                 local stopState = callback(...)
 
                 if stopState == false then
-                    table.remove(mainObj.timers, obj.number)
+                    table_remove(mainObj.timers, obj)
                     return false
                 end
             end, math.huge)
@@ -132,13 +132,13 @@ return {create = function()
 
         function mainObj.createListen(eventType, callback)
             local obj = {}
-            obj.on = false
+            obj.on = not scene or lib.scene == scene
             obj.id = event.register(eventType, function(inputEventType, ...)
                 if not obj.on or (eventType and inputEventType ~= eventType) or not inputEventType or lib.startTime > computer.uptime() then return end
                 local stopState = callback(inputEventType, ...)
 
                 if stopState == false then
-                    table.remove(mainObj.listens, obj.number)
+                    table_remove(mainObj.listens, obj)
                     return false
                 end
             end, math.huge, math.huge)
@@ -240,6 +240,15 @@ return {create = function()
         scene.createThread = scene.threadsMenager.createThread
 
         scene.objects = {}
+
+        scene.openCallbacks = {}
+
+        function scene.attachOpenCallback(func)
+            table.insert(scene.openCallbacks, func)
+        end
+        function scene.dettachOpenCallback(func)
+            table_remove(scene.openCallbacks, func)
+        end
 
         -------------------------------------
 
@@ -1069,6 +1078,7 @@ return {create = function()
         if lib.scene then lib.scene.threadsMenager.stopAll() end
         lib.scene = sceneOrNumber
         if lib.scene then lib.scene.threadsMenager.startAll() end
+        for i, data in ipairs(lib.scene.openCallbacks) do runCallback(data) end
         lib.redraw()
         lib.startTime = computer.uptime() + 0.2 --фикс паразитного нажатия кнопок при переключении сцен
     end
@@ -1112,6 +1122,9 @@ return {create = function()
     function lib.attachExitCallback(func)
         table.insert(lib.exitCallbacks, func)
     end
+    function lib.dettachExitCallback(func)
+        table_remove(lib.exitCallbacks, func)
+    end
     
     function lib.exit()
         pcall(component.invoke, lib.screen, "setPrecise", oldPreciseState)
@@ -1120,7 +1133,7 @@ return {create = function()
             if not lib.scenes[1] then break end
             lib.scenes[1].remove()
         end
-        for i, data in ipairs(lib.exitCallbacks) do data() end
+        for i, data in ipairs(lib.exitCallbacks) do runCallback(data) end
         lib.reset_gpu()
         term.clear()
         lib.active = false
