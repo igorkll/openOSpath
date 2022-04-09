@@ -291,10 +291,10 @@ return {create = function()
             obj.listens = {}
 
             --не table.insert чтоб не добовлять много скобок
-            obj.listens[#obj.listens + 1] = scene.createListen("touch", function(_, uuid, posX, posY, button)
+            obj.listens[#obj.listens + 1] = scene.createListen("touch", function(_, uuid, posX, posY, button, nikname)
                 if not obj.active or obj.killed then return end
                 if lib.block then return end --для того чтобы временно преостановить обработку, наример для контекстного меню
-                if uuid == lib.screen and button == 0 and isZone(obj, posX, posY) then
+                if uuid == lib.screen and isZone(obj, posX, posY) then
                     if obj.mode == 0 then
                         obj.state = true
                         obj.draw()
@@ -306,27 +306,27 @@ return {create = function()
                         soundNum(1)
                         os.sleep(0.1)
 
-                        runCallback(obj.callback, true, false)
+                        runCallback(obj.callback, true, false, button, nikname)
                     elseif obj.mode == 1 then
                         obj.state = not obj.state
                         obj.draw()
                         soundNum(obj.state and 0 or 1)
-                        runCallback(obj.callback, obj.state, not obj.state)
+                        runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                     elseif obj.mode == 2 then
                         obj.state = not obj.state
                         obj.draw()
                         soundNum(obj.state and 0 or 1)
-                        runCallback(obj.callback, obj.state, not obj.state)
+                        runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                     end
                     return
                 end
-                if uuid == lib.screen and button == 0 then
+                if uuid == lib.screen then
                     if obj.mode == 2 then
                         if obj.state then
                             obj.state = false
                             obj.draw()
                             soundNum(1)
-                            runCallback(obj.callback, obj.state, not obj.state)
+                            runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                         end
                     end
                 end
@@ -335,13 +335,13 @@ return {create = function()
             obj.listens[#obj.listens + 1] = scene.createListen("drop", function(_, uuid, posX, posY, button)
                 if not obj.active or obj.killed then return end
                 if lib.block then return end
-                if uuid == lib.screen and button == 0 then
+                if uuid == lib.screen then
                     if obj.mode == 2 then
                         if obj.state then
                             obj.state = false
                             obj.draw()
                             soundNum(1)
-                            runCallback(obj.callback, obj.state, not obj.state)
+                            runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                         end
                     end
                 end
@@ -1208,7 +1208,7 @@ return {create = function()
 
         local out
         while true do
-            local _, _, touchX, touchY, button = event.pull("touch", lib.screen)
+            local _, _, touchX, touchY, button, nikname = event.pull("touch", lib.screen)
             if isZone({posX = posX, posY = posY, sizeX = sizeX, sizeY = sizeY}, touchX, touchY) and button == 0 then
                 local num = (touchY - posY) + 1
                 if menuData.on[num] then
@@ -1216,7 +1216,7 @@ return {create = function()
                     break
                 end
             else
-                event.push("touch", lib.screen, touchX, touchY, button, "context")
+                event.push("touch", lib.screen, touchX, touchY, button, nikname)
                 break
             end
         end
