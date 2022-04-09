@@ -702,12 +702,17 @@ return {create = function()
                 end
             end
 
+            function obj.removeAtStr(str)
+                table_remove(obj.strs, str)
+                obj.reMatch()
+            end
+
             obj.listens = {}
 
             obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, posX, posY, button)
                 if lib.block then return end
                 if not obj.active or obj.killed then return end
-                if uuid ~= lib.screen or (button ~= 0 and eventName ~= "scroll") or not obj.seekBar.touch then return end
+                if uuid ~= lib.screen or not obj.seekBar.touch then return end
                 if eventName == "scroll" then
                     if isZone(obj, posX, posY) then
                         local oldValue = obj.seekBar.value
@@ -728,7 +733,7 @@ return {create = function()
                         if preciseState then num = num + 1 end
                         local str = obj.screenStrs[num]
                         if str then
-                            runCallback(obj.callback, str)
+                            runCallback(obj.callback, str, button)
                         end
                     end
                 end
