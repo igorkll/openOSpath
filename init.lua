@@ -32,15 +32,25 @@ do --спяший режим
     local computer_uptime = computer.uptime
     local table_unpack = table.unpack
     local checkArg = checkArg
-    function computer.sleep(time, saveEvent)
+
+    local uptimeAdd = 0
+    function computer.uptime()
+        return computer_uptime() + uptimeAdd
+    end
+
+    function computer.sleep(time, saveEvent, doNotCorectUptime)
         checkArg(1, time, "number")
         checkArg(2, saveEvent, "nil", "boolean")
+        checkArg(3, doNotCorectUptime, "nil", "boolean")
         local inTime = computer_uptime()
         while computer_uptime() - inTime < time do
             local eventData = {computer_pullSignal(time - (computer_uptime() - inTime))}
             if saveEvent then
                 computer_pushSignal(table_unpack(eventData))
             end
+        end
+        if not doNotCorectUptime then
+            uptimeAdd = uptimeAdd - (computer_uptime() - inTime)
         end
     end
 end
