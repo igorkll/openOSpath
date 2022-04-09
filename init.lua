@@ -1,5 +1,7 @@
 if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end --зашита от моих биосов(они усторели и удин удаляет setArchitecture а другой заставляет его выдать ошибку)
 
+-----------------------------------
+
 do --для таблиц в event
     local buffer = {}
 
@@ -19,6 +21,27 @@ do --для таблиц в event
     function computer.pushSignal(...)
         table.insert(buffer, {...})
         return true
+    end
+end
+
+-----------------------------------functions
+
+do --спяший режим
+    local computer_pullSignal = computer.pullSignal
+    local computer_pushSignal = computer.pushSignal
+    local computer_uptime = computer.uptime
+    local table_unpack = table.unpack
+    local checkArg = checkArg
+    function computer.sleep(time, saveEvent)
+        checkArg(1, time, "number")
+        checkArg(2, saveEvent, "nil", "boolean")
+        local inTime = computer_uptime()
+        while computer_uptime() - inTime < time do
+            local eventData = {computer_pullSignal(time - (computer_uptime() - inTime))}
+            if saveEvent then
+                computer_pushSignal(table_unpack(eventData))
+            end
+        end
     end
 end
 
