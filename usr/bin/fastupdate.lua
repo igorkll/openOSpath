@@ -71,7 +71,9 @@ local threads = {}
 local isUpdate = false
 if options.f or outData.version > inData.version then
     if term.isAvailable() and not options.t then
-        local gui = require("simpleGui2").create(50, 16)
+        local mx, my = 50, 16
+        if component.isAvailable("tablet") then mx, my = term.gpu().maxResolution() end
+        local gui = require("simpleGui2").create(mx, my)
 
         table.insert(threads, thread.create(function()
             local color = 0x5555FF

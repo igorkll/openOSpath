@@ -54,7 +54,7 @@ local function unlockScreen()
 
                 local textScene = gui.createScene(gui.selectColor(0xFF0000, nil, false), mx, my)
                 local cx, cy = textScene.getCenter()
-                textScene.createLabel(1, cy, 50, 1, "неверный пароль")
+                textScene.createLabel(1, cy, mx, 1, "неверный пароль")
                 local oldScene = gui.scene
                 gui.select(textScene)
                 os.sleep(2)
@@ -71,7 +71,7 @@ local function unlockScreen()
 
                 local textScene = gui.createScene(gui.selectColor(0x00FF00, nil, false), mx, my)
                 local cx, cy = textScene.getCenter()
-                textScene.createLabel(1, cy, 50, 1, "с возврашениям " .. nikname)
+                textScene.createLabel(1, cy, mx, 1, "с возврашениям " .. nikname)
                 local oldScene = gui.scene
                 gui.select(textScene)
                 os.sleep(2)
@@ -84,7 +84,7 @@ local function unlockScreen()
 
                         local textScene = gui.createScene(gui.selectColor(0x00FF00, nil, false), mx, my)
                         local cx, cy = textScene.getCenter()
-                        textScene.createLabel(1, cy, 50, 1, "разблокировано по админ доступу")
+                        textScene.createLabel(1, cy, mx, 1, "разблокировано по админ доступу")
                         local oldScene = gui.scene
                         gui.select(textScene)
                         os.sleep(2)
@@ -95,9 +95,9 @@ local function unlockScreen()
 
                         local textScene = gui.createScene(gui.selectColor(0xFF0000, nil, false), mx, my)
                         local cx, cy = textScene.getCenter()
-                        textScene.createLabel(1, cy, 50, 1, "админ доступ выключен, обратитесь к владельцу пк")
+                        textScene.createLabel(1, cy, mx, 1, "админ доступ выключен, обратитесь к владельцу пк")
                         if lockCfg.mainuser then
-                            textScene.createLabel(1, cy + 2, 50, 1, "владелец (" .. lockCfg.mainuser .. ")")
+                            textScene.createLabel(1, cy + 2, mx, 1, "владелец (" .. lockCfg.mainuser .. ")")
                         end
                         local oldScene = gui.scene
                         gui.select(textScene)
@@ -110,9 +110,9 @@ local function unlockScreen()
 
                     local textScene = gui.createScene(gui.selectColor(0xFF0000, nil, false), mx, my)
                     local cx, cy = textScene.getCenter()
-                    textScene.createLabel(1, cy, 50, 1, "вас нету в таблице пользователей")
+                    textScene.createLabel(1, cy, mx, 1, "вас нету в таблице пользователей")
                     if lockCfg.mainuser then
-                        textScene.createLabel(1, cy + 2, 50, 1, "владелец (" .. lockCfg.mainuser .. ")")
+                        textScene.createLabel(1, cy + 2, mx, 1, "владелец (" .. lockCfg.mainuser .. ")")
                     end
                     local oldScene = gui.scene
                     gui.select(textScene)
