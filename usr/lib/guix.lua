@@ -273,19 +273,27 @@ return {create = function()
             obj.killed = false
             obj.active = true
 
+            obj.invisible = false
+            obj.vertText = false
+
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
-                if (not obj.active and not forceDraw) or obj.killed then return end
+                if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
 
                 local back, fore = obj.backColor, obj.foreColor
                 if su.xor(not obj.state, obj.mode == 0 or obj.mode == 2) then back, fore = obj.invertBackColor, obj.invertForeColor end
                 lib.gpu.setBackground(back)
                 lib.gpu.setForeground(fore)
                 lib.gpu.fill(obj.posX, obj.posY, obj.sizeX, obj.sizeY, " ")
+
                 local posX, posY = scene.getCenter(obj.posX, obj.posY, obj.sizeX, obj.sizeY)
-                posX = posX - unicode.len(obj.text) // 2
-                lib.gpu.set(posX, posY, obj.text)
+                if not obj.vertText then
+                    posX = posX - unicode.len(obj.text) // 2
+                else
+                    posY = posY - unicode.len(obj.text) // 2
+                end
+                lib.gpu.set(posX, posY, obj.text, obj.vertText)
             end
 
             obj.listens = {}
@@ -298,24 +306,24 @@ return {create = function()
                     if obj.mode == 0 then
                         obj.state = true
                         obj.draw()
-                        soundNum(0)
+                        if obj.soundOn then soundNum(0) end
                         os.sleep(0.1) --и да я знаю что прерывания в сабытиях это не очень хорошо
 
                         obj.state = false
                         obj.draw()
-                        soundNum(1)
+                        if obj.soundOn then soundNum(1) end
                         os.sleep(0.1)
 
                         runCallback(obj.callback, true, false, button, nikname)
                     elseif obj.mode == 1 then
                         obj.state = not obj.state
                         obj.draw()
-                        soundNum(obj.state and 0 or 1)
+                        if obj.soundOn then soundNum(obj.state and 0 or 1) end
                         runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                     elseif obj.mode == 2 then
                         obj.state = not obj.state
                         obj.draw()
-                        soundNum(obj.state and 0 or 1)
+                        if obj.soundOn then soundNum(obj.state and 0 or 1) end
                         runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                     end
                     return
@@ -325,7 +333,7 @@ return {create = function()
                         if obj.state then
                             obj.state = false
                             obj.draw()
-                            soundNum(1)
+                            if obj.soundOn then soundNum(1) end
                             runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                         end
                     end
@@ -340,7 +348,7 @@ return {create = function()
                         if obj.state then
                             obj.state = false
                             obj.draw()
-                            soundNum(1)
+                            if obj.soundOn then soundNum(1) end
                             runCallback(obj.callback, obj.state, not obj.state, button, nikname)
                         end
                     end
@@ -354,6 +362,25 @@ return {create = function()
 
             function obj.setActive(state)
                 obj.active = state
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
+            end
+
+            function obj.setVertText(state)
+                obj.vertText = state
+            end
+
+            obj.soundOn = true
+            function obj.setSoundOn(state)
+                obj.soundOn = state
+                for i, object in ipairs(obj.subobjects) do
+                    object.soundOn = state
+                end
             end
 
             function obj.remove()
@@ -387,19 +414,27 @@ return {create = function()
             obj.active = true
             obj.killed = false
 
+            obj.invisible = false
+            obj.vertText = false
+
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
-                if (not obj.active and not forceDraw) or obj.killed then return end
+                if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
 
                 local back, fore = obj.backColor, obj.foreColor
                 if not obj.state then back, fore = obj.invertBackColor, obj.invertForeColor end
                 lib.gpu.setBackground(back)
                 lib.gpu.setForeground(fore)
                 lib.gpu.fill(obj.posX, obj.posY, obj.sizeX, obj.sizeY, " ")
+                
                 local posX, posY = scene.getCenter(obj.posX, obj.posY, obj.sizeX, obj.sizeY)
-                posX = posX - unicode.len(obj.text) // 2
-                lib.gpu.set(posX, posY, obj.text)
+                if not obj.vertText then
+                    posX = posX - unicode.len(obj.text) // 2
+                else
+                    posY = posY - unicode.len(obj.text) // 2
+                end
+                lib.gpu.set(posX, posY, obj.text, obj.vertText)
             end
 
             function obj.move(posX, posY)
@@ -407,8 +442,27 @@ return {create = function()
                 obj.posY = posY
             end
 
+            function obj.setVertText(state)
+                obj.vertText = state
+            end
+
             function obj.setActive(state)
                 obj.active = state
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
+            end
+
+            obj.soundOn = true
+            function obj.setSoundOn(state)
+                obj.soundOn = state
+                for i, object in ipairs(obj.subobjects) do
+                    object.soundOn = state
+                end
             end
 
             function obj.remove()
@@ -463,6 +517,16 @@ return {create = function()
             obj.killed = false
             obj.active = true
 
+            obj.invisible = false
+
+            obj.soundOn = true
+            function obj.setSoundOn(state)
+                obj.soundOn = state
+                for i, object in ipairs(obj.subobjects) do
+                    object.soundOn = state
+                end
+            end
+
             if obj.mode == 0 then
                 obj.sizeX = obj.size --для обработки косаний
                 obj.sizeY = 1
@@ -493,9 +557,9 @@ return {create = function()
             end
 
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
-                if (not obj.active and not forceDraw) or obj.killed then return end
+                if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
 
                 lib.gpu.setBackground(obj.backColor)
                 lib.gpu.setForeground(obj.foreColor)
@@ -545,7 +609,7 @@ return {create = function()
 
                         if obj.value == oldValue then return end
                         obj.draw()
-                        soundNum(2)
+                        if obj.soundOn then soundNum(2) end
                         runCallback(obj.callback, obj.value, oldValue)
                     end
                 end
@@ -580,7 +644,7 @@ return {create = function()
                         obj.value = value
                         if value == oldValue then return end
                         obj.draw()
-                        soundNum(2)
+                        if obj.soundOn then soundNum(2) end
                         runCallback(obj.callback, obj.value, oldValue)
                     end
                 end
@@ -588,6 +652,13 @@ return {create = function()
 
             function obj.setActive(state)
                 obj.active = state
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
             end
 
             function obj.remove()
@@ -640,14 +711,18 @@ return {create = function()
             obj.killed = false
             obj.active = true
 
+            obj.invisible = false
+
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
                 if (not obj.active and not forceDraw) or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.redrawAll and not forceDraw2 and not obj.invisible then lib.redraw() return end
 
-                lib.gpu.setBackground(obj.backColor)
-                lib.gpu.setForeground(obj.foreColor)
-                lib.gpu.fill(obj.posX, obj.posY, obj.sizeX - 1, obj.sizeY, " ")
+                if not obj.invisible then
+                    lib.gpu.setBackground(obj.backColor)
+                    lib.gpu.setForeground(obj.foreColor)
+                    lib.gpu.fill(obj.posX, obj.posY, obj.sizeX - 1, obj.sizeY, " ")
+                end
 
                 obj.screenStrs = {}
                 local mainStr = (obj.posY + obj.sizeY) - 1
@@ -659,11 +734,11 @@ return {create = function()
                         local str = obj.strs[(#obj.strs - i) + 1]
                         str = unicode.sub(str, 1, obj.sizeX - 1)
                         obj.screenStrs[posY - obj.posY] = str
-                        lib.gpu.set(obj.posX, posY, str)
+                        if not obj.invisible then lib.gpu.set(obj.posX, posY, str) end
                     end
                 end
 
-                obj.seekBar.draw(forceDraw, forceDraw2)
+                if not obj.invisible then obj.seekBar.draw(forceDraw, forceDraw2) end
             end
 
             function obj.reMatch()
@@ -688,6 +763,14 @@ return {create = function()
             function obj.addStr(str)
                 table.insert(obj.strs, str)
                 obj.reMatch()
+            end
+
+            obj.soundOn = true
+            function obj.setSoundOn(state)
+                obj.soundOn = state
+                for i, object in ipairs(obj.subobjects) do
+                    object.soundOn = state
+                end
             end
 
             function obj.clear()
@@ -723,7 +806,7 @@ return {create = function()
 
                         if obj.seekBar.value == oldValue then return end
                         obj.draw()
-                        soundNum(2)
+                        if obj.soundOn then soundNum(2) end
                     end
                 end
                 if eventName == "touch" then
@@ -749,6 +832,13 @@ return {create = function()
             function obj.setActive(state)
                 obj.active = state
                 obj.seekBar.active = state
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
             end
 
             function obj.remove()
@@ -777,7 +867,9 @@ return {create = function()
             obj.active = true
             obj.killed = false
 
-            function obj.input()
+            obj.invisible = false
+
+            function obj.input(nikname)
                 if lib.scene ~= scene or lib.block then return end
                 if not obj.active or obj.killed then return end
                 if obj.used then return end
@@ -809,11 +901,18 @@ return {create = function()
                     setText()
                     lib.redraw()
                     obj.used = false
-                    runCallback(obj.callback, obj.userInput)
+                end)
+                scene.createTimer(1, function()
+                    if not obj.used then
+                        runCallback(obj.callback, obj.userInput, nikname)
+                        return false
+                    end
                 end)
             end
 
-            obj.button = scene.createButton(posX, posY, sizeX, sizeY, text, obj.input)
+            obj.button = scene.createButton(posX, posY, sizeX, sizeY, text, function(_, _, _, nikname)
+                obj.input(nikname)
+            end)
             table_remove(scene.objects, obj.button)
             table.insert(obj.subobjects, obj.button)
 
@@ -823,15 +922,34 @@ return {create = function()
             end
 
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
-                if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.scene ~= scene or lib.block or obj.invisible then return end --для корректной ручьной перерисовки
                 if (not obj.active and not forceDraw) or obj.killed then return end
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
                 obj.button.draw(forceDraw, forceDraw2)
             end
 
             function obj.setActive(state)
                 obj.active = state
                 obj.button.active = state
+            end
+
+            function obj.setVertText(state)
+                obj.button.vertText = state
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
+            end
+
+            obj.soundOn = true
+            function obj.setSoundOn(state)
+                obj.soundOn = state
+                for i, object in ipairs(obj.subobjects) do
+                    object.soundOn = state
+                end
             end
 
             function obj.remove()
@@ -855,10 +973,12 @@ return {create = function()
             obj.active = true
             obj.killed = false
 
+            obj.invisible = false
+
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
-                if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.scene ~= scene or lib.block or obj.invisible then return end --для корректной ручьной перерисовки
                 if (not obj.active and not forceDraw) or obj.killed then return end
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
 
                 runCallback(obj.drawer, lib.gpu, obj.posX, obj.posY)
             end
@@ -870,6 +990,13 @@ return {create = function()
             function obj.move(posX, posY)
                 obj.posX = posX
                 obj.posY = posY
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
             end
 
             function obj.remove()
@@ -897,6 +1024,8 @@ return {create = function()
             obj.killed = false
 
             obj.windowSelected = false
+
+            obj.invisible = false
 
             obj.objects = {}
 
@@ -939,9 +1068,9 @@ return {create = function()
             end
 
             function obj.draw(forceDraw, forceDraw2)
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
-                if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
+                if lib.scene ~= scene or lib.block or obj.invisible then return end --для корректной ручьной перерисовки
                 if (not obj.active and not forceDraw) or obj.killed then return end
+                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
 
                 if obj.color then
                     lib.gpu.setBackground(obj.color)
@@ -963,9 +1092,24 @@ return {create = function()
                 end
             end
 
+            obj.soundOn = true
+            function obj.setSoundOn(state)
+                obj.soundOn = state
+                for i, object in ipairs(obj.subobjects) do
+                    object.soundOn = state
+                end
+            end
+
             function obj.move(posX, posY)
                 obj.posX = posX
                 obj.posY = posY
+            end
+
+            function obj.setInvisible(state)
+                obj.invisible = state
+                for i = 1, #obj.subobjects do
+                    obj.subobjects[i].setInvisible(state)
+                end
             end
 
             obj.listens = {}
@@ -1131,7 +1275,8 @@ return {create = function()
         table_remove(lib.exitCallbacks, func)
     end
     
-    function lib.exit()
+    local oldHook
+    function lib.off()
         pcall(component.invoke, lib.screen, "setPrecise", oldPreciseState)
         lib.threadsMenager.killAll()
         while true do
@@ -1142,8 +1287,13 @@ return {create = function()
         lib.reset_gpu()
         term.clear()
         lib.active = false
+        process.info().data.signal = oldHook
+    end
+    function lib.exit()
+        lib.off()
         os.exit()
     end
+    oldHook = process.info().data.signal
     process.info().data.signal = lib.exit
 
     --bloked functions
