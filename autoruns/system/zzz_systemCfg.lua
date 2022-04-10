@@ -39,6 +39,8 @@ end
 
 ------------------------------------
 
+os.execute("lock")
+
 _G.updateRepo = systemCfg.updateRepo
 
 local isInternet = su.isInternet()
