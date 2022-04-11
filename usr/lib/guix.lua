@@ -270,16 +270,30 @@ return {create = function()
             obj.invertBackColor = lib.selectColor(0x555555, 0x222222, false)
             obj.invertForeColor = 0xFFFFFF
 
+            obj.drawer = false
+
             obj.killed = false
             obj.active = true
 
             obj.invisible = false
             obj.vertText = false
 
+            function obj.attachDrawer(drawer)
+                obj.drawer = drawer
+                obj.drawer.move(obj.posX, obj.posY)
+                table_remove(scene.objects, drawer)
+                table.insert(obj.subobjects, drawer)
+            end
+
             function obj.draw(forceDraw, forceDraw2)
                 if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
                 if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+
+                if obj.drawer then
+                    obj.drawer.draw(forceDraw, forceDraw2)
+                    return
+                end
 
                 local back, fore = obj.backColor, obj.foreColor
                 if su.xor(not obj.state, obj.mode == 0 or obj.mode == 2) then back, fore = obj.invertBackColor, obj.invertForeColor end
@@ -358,10 +372,16 @@ return {create = function()
             function obj.move(posX, posY)
                 obj.posX = posX
                 obj.posY = posY
+                if obj.drawer then
+                    obj.drawer.move(posX, posY)
+                end
             end
 
             function obj.setActive(state)
                 obj.active = state
+                if obj.drawer then
+                    obj.drawer.setActive(state)
+                end
             end
 
             function obj.setInvisible(state)
