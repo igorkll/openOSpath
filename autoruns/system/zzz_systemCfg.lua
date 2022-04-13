@@ -21,7 +21,12 @@ function _G.updateNoInternetScreen()
     event.superHook = false
     if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown(true) end
 
-    local gui = require("simpleGui2").create(50, 16)
+    local rx, ry = 50, 16
+    if component.isAvailable("tablet") then
+        rx, ry = term.gpu().maxResolution()
+    end
+
+    local gui = require("simpleGui2").create(rx, ry)
     local color = 0x5555FF
     if gui.depth == 4 then color = 0x5544FF end
 
@@ -39,7 +44,7 @@ end
 
 ------------------------------------
 
-os.execute("lock")
+os.execute("lock -c")
 
 _G.updateRepo = systemCfg.updateRepo
 
