@@ -15,7 +15,7 @@ local args, options = shell.parse(...)
 if not fs.exists("/etc/lock.cfg") then
     su.saveFile("/etc/lock.cfg", serialization.serialize({
         lock = false,
-        passwordSha256 = false,
+        passwordSha256 = "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0", --0000
         users = {},
         mainuser = false,
         adminAllow = false
