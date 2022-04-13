@@ -1178,6 +1178,10 @@ return {create = function()
             end)
 
             function obj.remove()
+                if obj.windowSelected then
+                    windowMenager(false)
+                end
+
                 obj.killed = true
                 for i = 1, #obj.objects do
                     obj.objects[i][3].remove()

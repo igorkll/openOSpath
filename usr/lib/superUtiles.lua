@@ -345,4 +345,20 @@ function lib.isInternet()
     return component.isAvailable("internet") and pcall(function(url) assert(lib.getInternetFile(url)) end, "https://raw.githubusercontent.com/igorkll/openOSpath/main/null")
 end
 
+function lib.getPath()
+    local info
+
+    for runLevel = 0, math.huge do
+        info = debug.getinfo(runLevel)
+
+        if info then
+            if info.what == "main" then
+                return info.source:sub(2, -1)
+            end
+        else
+            error("Failed to get debug info for runlevel " .. runLevel)
+        end
+    end
+end
+
 return lib

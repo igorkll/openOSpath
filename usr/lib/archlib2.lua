@@ -1,7 +1,6 @@
 local serialization = require("serialization")
 local fs = require("filesystem")
 local su = require("superUtiles")
-local LibDeflate = require("LibDeflate")
 local unicode = require("unicode")
 
 ----------------------------------------------------
@@ -49,6 +48,7 @@ end
 --------------------------
 
 function lib.pack(mainpath)
+    local LibDeflate = require("LibDeflate")
     local files = lib.simplePack(mainpath)
     local raw_data = serialization.serialize(files)
     local compressData = LibDeflate.CompressDeflate("", raw_data)
@@ -56,9 +56,31 @@ function lib.pack(mainpath)
 end
 
 function lib.unpack(mainpath, data)
+    local LibDeflate = require("LibDeflate")
     data = LibDeflate.DecompressDeflate("", data)
     data = serialization.unserialize(data)
     lib.simpleUnpack(mainpath, data)
+end
+
+function lib.packPro(mainpath, filepath, compress)
+    local files = lib.simplePack(mainpath)
+    local raw_data = serialization.serialize(files)
+    local compressData = raw_data
+    if compress then
+        local LibDeflate = require("LibDeflate")
+        compressData = LibDeflate.CompressDeflate("", raw_data)
+    end
+    return assert(su.saveFile(filepath, compressData))
+end
+
+function lib.unpackPro(mainpath, filepath, compress)
+    local data = assert(su.getFile(filepath))
+    if compress then
+        local LibDeflate = require("LibDeflate")
+        data = LibDeflate.DecompressDeflate("", data)
+    end
+    lib.simpleUnpack(mainpath, assert(serialization.unserialize(data)))
+    return true
 end
 
 return lib
