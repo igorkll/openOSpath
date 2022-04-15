@@ -44,7 +44,7 @@ end
 
 ------------------------------------
 
-os.execute("lock -c")
+--os.execute("lock -c")
 
 _G.updateRepo = systemCfg.updateRepo
 
