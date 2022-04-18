@@ -1,5 +1,6 @@
 local component = require("component")
 local event = require("event")
+local serialization = require("serialization")
 
 -----------------------------------------
 
@@ -23,6 +24,7 @@ lib.isOk = function()
 end
 
 lib.raw_send = function(...)
+    ok = false
     local modem = getModem()
     local port = math.random(1, 65535)
     local strength = modem.setStrength(2)
@@ -31,42 +33,37 @@ lib.raw_send = function(...)
     modem.broadcast(port, "nanomachines", "setResponsePort", port)
     local eventName = event.pull(4, "modem_message", modem.address, nil, port, nil, "nanomachines", "port", port)
     if not eventName then
-        ok = false
         modem.setStrength(strength)
-        if isOpen == true then
-            modem.close(port)
-        end
-        return
+        if isOpen == true then modem.close(port) end
+        error("no connection")
     end
     modem.broadcast(port, "nanomachines", ...)
 
     modem.setStrength(strength)
-    local data = table.pack(event.pull(4, "modem_message", modem.address, nil, port, nil, "nanomachines"))
-    if isOpen == true then
-        modem.close(port)
-    end
-
-    local returnData = {}
-    for i = 7, #data do
-        returnData[#returnData + 1] = data[i]
-    end
+    local data = {event.pull(4, "modem_message", modem.address, nil, port, nil, "nanomachines")}
+    if isOpen == true then modem.close(port) end
+    if #data == 0 then error("no connection") end
     ok = true
-    return table.unpack(returnData)
+    return table.unpack(data, 7)
 end
 
 --------------------
 
 lib.getInput = function(num)
+    checkArg(1, num, "number")
     local _, _, out = lib.raw_send("getInput", num)
     return out
 end
 
 lib.setInput = function(num, state)
+    checkArg(1, num, "number")
+    checkArg(2, state, "boolean")
     lib.raw_send("setInput", num, state)
 end
 
 lib.getActiveEffects = function()
     local _, out = lib.raw_send("getActiveEffects")
+    --return serialization.unserialize(out)
     return out
 end
 

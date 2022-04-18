@@ -512,6 +512,7 @@ return {create = function()
             obj.min = min or 0
             obj.max = max or 1
             obj.value = value or obj.min
+            obj.floorAt = 0.1
             function obj.floor()
                 if obj.onlyIntegers then
                     obj.value = math.floor(obj.value)
@@ -563,7 +564,7 @@ return {create = function()
                 if obj.onlyIntegers then
                     return math.floor(su.mapClip(value, 1, obj.realSize, obj.min, obj.max))
                 else
-                    return su.floorAt(su.mapClip(value, 1, obj.realSize, obj.min, obj.max), 0.1) + 0.0
+                    return su.floorAt(su.mapClip(value, 1, obj.realSize, obj.min, obj.max), obj.floorAt) + 0.0
                 end
             end
 
