@@ -117,12 +117,12 @@ local function unlockScreen(skipAllow, powerOff)
             event.pull(4, "key_down", term.keyboard(), nil, 28)
         end
     else
+        local gui = require("guix").create()
+
         local mx, my = 50, 16
         if component.isAvailable("tablet") then
-            mx, my = term.gpu().maxResolution()
+            mx, my = gui.maxX, gui.maxY
         end
-
-        local gui = require("guix").create()
 
         local main = gui.createScene(gui.selectColor(0xFFFFFF, nil, false), mx, my)
         local cx, cy = main.getCenter()
@@ -252,8 +252,9 @@ local function usersMenager()
             print("2.add")
             print("3.remove")
             print("4.user add")
+            print("5.save and exit")
             local num = io.read()
-            if not num then
+            if not num or num == 5 then
                 break
             end
             num = tonumber(num)
@@ -350,7 +351,7 @@ local function usersMenager()
         end)
         b1.viewData = false
 
-        local b2 = main.createButton(main.sizeX // 2, main.sizeY - 1, (main.sizeX // 2) - 2, 1, "auto add", function(_, _, button, nik)
+        local b2 = main.createButton((main.sizeX // 2) + 1, main.sizeY - 1, (main.sizeX // 2) - 2, 1, "auto add", function(_, _, button, nik)
             if su.inTable(lockCfg.users, nik) then
                 createWindow("вы уже в списке")
             else
@@ -367,36 +368,158 @@ local function usersMenager()
     end
 end
 
-if args[1] == "set" then
-    local ok = unlockScreen(true, false)
-    if ok then
-        if args[2] == "password" then
-            term.clear()
-            print("введите новый пароль")
-            local read = io.read()
-            if not read then term.clear() return end
-            print("подтвердите новый пароль")
-            local read2 = io.read()
-            if not read2 then term.clear() return end
+local function setPasswordScreen()
+    if math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or options.s then
+        term.clear()
+        print("введите новый пароль")
+        local read = io.read()
+        if not read then term.clear() return end
+        print("подтвердите новый пароль")
+        local read2 = io.read()
+        if not read2 then term.clear() return end
 
-            if read == read2 then
-                lockCfg.passwordSha256 = sha256(read)
-            end
-        elseif args[2] == "mainuser" then
-        elseif args[2] == "users" then
-            usersMenager()
-        elseif args[2] == "on" then
-            lockCfg.lock = true
-        elseif args[2] == "off" then
-            lockCfg.lock = false
+        if read == read2 then
+            lockCfg.passwordSha256 = sha256(read)
+            saveCfg()
         end
-        saveCfg()
+    else
+        local gui = require("guix").create()
+        
+        local mx, my = 50, 16
+        if component.isAvailable("tablet") then
+            mx, my = gui.maxX, gui.maxY
+        end
+
+        local main = gui.createScene(gui.selectColor(0xFFFFFF, nil, false), mx, my)
+
+        local x, y = main.getCenter()
+        y = y - 2
+        local i1 = main.createInputbox(x - 8, y, 16, 1, "enter password")
+        i1.viewData = false
+        i1.button.backColor = gui.selectColor(0xAAAAAA, nil, true)
+        
+        local x, y = main.getCenter()
+        local i2 = main.createInputbox(x - 8, y, 16, 1, "commit password")
+        i2.viewData = false
+        i2.button.backColor = gui.selectColor(0xAAAAAA, nil, true)
+
+        main.createTimer(0.05, function()
+            i1.draw()
+            i2.draw()
+        end)
+
+        local x, y = main.getCenter()
+        y = y + 2
+        local b1 = main.createButton(x - 8, y, 16, 1, "commit", function()
+            if not i1.userInput or not i2.userInput then gui.splash("заполните все поля", gui.selectColor(0xFF0000, nil, false)) return end
+            if i1.userInput ~= i2.userInput then
+                gui.splash("пароли не совпадают", gui.selectColor(0xFF0000, nil, false))
+                return
+            end
+            lockCfg.passwordSha256 = sha256(i1.userInput)
+            saveCfg()
+            gui.splash("настройки успешно устоновленны", gui.selectColor(0x00FF00, nil, false))
+        end)
+        b1.backColor = gui.selectColor(0xFFFF00, nil, true)
+        b1.foreColor = gui.selectColor(0xAAAAAA, nil, false)
+
+        gui.select(main)
+        gui.run()
     end
-    term.clear()
+end
+
+local function setMainuserScreen()
+    if math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or options.s then
+        term.clear()
+        print("способ")
+        print("1.ввести ник")
+        print("2.устоновить меня")
+        
+        local num, nikname
+        repeat
+            local _, _, char, _, nikname2 = term.pull("key_down", term.keyboard())
+            nikname = nikname2
+            num = tonumber(string.char(math.floor(char)))
+        until num == 1 or num == 2
+
+        if num == 1 then
+            local read = io.read()
+            if not read then
+                return
+            end
+            nikname = read
+        end
+
+        lockCfg.mainuser = nikname
+        saveCfg()
+        print("теперь " .. nikname .. " главный пользователь")
+        os.sleep(2)
+    else
+        local gui = require("guix").create()
+
+        local mx, my = 50, 16
+        if component.isAvailable("tablet") then
+            mx, my = gui.maxX, gui.maxY
+        end
+
+        local main = gui.createScene(gui.selectColor(0xFFFFFF, nil, false), mx, my)
+
+        local function setNikname(nikname)
+            lockCfg.mainuser = nikname
+            saveCfg()
+            gui.splash("теперь " .. nikname .. " главный пользователь", 0, nil, main.sizeX, main.sizeY)
+        end
+
+        local x, y = main.getCenter()
+        y = y - 1
+        local i1 = main.createInputbox(x - 8, y, 16, 1, "enter nikname", function(input)
+            setNikname(input)
+        end)
+        i1.viewData = false
+        i1.button.backColor = gui.selectColor(0xAAAAAA, nil, true)
+
+        local x, y = main.getCenter()
+        y = y + 1
+        local b1 = main.createButton(x - 8, y, 16, 1, "auto", function(_, _, _, nikname)
+            setNikname(nikname)
+        end)
+        b1.backColor = gui.selectColor(0xAAAAAA, nil, true)
+
+        gui.select(main)
+        gui.run()
+    end
+end
+
+if args[1] == "set" then
+    if args[2] == "password" then
+        if not unlockScreen(true, false) then return end
+        setPasswordScreen()
+        term.clear()
+    elseif args[2] == "mainuser" then
+        if not unlockScreen(true, false) then return end
+        setMainuserScreen()
+        term.clear()
+    elseif args[2] == "users" then
+        if not unlockScreen(true, false) then return end
+        usersMenager()
+        term.clear()
+    elseif args[2] == "on" then
+        if not unlockScreen(true, false) then return end
+        lockCfg.lock = true
+        saveCfg()
+        term.clear()
+    elseif args[2] == "off" then
+        if not unlockScreen(true, false) then return end
+        lockCfg.lock = false
+        saveCfg()
+        term.clear()
+    else
+        print("нет такого параметра")
+    end
 elseif args[1] == "help" then
     print("lock [-a(do not power off allow)] [-c(check)] [-s(simple graphic)]")
     print("lock set password")
-    --print("lock set mainuser")
+    print("lock set mainuser(его ник будет писаться в случаи ошибки для обшашения)")
     print("lock set users")
     print("lock set on")
     print("lock set off")
