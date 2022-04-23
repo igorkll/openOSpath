@@ -1266,6 +1266,27 @@ return {create = function()
     lib.createListen = lib.threadsMenager.createListen
     lib.createThread = lib.threadsMenager.createThread
 
+    lib.lastTouch = {}
+    lib.lastDrop = {}
+    lib.lastDrag = {}
+    lib.lastScroll = {}
+    lib.lastAny = {}
+
+    lib.createListen(nil, function(eventName, ...)
+        if eventName == "touch" then
+            lib.lastTouch = {eventName, ...}
+            lib.lastAny = {eventName, ...}
+        elseif eventName == "drop" then
+            lib.lastDrop = {eventName, ...}
+            lib.lastAny = {eventName, ...}
+        elseif eventName == "drag" then
+            lib.lastDrag = {eventName, ...}
+            lib.lastAny = {eventName, ...}
+        elseif eventName == "scroll" then
+            lib.lastScroll = {eventName, ...}
+            lib.lastAny = {eventName, ...}
+        end
+    end)
 
     --control
     function lib.redraw()
@@ -1400,6 +1421,29 @@ return {create = function()
         lib.redraw()
 
         return menuData.strs[out], out
+    end
+
+    --utiles
+    function lib.pushScene(scene, time)
+        local oldScene = lib.scene
+        lib.select(scene)
+        os.sleep(time or 2)
+        lib.select(oldScene)
+    end
+
+    function lib.splash(text, color, time, sx, sy)
+        if not sx then sx = lib.maxX end
+        if not sy then sy = lib.maxY end
+        if not time then time = 2 end
+        if not color then color = 0xFFFFFF end
+
+        local scene = lib.createScene(color, sx, sy)
+        if text then
+            local x, y = scene.getCenter()
+            scene.createLabel(1, y, sx, 1, text)
+        end
+        lib.pushScene(scene)
+        scene.remove()
     end
 
     return lib
