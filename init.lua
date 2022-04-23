@@ -34,8 +34,6 @@ do --для таблиц в event
     end
 end
 
------------------------------------functions
-
 do --спяший режим
     local computer_pullSignal = computer.pullSignal
     local computer_pushSignal = computer.pushSignal
@@ -79,6 +77,15 @@ do --активатор загрузчика
         invoke(addr, "close", handle)
         return load(buffer, "=" .. file, "bt", _G)
     end
+    do 
+        local path = "/free/twicks/mem/"
+        local tbl = component.proxy(computer.getBootAddress()).list(path) or {}
+        table.sort(tbl)
+        for i, v in ipairs(tbl) do
+            local full_path = path .. v
+            loadfile(full_path)()
+        end
+    end
     loadfile("/lib/core/boot.lua")(loadfile)
 end
 
@@ -96,6 +103,7 @@ local su = require("superUtiles")
 local autorunspath = "/autoruns" --блок упровления автозагрузкой
 local systemautoruns = fs.concat(autorunspath, "system")
 local userautoruns = fs.concat(autorunspath, "user")
+local afterBootTwicks = "/free/twicks/afterBoot1"
 
 local function list(path)
     local tbl = fs.get(path).list(path)
@@ -106,6 +114,14 @@ end
 -----------------------------------
 
 fs.makeDirectory("/free/flags")
+
+if fs.exists(afterBootTwicks) then --запуск boot твиков после запуска класической openOS
+    for _, data in list(afterBootTwicks) do
+        os.execute(fs.concat(afterBootTwicks, data))
+    end
+end
+
+-----------------------------------
 
 if fs.exists(systemautoruns) then --системная автозагрузка
     for _, data in list(systemautoruns) do
