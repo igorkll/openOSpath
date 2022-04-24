@@ -1,6 +1,7 @@
 local term = require("term")
 local unicode = require("unicode")
 local event = require("event")
+local su = require("superUtiles")
 
 ---------------------------------------------
 
@@ -56,7 +57,7 @@ function lib.menu(label, strs, num, back, fore)
                 invert()
             else
                 setText(label, 1 + dy)
-                setColor(nil, 0x888888)
+                setColor(nil, su.selectColor(nil, 0x888888, 0xAAAAAA, false))
             end
         else
             dy = 0

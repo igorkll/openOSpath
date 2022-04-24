@@ -285,12 +285,13 @@ function lib.mapClip(value, low, high, low_2, high_2)
 end
 
 function lib.selectColor(gpu, mainColor, miniColor, bw)
+    if not gpu then gpu = term.gpu() end
+    if type(bw) == "boolean" then bw = bw and 0xFFFFFF or 0x000000 end
     local depth = math.floor(gpu.getDepth())
-    if not miniColor then miniColor = mainColor end
     if depth == 4 then
-        return miniColor
+        return miniColor or mainColor
     elseif depth == 1 then
-        return bw and 0xFFFFFF or 0x000000
+        return bw
     end
     return mainColor
 end

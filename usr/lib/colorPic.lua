@@ -42,9 +42,40 @@ function lib.getColors()
     return colors
 end
 
-function optimize(color)
+function lib.optimize(color)
     local depth = lib.getDepth()
-    if depth == 4 and color == 0x00FFFF then color = 0x00AAFF end
+    local colors = lib.getColors()
+    color = math.floor(color)
+
+    if depth == 4 then
+        local r, g, b = lib.colorUnBlend(color)
+        local gray
+        if r == g and g == b then
+            gray = r
+        end
+
+        if gray then
+            if gray <= 64 then
+                gray = 0x000000
+            elseif gray <= 128 then
+                gray = 0x222222
+            elseif gray <= 192 then
+                gray = 0xAAAAAA
+            else
+                gray = 0xFFFFFF
+            end
+            return gray
+        end
+
+        local levelR, levelG, levelB = r // 64, g // 64, b // 64
+        if (levelR >= 2) and (levelG ~= 0 and levelG ~= 3) and (levelB ~= 0 and levelB ~= 3) then
+            return colors.pink
+        elseif (levelR == 3) and (levelG >= 1 and levelG <= 2) and (levelB <= 1) then
+            return colors.orange
+        elseif (levelR == 0) and (levelG >= 2) and (levelB >= 1) then
+            return colors.lightBlue
+        end
+    end
     return color
 end
 
@@ -91,7 +122,18 @@ function lib.hsvToRgb(h, s, v)
 end
 
 function lib.colorBlend(r, g, b)
-    return b + (g * 256) + (r * 256 * 256)
+    r = math.floor(r)
+    g = math.floor(g)
+    b = math.floor(b)
+    return math.floor(b + (g * 256) + (r * 256 * 256))
+end
+
+function lib.colorUnBlend(color)
+    color =  math.floor(color)
+    local blue = color % 256
+    local green = (color // 256) % 256
+    local red = (color // (256 * 256)) % 256
+    return math.floor(red), math.floor(green), math.floor(blue)
 end
 
 return lib

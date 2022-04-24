@@ -16,7 +16,7 @@ function lib.create(r, y)
 
     obj.colors.back = 0xFFFFFF
     obj.colors.main = 0
-    obj.colors.sub = 0x888888
+    obj.colors.sub = su.selectColor(nil, 0x888888, 0xAAAAAA, false)
 
     ----------------------
 
@@ -70,7 +70,7 @@ function lib.create(r, y)
     end
 
     function obj.setText(text, posY)
-        gpu.set(math.ceil((rx / 2) - (unicode.len(text) / 2)), posY, text)
+        gpu.set(math.ceil((rx / 2) - (unicode.len(text) / 2)) + 1, posY, text)
     end
 
     ----------------------
