@@ -27,7 +27,7 @@ function _G.updateNoInternetScreen()
     end
 
     local gui = require("simpleGui2").create(rx, ry)
-    local color = 0x99B2F2
+    local color = 0x6699FF
 
     while true do
         gui.status("при предидушем обновлениия произошла ошибка", 0xFFFFFF, color)
