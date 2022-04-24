@@ -76,7 +76,7 @@ if options.f or outData.version > inData.version then
         local gui = require("simpleGui2").create(mx, my)
 
         table.insert(threads, thread.create(function()
-            local color = 0x99B2F2
+            local color = 0x6699FF
 
             local function status(text, time)
                 local inTime = computer.uptime()
