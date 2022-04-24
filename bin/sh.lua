@@ -10,21 +10,24 @@ local process = require("process")
 ----------------------------------
 
 local args = shell.parse(...)
-
 shell.prime()
+
+if not _G.shortcut then
+    function _G.shortcut(_, uuid, _, code)
+        if uuid == term.keyboard() and code == 31 and keyboard.isControlDown() then
+            event.hookCount = 1
+            function _G.foExecute()
+                os.execute("shortcut")
+            end
+        end
+    end
+end
+event.ignore("key_down", _G.shortcut)
 
 ----------------------------------
 
-local shortcut
 local function func(...)
     if #args == 0 then
-        function shortcut(_, uuid, _, code)
-            if uuid == term.keyboard() and code == 31 and keyboard.isControlDown() then
-                event.push("interrupted", 1)
-                event.push("clipboard", uuid, "shortcut\n", "system")
-            end
-        end
-
         local has_profile
         local input_handler = {hint = sh.hintHandler}
         while true do
@@ -39,9 +42,13 @@ local function func(...)
                 io.write(sh.expand(os.getenv("PS1") or "$ "))
             end
             tty.window.cursor = input_handler
-            event.listen("key_down", shortcut)
+
+            event.listen("key_down", _G.shortcut)
             local command = io.stdin:readLine(false)
-            event.ignore("key_down", shortcut)
+            event.ignore("key_down", _G.shortcut)
+
+            if _G.foExecute then _G.foExecute() _G.foExecute = nil end
+            
             tty.window.cursor = nil
             if command then
                 command = text.trim(command)
@@ -66,6 +73,6 @@ local function func(...)
     end
 end
 local tbl = {pcall(func, ...)}
-if shortcut then event.ignore("key_down", shortcut) end
-if not tbl[1] then error(tbl[2] or "unkown") end
+event.ignore("key_down", _G.shortcut)
+if not tbl[1] then error(tbl[2] or "unkown", 0) end
 return table.unpack(tbl, 2)
