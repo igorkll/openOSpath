@@ -74,10 +74,9 @@ if options.f or outData.version > inData.version then
         local mx, my = 50, 16
         if component.isAvailable("tablet") then mx, my = term.gpu().maxResolution() end
         local gui = require("simpleGui2").create(mx, my)
-        local colorPic = require("colorPic")
 
         table.insert(threads, thread.create(function()
-            local color = colorPic.getColors().lightBlue
+            local color = 0x99B2F2
 
             local function status(text, time)
                 local inTime = computer.uptime()
