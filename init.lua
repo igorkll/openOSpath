@@ -126,6 +126,7 @@ end
 if fs.exists(systemautoruns) then --системная автозагрузка
     for _, data in list(systemautoruns) do
         os.execute(fs.concat(systemautoruns, data))
+        computer.pullSignal()
     end
 end
 
@@ -200,10 +201,14 @@ while _G.shellAllow do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
     end)
-    if not result and term.isAvailable() then
-        io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
-        io.write("Press enter key to continue.\n")
-        waitFoEnter()
+    if not result then
+        if term.isAvailable() then
+            io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
+            io.write("Press enter key to continue.\n")
+            waitFoEnter()
+        else
+            computer.pullSignal() --для возможности крашнуть комп с ошибкой
+        end
     end
 end
 io.write("Shell is not allow, press enter key to reboot.\n")
