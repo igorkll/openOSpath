@@ -362,4 +362,8 @@ function lib.getPath()
     end
 end
 
+function lib.isTouchScreen(address)
+    return math.floor(computer.getDeviceInfo()[address].width) ~= 1
+end
+
 return lib

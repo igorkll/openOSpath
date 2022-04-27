@@ -6,6 +6,7 @@ local su = require("superUtiles")
 local thread = require("thread")
 local component = require("component")
 local computer = require("computer")
+local keyboard = require("keyboard")
 
 -----------------------------------------
 
@@ -26,6 +27,8 @@ local function table_remove(tbl, obj)
     end
 end
 
+-----------------------------------------
+
 return {create = function()
     local lib = {}
 
@@ -39,10 +42,14 @@ return {create = function()
     pcall(component.invoke, lib.screen, "setPrecise", false)
     local _, preciseState = pcall(component.invoke, lib.screen, "isPrecise")
 
-    if not _G.touchCursorOn and math.floor(tonumber(computer.getDeviceInfo()[lib.screen].width)) == 1 then
+    lib.noTouch = math.floor(tonumber(computer.getDeviceInfo()[lib.screen].width)) == 1
+
+    --[[
+    if lib.noTouch then
         io.stderr:write("error to open gui, screen in not touchable and 'rc cursor' is not on, run program in clickable screen or run 'rc cursor start'")
         os.exit()
     end
+    ]]
 
     --params
     lib.active = true
@@ -207,6 +214,117 @@ return {create = function()
         return mainObj
     end
 
+    local function createCursor()
+        local obj = {}
+        obj.posX = 1
+        obj.posY = 1
+        obj.pressedButton = false
+    
+        obj.blickState = false
+        function obj.draw()
+            local char, fore, back = lib.gpu.get(obj.posX, obj.posY)
+            lib.gpu.setBackground(0xFFFFFF - back)
+            lib.gpu.setForeground(0xFFFFFF - fore)
+            lib.gpu.set(obj.posX, obj.posY, char)
+            obj.blickState = not obj.blickState
+        end
+
+        function obj.setBlick(state)
+            if obj.blickState ~= state then
+                obj.draw()
+            end
+        end
+
+        function obj.posCheck()
+            local rx, ry = lib.gpu.getResolution()
+            local posChange = false
+            if obj.posX > rx then
+                obj.posX = rx
+                posChange = true
+            elseif obj.posX < 1 then
+                obj.posX = 1
+                posChange = true
+            end
+            if obj.posY > ry then
+                obj.posY = ry
+                posChange = true
+            elseif obj.posY < 1 then
+                obj.posY = 1
+                posChange = true
+            end
+            return posChange
+        end
+
+        obj.thread = lib.createThread(function()
+            while true do
+                obj.draw()
+                local eventName, uuid, char, code, nikname = event.pull(0.5, nil, lib.keyboard)
+                obj.posCheck()
+
+                if keyboard.isControlDown() then
+                    if eventName == "key_down" then
+                        if code == keyboard.keys.up then
+                            event.push("scroll", lib.screen, obj.posX, obj.posY, 1, nikname)
+                        elseif code == keyboard.keys.down then
+                            event.push("scroll", lib.screen, obj.posX, obj.posY, -1, nikname)
+                        end
+                    end
+                else
+                    if eventName == "key_down" then
+                        local posChange = false
+                        if code == keyboard.keys.up then
+                            obj.setBlick(false)
+                            obj.posY = obj.posY - 1
+                            posChange = true
+                        elseif code == keyboard.keys.down then
+                            obj.setBlick(false)
+                            obj.posY = obj.posY + 1
+                            posChange = true
+                        elseif code == keyboard.keys.left then
+                            obj.setBlick(false)
+                            obj.posX = obj.posX - 1
+                            posChange = true
+                        elseif code == keyboard.keys.right then
+                            obj.setBlick(false)
+                            obj.posX = obj.posX + 1
+                            posChange = true
+                        end
+                        if obj.posCheck() then
+                            posChange = false
+                        end
+
+                        if posChange and obj.pressedButton then
+                            event.push("drag", lib.screen, obj.posX, obj.posY, obj.pressedButton, nikname)
+                        end
+                    end
+                    if eventName == "key_down" or eventName == "key_up" then
+                        if not obj.pressedButton or eventName ~= "key_down" then
+                            if code == keyboard.keys.enter then
+                                if eventName == "key_down" then
+                                    event.push("touch", lib.screen, obj.posX, obj.posY, 0, nikname)
+                                    obj.pressedButton = 0
+                                elseif eventName == "key_up" then
+                                    event.push("drop", lib.screen, obj.posX, obj.posY, 0, nikname)
+                                    obj.pressedButton = false
+                                end
+                            elseif code == keyboard.keys.tab then
+                                if eventName == "key_down" then
+                                    event.push("touch", lib.screen, obj.posX, obj.posY, 1, nikname)
+                                    obj.pressedButton = 1
+                                elseif eventName == "key_up" then
+                                    event.push("drop", lib.screen, obj.posX, obj.posY, 1, nikname)
+                                    obj.pressedButton = false
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    
+        return obj
+    end
+
     --scene menager
     lib.scene = nil
     lib.scenes = {}
@@ -216,6 +334,7 @@ return {create = function()
         scene.sceneColor = sceneColor or 0x000000
         scene.sizeX = sizeX or lib.maxX
         scene.sizeY = sizeY or lib.maxY
+        scene.redrawAll = false
 
         function scene.getResolution()
             return scene.sizeX, scene.sizeY
@@ -288,7 +407,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 then lib.redraw() return end
 
                 if obj.drawer then
                     obj.drawer.draw(forceDraw, forceDraw2)
@@ -321,12 +440,12 @@ return {create = function()
                         obj.state = true
                         obj.draw()
                         if obj.soundOn then soundNum(0) end
-                        os.sleep(0.1) --и да я знаю что прерывания в сабытиях это не очень хорошо
+                        computer.sleep(0.1, true) --это не прирывания, а delay сохраняюший эвенты, добовляеться этот метод моим модом для openOS
 
                         obj.state = false
                         obj.draw()
                         if obj.soundOn then soundNum(1) end
-                        os.sleep(0.1)
+                        computer.sleep(0.1, true)
 
                         runCallback(obj.callback, true, false, button, nikname)
                     elseif obj.mode == 1 then
@@ -440,7 +559,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 then lib.redraw() return end
 
                 local back, fore = obj.backColor, obj.foreColor
                 if not obj.state then back, fore = obj.invertBackColor, obj.invertForeColor end
@@ -580,7 +699,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if (not obj.active and not forceDraw) or obj.killed or obj.invisible then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 then lib.redraw() return end
 
                 lib.gpu.setBackground(obj.backColor)
                 lib.gpu.setForeground(obj.foreColor)
@@ -737,7 +856,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if (not obj.active and not forceDraw) or obj.killed then return end
                 if lib.scene ~= scene or lib.block then return end --для корректной ручьной перерисовки
-                if lib.redrawAll and not forceDraw2 and not obj.invisible then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 and not obj.invisible then lib.redraw() return end
 
                 if not obj.invisible then
                     lib.gpu.setBackground(obj.backColor)
@@ -945,7 +1064,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if lib.scene ~= scene or lib.block or obj.invisible then return end --для корректной ручьной перерисовки
                 if (not obj.active and not forceDraw) or obj.killed then return end
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 then lib.redraw() return end
                 obj.button.draw(forceDraw, forceDraw2)
             end
 
@@ -999,7 +1118,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if lib.scene ~= scene or lib.block or obj.invisible then return end --для корректной ручьной перерисовки
                 if (not obj.active and not forceDraw) or obj.killed then return end
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 then lib.redraw() return end
 
                 runCallback(obj.drawer, lib.gpu, obj.posX, obj.posY)
             end
@@ -1081,6 +1200,7 @@ return {create = function()
                     end
                 end
             end
+            obj.windowMenager = windowMenager
 
             function obj.attachObj(posX, posY, tbl)
                 table.insert(obj.objects, {posX, posY, tbl})
@@ -1091,7 +1211,7 @@ return {create = function()
             function obj.draw(forceDraw, forceDraw2)
                 if lib.scene ~= scene or lib.block or obj.invisible then return end --для корректной ручьной перерисовки
                 if (not obj.active and not forceDraw) or obj.killed then return end
-                if lib.redrawAll and not forceDraw2 then lib.redraw() return end
+                if (lib.redrawAll or scene.redrawAll) and not forceDraw2 then lib.redraw() return end
 
                 if obj.color then
                     lib.gpu.setBackground(obj.color)
@@ -1142,7 +1262,7 @@ return {create = function()
             obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, touchX, touchY, button, nik)
                 if lib.block then return end
                 if not obj.active or obj.killed then return end
-                if uuid ~= lib.screen or (button ~= 0 and eventName ~= "scroll") then return end
+                if uuid ~= lib.screen then return end
 
                 if obj.userMove then
                     if eventName == "touch" or eventName == "drag" or eventName == "scroll" then
@@ -1155,6 +1275,7 @@ return {create = function()
                             end
                         end
                     end
+                    if button ~= 0 then return end
                     if eventName == "drop" then
                         obj.isPress = false
                         return
@@ -1193,6 +1314,13 @@ return {create = function()
                 table_remove(scene.objects, obj)
             end
 
+            --for i, v in ipairs(scene.objects) do
+            --    if v.windowSelected then
+            --        v.windowMenager(false)
+            --    end
+            --end
+            --windowMenager(true)
+            
             table.insert(scene.objects, obj)
             return obj
         end
@@ -1208,13 +1336,13 @@ return {create = function()
 
             for i, data in ipairs(scene.objects) do
                 if data.windowSelected == nil then --нет not не подайдет, так как тогда false тоже вернет true
-                    data.draw(not not data.backToClassic, lib.redrawAll) --not not это чтоб boolean были а не таблицы
+                    data.draw(not not data.backToClassic, (lib.redrawAll or scene.redrawAll)) --not not это чтоб boolean были а не таблицы
                 end
             end
 
             for i, data in ipairs(scene.objects) do
                 if data.windowSelected ~= nil then
-                    data.draw(not not data.backToClassic, lib.redrawAll) --not not это чтоб boolean были а не таблицы
+                    data.draw(not not data.backToClassic, (lib.redrawAll or scene.redrawAll)) --not not это чтоб boolean были а не таблицы
                 end
             end
         end
@@ -1246,12 +1374,20 @@ return {create = function()
     end
 
     function lib.select(sceneOrNumber)
+        if not sceneOrNumber then
+            if lib.scene then lib.scene.threadsMenager.stopAll() end
+            lib.scene = nil
+            return
+        end
         if type(sceneOrNumber) == "number" then
             sceneOrNumber = lib.scenes[sceneOrNumber]
         end
-        if lib.scene then lib.scene.threadsMenager.stopAll() end
-        lib.scene = sceneOrNumber
-        if lib.scene then lib.scene.threadsMenager.startAll() end
+
+        if sceneOrNumber ~= lib.scene then
+            if lib.scene then lib.scene.threadsMenager.stopAll() end
+            lib.scene = sceneOrNumber
+            if lib.scene then lib.scene.threadsMenager.startAll() end
+        end
         for i, data in ipairs(lib.scene.openCallbacks) do runCallback(data) end
         lib.redraw()
         lib.startTime = computer.uptime() + 0.2 --фикс паразитного нажатия кнопок при переключении сцен
@@ -1307,7 +1443,7 @@ return {create = function()
     function lib.run()
         lib.start()
         while lib.active do
-            os.sleep()
+            os.sleep(1)
         end
     end
 
@@ -1428,7 +1564,9 @@ return {create = function()
         local oldScene = lib.scene
         lib.select(scene)
         os.sleep(time or 2)
-        lib.select(oldScene)
+        if oldScene then
+            lib.select(oldScene)
+        end
     end
 
     function lib.splash(text, color, time, sx, sy)
@@ -1444,6 +1582,12 @@ return {create = function()
         end
         lib.pushScene(scene)
         scene.remove()
+    end
+
+    -------------------------------------twicks active
+
+    if _G.alwaysUseCourses or lib.noTouch then
+        createCursor()
     end
 
     return lib
