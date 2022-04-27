@@ -80,7 +80,7 @@ elseif args[1] == "shell" then
         end
     end
     print("LUA SHELL")
-    print("network: ", args[1])
+    print("network: ", args[2])
     print("device: ", args[3])
     while true do
         term.write("LUA: ")

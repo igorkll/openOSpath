@@ -2,6 +2,7 @@ local fs = require("filesystem")
 local component = require("component")
 local shell = require("shell")
 local computer = require("computer")
+local su = require("superUtiles")
 
 ----------------------------------
 
@@ -50,6 +51,11 @@ end
 
 if computer.freeMemory() < (1024 * 128) then
     table.insert(warnings, "свободной оперативной памяти мение 128мб(" .. tostring(computer.freeMemory() // 1024) .. "мб) это может привести к сбою")
+end
+
+local data = su.getFile("/free/data/powerWarning")
+if data then
+    table.insert(warnings, "этот компьютер " .. tostring(data) .. " раз завершил свою работу аварийно(не програмно)")
 end
 
 ----------------------------------
