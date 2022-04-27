@@ -8,6 +8,34 @@ local computer = require("computer")
 
 ------------------------------------
 
+if fs.get("/").isReadOnly() then
+    os.execute("error \"drive is readonly\"")
+end
+
+local function updateValue(path)
+    if fs.exists(path) then
+        local count = tonumber(su.getFile(path))
+        count = count + 1
+        su.saveFile(path, tostring(count))
+    else
+        su.saveFile(path, "1")
+    end
+end
+
+updateValue("/free/data/powerOnCount")
+
+if fs.exists("/free/flags/powerOn") then
+    updateValue("/free/data/powerWarning")
+else
+    su.saveFile("/free/flags/powerOn", "")
+end
+event.listen("shutdown", function()
+    fs.remove("/free/flags/powerOn")
+    updateValue("/free/data/likePowerOffCount")
+end)
+
+------------------------------------
+
 function _G.saveSystemConfig()
     su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg"}))
 end
@@ -29,16 +57,13 @@ function _G.updateNoInternetScreen()
     local gui = require("simpleGui2").create(rx, ry)
     local color = 0x6699FF
 
-    while true do
-        gui.status("при предидушем обновлениия произошла ошибка", 0xFFFFFF, color)
-        os.sleep(2)
-        gui.status("подлючите internet card, чтобы все исправить", 0xFFFFFF, color)
-        os.sleep(2)
-        gui.status("убедитесь что реальный пк подключен к интернету", 0xFFFFFF, color)
-        os.sleep(2)
-        gui.status("после испровления подключения перезагрузите", 0xFFFFFF, color)
-        os.sleep(2)
-    end
+    gui.status("при предидушем обновлениия произошла ошибка", 0xFFFFFF, color)
+    os.sleep(2)
+    gui.status("подлючите internet card, чтобы все исправить", 0xFFFFFF, color)
+    os.sleep(2)
+    gui.status("убедитесь что реальный пк подключен к интернету", 0xFFFFFF, color)
+    os.sleep(2)
+    computer.shutdown()
 end
 
 ------------------------------------
