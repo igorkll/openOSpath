@@ -5,12 +5,17 @@ local event = require("event")
 local component = require("component")
 local term = require("term")
 local computer = require("computer")
+local shell = require("shell")
 
 ------------------------------------
 
-if fs.get("/").isReadOnly() then
+if fs.exists("/free/flags/error") then
+    shell.execute("error", _ENV, su.getFile("/free/flags/error"))
+elseif fs.get("/").isReadOnly() then
     os.execute("error \"drive is readonly\"")
 end
+
+------------------------------------
 
 local function updateValue(path)
     if fs.exists(path) then
