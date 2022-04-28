@@ -363,7 +363,10 @@ function lib.getPath()
 end
 
 function lib.isTouchScreen(address)
-    return math.floor(computer.getDeviceInfo()[address].width) ~= 1
+    local inf = computer.getDeviceInfo()
+    local dat = math.floor(inf[address].width) ~= 1
+    inf = nil
+    return dat
 end
 
 return lib
