@@ -13,7 +13,7 @@ local gpu = term.gpu()
 
 local args, options = shell.parse(...)
 
-local mainMessage = "The system has been destroyed" .. ((args[1] and (" (" .. args[1] .. ")")) or "")
+local mainMessage = "Fatal error" .. ((args[1] and (" (" .. args[1] .. ")")) or "")
 if not term.isAvailable() then
     computer.pullSignal = function()
         error(mainMessage, 0)
