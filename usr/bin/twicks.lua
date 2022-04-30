@@ -1,165 +1,8 @@
+local gui = require("simpleGui3").create()
 local su = require("superUtiles")
 local fs = require("filesystem")
-local regFile = require("regFile")
-
--------------------------------------------------
-
-local unloadTwicks = [[
-    local su = require("superUtiles")
-    local fs = require("filesystem")
-    local trashData = require("trashData")
-
-    local twicksPath = "/usr/twicks"
-    local twicksFlagsPath = "/free/twicks/active"
-    fs.makeDirectory(twicksPath)
-
-    local function isEnabled(name)
-        return fs.exists(fs.concat(twicksFlagsPath, name))
-    end
-
-    local function getError(err)
-        return err or "unknown error"
-    end
-    
-    local function disable(name)
-        if not isEnabled(name) then return end
-
-        local func, err = loadfile(fs.concat(twicksPath, name))
-        if not func then
-            error("error from load twick: " .. getError(err))
-            return
-        end
-        local ok, err = pcall(func, false)
-        if not ok then
-            error("error to run twick: " .. getError(err))
-            return
-        end
-        fs.remove(fs.concat(twicksFlagsPath, name))
-        return true
-    end
-
-    local function twicks(state)
-        local tbl = {}
-        if state == nil then
-            for file in fs.list(twicksPath) do
-                table.insert(tbl, file)
-            end
-        elseif state == true then
-            for file in fs.list(twicksPath) do
-                local fullPath = fs.concat(twicksFlagsPath, file)
-                if fs.exists(fullPath) then
-                    table.insert(tbl, file)
-                end
-            end
-        elseif state == false then
-            for file in fs.list(twicksPath) do
-                local fullPath = fs.concat(twicksFlagsPath, file)
-                if not fs.exists(fullPath) then
-                    table.insert(tbl, file)
-                end
-            end
-        else
-            error("unsupported mode")
-        end
-    
-        return tbl
-    end
-
-    local tbl = trashData.pullPlus("enablesTwicks", {})
-
-    for i, v in ipairs(twicks(true)) do
-        disable(v)
-        table.insert(tbl, v)
-        trashData.push("enablesTwicks", tbl)
-    end
-]]
-
-local loadTwicks = [[
-    local su = require("superUtiles")
-    local fs = require("filesystem")
-    local trashData = require("trashData")
-
-    local twicksPath = "/usr/twicks"
-    local twicksFlagsPath = "/free/twicks/active"
-    fs.makeDirectory(twicksPath)
-
-    local function isEnabled(name)
-        return fs.exists(fs.concat(twicksFlagsPath, name))
-    end
-
-    local function getError(err)
-        return err or "unknown error"
-    end
-    
-    local function enable(name)
-        if isEnabled(name) then return end
-    
-        local func, err = loadfile(fs.concat(twicksPath, name))
-        if not func then
-            error("error from load twick: " .. getError(err))
-            return
-        end
-        local ok, err = pcall(func, true)
-        if not ok then
-            error("error to run twick: " .. getError(err))
-            return
-        end
-        su.saveFile(fs.concat(twicksFlagsPath, name), "")
-        return true
-    end
-
-    local function twicks(state)
-        local tbl = {}
-        if state == nil then
-            for file in fs.list(twicksPath) do
-                table.insert(tbl, file)
-            end
-        elseif state == true then
-            for file in fs.list(twicksPath) do
-                local fullPath = fs.concat(twicksFlagsPath, file)
-                if fs.exists(fullPath) then
-                    table.insert(tbl, file)
-                end
-            end
-        elseif state == false then
-            for file in fs.list(twicksPath) do
-                local fullPath = fs.concat(twicksFlagsPath, file)
-                if not fs.exists(fullPath) then
-                    table.insert(tbl, file)
-                end
-            end
-        else
-            error("unsupported mode")
-        end
-    
-        return tbl
-    end
-
-    local tbl = trashData.pullPlus("enablesTwicks", {})
-
-    for i, v in ipairs(tbl) do
-        enable(v)
-    end
-
-    trashData.push("enablesTwicks", nil)
-]]
-
-if not fs.exists("/usr/twickMenager/unload.lua") then
-    su.saveFile("/usr/twickMenager/unload.lua", unloadTwicks)
-end
-
-if not fs.exists("/usr/twickMenager/load.lua") then
-    su.saveFile("/usr/twickMenager/load.lua", loadTwicks)
-end
-
-regFile.checkReg("/beforeUpdate.lua", "/usr/twickMenager/unload.lua")
-regFile.checkReg("/afterUpdate.lua", "/usr/twickMenager/load.lua")
-
--------------------------------------------------
-
-local twicksPath = "/usr/twicks"
-local twicksFlagsPath = "/free/twicks/active"
-fs.makeDirectory(twicksPath)
+local computer = require("computer")
+local twicks = require("twicks")
 
 -------------------------------------------------
 
@@ -169,103 +12,92 @@ end
 
 -------------------------------------------------
 
-local lib = {}
+local function control(state)
+    local num
+    while true do
+        local names = twicks.twicks(state)
 
-function lib.twicks(state)
-    local tbl = {}
-    if state == nil then
-        for file in fs.list(twicksPath) do
-            table.insert(tbl, file)
+        local strs = {}
+        for i, v in ipairs(names) do
+            table.insert(strs, v .. ", state: " .. tostring(twicks.isEnabled(v)))
         end
-    elseif state == true then
-        for file in fs.list(twicksPath) do
-            local fullPath = fs.concat(twicksFlagsPath, file)
-            if fs.exists(fullPath) then
-                table.insert(tbl, file)
+        table.insert(strs, "back")
+
+        num = gui.menu("twicks", strs, num)
+        local name = names[num]
+        if not name then
+            return
+        end
+
+        local num2
+        while true do
+            num2 = gui.menu("control twick: " .. name .. ", state: " .. tostring(twicks.isEnabled(name)), {(twicks.isEnabled(name) and "disable" or "enable") .. " & reboot", "remove" .. (twicks.isEnabled(name) and " & reboot" or ""), "back"}, num2)
+            if num2 == 1 then
+                if twicks.changeState(name) then
+                    computer.shutdown(true)
+                end
+            elseif num2 == 2 then
+                if twicks.remove(name) then
+                    computer.shutdown(true)
+                end
+                break
+            elseif num2 == 3 then
+                break
             end
         end
-    elseif state == false then
-        for file in fs.list(twicksPath) do
-            local fullPath = fs.concat(twicksFlagsPath, file)
-            if not fs.exists(fullPath) then
-                table.insert(tbl, file)
+    end
+end
+
+local function market()
+    if not su.isInternet() then
+        gui.status("internet error", true)
+        return
+    end
+    local data = assert(su.getInternetFile("https://raw.githubusercontent.com/igorkll/twicksForMod/main/twlist.txt"))
+    local splitdata = su.split(data, "\n")
+
+    local links = {}
+    local names = {}
+    for i, v in ipairs(splitdata) do
+        local link, name = table.unpack(su.split(v, ";"))
+        table.insert(links, link)
+        table.insert(names, name)
+    end
+    table.insert(names, "back")
+
+    local num
+    while true do
+        num = gui.menu("market", names, num)
+        local name = names[num]
+        local link = links[num]
+        if not link then return end
+
+        if twicks.isInstalled(name) then
+            gui.status("this twick installed", true)
+        else
+            local num2 = gui.menu("download twick " .. name .. "?", {"download", "back"})
+            if num2 == 1 then
+                local data = assert(su.getInternetFile(link))
+                twicks.insert(name, data)
             end
         end
-    else
-        error("unsupported mode")
-    end
-
-    return tbl
-end
-
-function lib.isEnabled(name)
-    return fs.exists(fs.concat(twicksFlagsPath, name))
-end
-
-function lib.isInstalled(name)
-    return fs.exists(fs.concat(twicksPath, name))
-end
-
-function lib.enable(name)
-    if lib.isEnabled(name) then return end
-
-    local func, err = loadfile(fs.concat(twicksPath, name))
-    if not func then
-        error("error from load twick: " .. getError(err))
-        return
-    end
-    local ok, err = pcall(func, true)
-    if not ok then
-        error("error to run twick: " .. getError(err))
-        return
-    end
-    su.saveFile(fs.concat(twicksFlagsPath, name), "")
-    return true
-end
-
-function lib.disable(name)
-    if not lib.isEnabled(name) then return end
-
-    local func, err = loadfile(fs.concat(twicksPath, name))
-    if not func then
-        error("error from load twick: " .. getError(err))
-        return
-    end
-    local ok, err = pcall(func, false)
-    if not ok then
-        error("error to run twick: " .. getError(err))
-        return
-    end
-    fs.remove(fs.concat(twicksFlagsPath, name))
-    return true
-end
-
-function lib.remove(name)
-    if lib.isEnabled(name) then
-        if lib.disable(name) then
-            fs.remove(fs.concat(twicksPath, name))
-            return true --твик был выключен а не просто удален
-        end
-    else
-        fs.remove(fs.concat(twicksPath, name))
     end
 end
 
-function lib.insert(name, data)
-    if not fs.exists(fs.concat(twicksPath, name)) then
-        su.saveFile(fs.concat(twicksPath, name), data)
-        return true
-    else
-        return nil, "this twick installed"
+-------------------------------------------------
+
+local num
+while true do
+    num = gui.menu("twick menager", {"downloaded", "market", "enabled", "disabled", "back"}, num)
+    if num == 1 then
+        control()
+    elseif num == 2 then
+        market()
+    elseif num == 3 then
+        control(true)
+    elseif num == 4 then
+        control(false)
+    elseif num == 5 then
+        gui.exit()
     end
 end
-
-function lib.changeState(name)
-    if lib.isEnabled(name) then
-        return lib.disable(name)
-    else
-        return lib.enable(name)
-    end
-end
-
-return lib
