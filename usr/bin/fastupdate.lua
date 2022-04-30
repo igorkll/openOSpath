@@ -94,6 +94,21 @@ if options.f or outData.version > inData.version then
     end
     local oldSuperHookState = event.superHook
     event.superHook = false
+
+    local ok, err = pcall(dofile, "/beforeUpdate.lua") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
+    if not ok then
+        if not err then err = "unkown" end
+        su.logTo("/free/logs/beforeUpdateError.log", err)
+        
+        if not options.t then
+            print(err)
+        end
+        
+        for _, t in ipairs(threads) do t:kill() end
+        event.superHook = oldSuperHookState
+        return nil, err
+    end
+
     if not options.a then su.saveFile("/free/flags/updateStart", "") end
     os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
     local ok, err = pcall(dofile, "/tmp/getinstaller.lua", url, "/", "-q") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
@@ -107,6 +122,7 @@ if options.f or outData.version > inData.version then
             return nil, err
         end
     end
+
     if not options.a then
         su.saveFile("/free/flags/updateEnd", "")
         fs.remove("/free/flags/updateStart")

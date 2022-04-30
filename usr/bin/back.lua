@@ -32,7 +32,7 @@ if args[1] == "load" then
         programmArgs[#programmArgs + 1] = args[i]
     end
 
-    local path = shell.resolve(args[2])
+    local path = shell.resolve(args[2], "lua")
     local data = assert(su.getFile(path))
     data = su.modProgramm(data)
     local func = assert(load(data))
