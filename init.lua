@@ -126,7 +126,6 @@ end
 if fs.exists(systemautoruns) then --системная автозагрузка
     for _, data in list(systemautoruns) do
         os.execute(fs.concat(systemautoruns, data))
-        computer.pullSignal()
     end
 end
 
