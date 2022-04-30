@@ -2,6 +2,7 @@ local event = require("event")
 local fs = require("filesystem")
 local shell = require("shell")
 local tmp = require("computer").tmpAddress()
+local computer = require("computer")
 
 local pendingAutoruns = {}
 
@@ -49,7 +50,9 @@ end
 
 local function onComponentRemoved(_, address, componentType)
     if componentType == "filesystem" then
-        if fs.get(shell.getWorkingDirectory()).address == address then
+        if fs.get("/").address == address then
+            computer.shutdown()
+        elseif fs.get(shell.getWorkingDirectory()).address == address then
             shell.setWorkingDirectory("/")
         end
         fs.umount(address)
