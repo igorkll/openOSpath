@@ -9,10 +9,12 @@ local shell = require("shell")
 
 ------------------------------------
 
-if fs.exists("/free/flags/error") then
-    shell.execute("error", _ENV, su.getFile("/free/flags/error"))
-elseif fs.get("/").isReadOnly() then
-    os.execute("error \"drive is readonly\"")
+if not _G.recoveryMod then
+    if fs.exists("/free/flags/error") then
+        shell.execute("error", _ENV, su.getFile("/free/flags/error"))
+    elseif fs.get("/").isReadOnly() then
+        os.execute("error \"drive is readonly\"")
+    end
 end
 
 ------------------------------------
@@ -77,17 +79,19 @@ end
 
 _G.updateRepo = systemCfg.updateRepo
 
-local isInternet = su.isInternet()
-if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
-    if fs.exists("/free/flags/updateStart") then
-        if isInternet then
-            os.execute("fastupdate -f")
+if not _G.recoveryMod then
+    local isInternet = su.isInternet()
+    if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
+        if fs.exists("/free/flags/updateStart") then
+            if isInternet then
+                os.execute("fastupdate -f")
+            else
+                _G.updateNoInternetScreen()
+            end
         else
-            _G.updateNoInternetScreen()
-        end
-    else
-        if isInternet then
-            os.execute("fastupdate")
+            if isInternet then
+                os.execute("fastupdate")
+            end
         end
     end
 end
