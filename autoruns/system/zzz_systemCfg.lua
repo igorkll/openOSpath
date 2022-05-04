@@ -6,6 +6,25 @@ local component = require("component")
 local term = require("term")
 local computer = require("computer")
 local shell = require("shell")
+local uuid = require("uuid")
+
+------------------------------------
+
+if not fs.exists("/free/unical/systemUuid") then
+    su.saveFile("/free/unical/systemUuid", uuid.next())
+end
+
+if not fs.exists("/free/unical/deviceType") then
+    local function getType(checkType)
+        local _, c = component.list(checkType)()
+        return c
+    end
+    su.saveFile("/free/unical/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
+end
+
+if not fs.exists("/free/unical/deviceAddress") then
+    su.saveFile("/free/unical/deviceAddress", computer.address())
+end
 
 ------------------------------------
 
