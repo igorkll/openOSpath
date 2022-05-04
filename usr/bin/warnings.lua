@@ -24,10 +24,6 @@ if fs.isAutorunEnabled() then
     table.insert(warnings, "внешняя автозагрузка включена, это очень не безопастно и любой наситель сможет причинить устройству вред")
 end
 
-if componentCount("keyboard") > 1 then
-    table.insert(warnings, "с модом для openOS несколько клавиатур не имеет смысла(если они подключены к одному монитору)")
-end
-
 if componentCount("internet") > 1 then
     table.insert(warnings, "нет необходимости в устоновки нескольких интернет плат")
 end
