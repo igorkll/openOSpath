@@ -57,7 +57,7 @@ function lib.menu(label, strs, num, back, fore)
                 invert()
             else
                 setText(label, 1 + dy)
-                setColor(nil, su.selectColor(nil, 0x888888, 0xAAAAAA, false))
+                setColor(nil, su.selectColor(nil, 0x888888, 0x222222, false))
             end
         else
             dy = 0

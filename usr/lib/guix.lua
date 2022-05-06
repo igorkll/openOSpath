@@ -440,12 +440,12 @@ return {create = function()
                         obj.state = true
                         obj.draw()
                         if obj.soundOn then soundNum(0) end
-                        computer.sleep(0.1, true) --это не прирывания, а delay сохраняюший эвенты, добовляеться этот метод моим модом для openOS
+                        computer.delay(0.1) --это не прирывания, а delay сохраняюший эвенты, добовляеться этот метод моим модом для openOS
 
                         obj.state = false
                         obj.draw()
                         if obj.soundOn then soundNum(1) end
-                        computer.sleep(0.1, true)
+                        computer.delay(0.1)
 
                         runCallback(obj.callback, true, false, button, nikname)
                     elseif obj.mode == 1 then
@@ -473,7 +473,7 @@ return {create = function()
                 end
             end)
 
-            obj.listens[#obj.listens + 1] = scene.createListen("drop", function(_, uuid, posX, posY, button)
+            obj.listens[#obj.listens + 1] = scene.createListen("drop", function(_, uuid, posX, posY, button, nikname)
                 if not obj.active or obj.killed then return end
                 if lib.block then return end
                 if uuid == lib.screen then

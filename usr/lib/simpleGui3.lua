@@ -28,7 +28,7 @@ return {create = function()
 
     lib.blackColor = 0
     lib.whiteColor = 0xFFFFFF
-    lib.grayColor = lib.selectColor(0x888888, 0xAAAAAA, false)
+    lib.grayColor = lib.selectColor(0x888888, 0x222222, false)
 
     function lib.setColor(back, fore)
         lib.gpu.setBackground(back or lib.whiteColor)
