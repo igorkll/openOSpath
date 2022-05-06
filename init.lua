@@ -35,6 +35,7 @@ do --для таблиц в event
 end
 
 do --спяший режим
+    local computer = computer
     local computer_pullSignal = computer.pullSignal
     local computer_pushSignal = computer.pushSignal
     local computer_uptime = computer.uptime
@@ -60,6 +61,10 @@ do --спяший режим
         if not doNotCorectUptime then
             uptimeAdd = uptimeAdd - (computer_uptime() - inTime)
         end
+    end
+
+    function computer.delay(time)
+        computer.sleep(time, true, true)
     end
 end
 
