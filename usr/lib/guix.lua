@@ -16,6 +16,7 @@ local function orValue(value, standart)
 end
 
 local function runCallback(callback, ...)
+    if not callback then return true end
     return xpcall(callback, function(str) event.onError(str) end, ...)
 end
 
@@ -1041,10 +1042,16 @@ return {create = function()
                     setText()
                     lib.redraw()
                     obj.used = false
+                    obj.ok = true
                 end)
                 scene.createTimer(1, function()
                     if not obj.used then
-                        runCallback(obj.callback, obj.userInput, nikname)
+                        if obj.ok then
+                            obj.ok = nil
+                            runCallback(obj.callback, obj.userInput, nikname)
+                        else
+                            runCallback(obj.cancel, nikname)
+                        end
                         return false
                     end
                 end)

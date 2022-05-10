@@ -20,14 +20,14 @@ lib.getPathValue = function(path)
 end
 
 lib.rePath = function(path, fspath)
-    path = fs.canonical(path)
+    fspath = fs.canonical(fspath)
     local new = fs.concat(path, fspath)
-    if unicode.sub(new, 1, unicode.len(path)) ~= path then error("out side in box") return end
+    if unicode.sub(new, 1, unicode.len(path)) ~= path then new = path end
     return new
 end
 
 lib.createFS = function(path, label, classic)
-    local path = path
+    local path = fs.canonical(path)
     local label = label or "sandbox"
     local classic = classic or false
     local obj = {}
