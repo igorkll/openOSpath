@@ -160,6 +160,10 @@ lib.saveGpu = function(gpuAddress)
     local fore, isPalF = gpu.getForeground()
     local screen = gpu.getScreen()
     local depth = gpu.getDepth()
+    local pallete = {}
+    for i = 0, 15 do
+        pallete[i] = gpu.getPaletteColor(i)
+    end
 
     return function()
         if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
@@ -168,6 +172,11 @@ lib.saveGpu = function(gpuAddress)
         gpu.setDepth(depth)
         gpu.setBackground(back, isPalB)
         gpu.setForeground(fore, isPalF)
+        for i = 0, 15 do
+            if pallete[i] then
+                gpu.setPaletteColor(i, pallete[i])
+            end
+        end
     end
 end
 

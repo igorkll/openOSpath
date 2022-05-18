@@ -1044,7 +1044,7 @@ return {create = function()
                     obj.used = false
                     obj.ok = true
                 end)
-                scene.createTimer(1, function()
+                scene.createTimer(0.2, function()
                     if not obj.used then
                         if obj.ok then
                             obj.ok = nil
@@ -1593,7 +1593,7 @@ return {create = function()
 
     -------------------------------------twicks active
 
-    if _G.alwaysUseCourses or lib.noTouch then
+    if (_G.alwaysUseCourses or lib.noTouch) and not _G.rcCursor then
         createCursor()
     end
 
