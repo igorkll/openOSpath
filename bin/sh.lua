@@ -55,7 +55,7 @@ local function func(...)
                 if command == "exit" then
                     return
                 elseif command ~= "" then
-                    local result, reason = sh.execute(_ENV, command)
+                    local result, reason = sh.execute(nil, command)
                     if not result then
                         io.stderr:write((reason and tostring(reason) or "unknown error") .. "\n")
                     end
