@@ -2,10 +2,10 @@ local event = require("event")
 local component = require("component")
 local computer = require("computer")
 local term = require("term")
-local unicode = require("unicode") 
+local unicode = require("unicode")
 local shell = require("shell")
 
-------------------------------------
+------------------------------------asdasdad
 
 local args, options = shell.parse(...)
 
