@@ -19,7 +19,7 @@ local function autorun(_, address)
     if (not fs.exists("/etc/filesystem.cfg") or fs.isAutorunEnabled()) and (address ~= fs.get("/").address) and (tmp ~= address) and _G.externalAutoruns then
         local function run(file)
             if file then
-                local run = {file, _ENV, proxy}
+                local run = {file, nil, proxy}
                 if pendingAutoruns then
                     table.insert(pendingAutoruns, run)
                 else

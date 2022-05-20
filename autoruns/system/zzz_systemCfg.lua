@@ -37,7 +37,7 @@ su.saveFile("/free/current/deviceType", getType("tablet") or getType("robot") or
 
 if not _G.recoveryMod then
     if fs.exists("/free/flags/error") then
-        shell.execute("error", _ENV, su.getFile("/free/flags/error"))
+        shell.execute("error", nil, su.getFile("/free/flags/error"))
     elseif fs.get("/").isReadOnly() then
         --os.execute("error \"drive is readonly\"")
     end
@@ -70,7 +70,7 @@ end)
 ------------------------------------
 
 function _G.saveSystemConfig()
-    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg"}))
+    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}))
 end
 
 if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
@@ -102,6 +102,40 @@ end
 ------------------------------------
 
 --os.execute("lock -c")
+
+if _G.systemCfg.logo and term.isAvailable() then
+    local img
+    local gpu = term.gpu()
+    if math.floor(gpu.getDepth()) ~= 1 then
+        if fs.exists("/etc/logo.pic") then
+            img = require("imageDrawer").loadimage("/etc/logo.pic")
+        elseif fs.exists("/etc/logoBW.pic") then
+            img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+        end
+    else
+        if fs.exists("/etc/logoBW.pic") then
+            img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+        elseif fs.exists("/etc/logo.pic") then
+            img = require("imageDrawer").loadimage("/etc/logo.pic")
+        end
+    end
+    if img then
+        local rx, ry = gpu.getResolution()
+        local cx, cy = img.getSize()
+        cx, cy = (rx // 2) - (cx // 2), (ry // 2) - (cy // 2)
+        img.draw(cx, cy)
+    end
+end
+if _G.systemCfg.startSound and fs.exists("/etc/startSound.mid") then
+    local function beep(n, d)
+        if component.isAvailable("beep") then
+            component.beep.beep({[n] = d})
+        else
+            computer.beep(n, d)
+        end
+    end
+    require("midi2").create("/etc/startSound.mid", {beep}).play()
+end
 
 _G.updateRepo = systemCfg.updateRepo
 

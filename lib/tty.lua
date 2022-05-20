@@ -29,8 +29,9 @@ local function drawImageCureent()
 
     local rx, ry = tty.getViewport()
     local sx, sy = image.getSize()
-    rx = (rx // 2) - (sx // 2)
-    ry = (ry // 2) - (sy // 2)
+    rx = math.ceil((rx / 2) - (sx / 2))
+    ry = math.ceil((ry / 2) - (sy / 2))
+    if rx <= 0 or ry <= 0 then rx = 1 ry = 1 end
     clearImage()
     currentScreenShot = screenShot.pull(rx, ry, sx, sy)
     
@@ -40,15 +41,19 @@ end
 
 local mainImagePath = "/etc/image.pic"
 local currentImagePath = "/etc/logo.pic"
+local drawOff = true
 
 local function drawImage()
+  if drawOff then return end
   setImage(currentImagePath)
   drawImageCureent()
 end
 _G.drawImage = drawImage
 event.listen("full_load", function()
-  currentImagePath = mainImagePath
-  drawImage()
+  --currentImagePath = mainImagePath
+  drawOff = true
+  clearImage()
+  --drawImage()
   return false
 end)
 
