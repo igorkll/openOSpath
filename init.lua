@@ -201,6 +201,7 @@ local function waitFoEnter()
     end
 end
 
+event.push("full_load")
 while _G.shellAllow do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()

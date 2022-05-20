@@ -100,8 +100,8 @@ function shell.resolve(path, ext)
       -- extensions are provided when the caller is looking for a file
       if fs.exists(search_name) then
         if fs.isDirectory(search_name) then
-          if fs.exists(fs.concat(search_name, "main.lua")) then
-            return fs.concat(search_name, "main.lua")
+          if fs.exists(fs.concat(search_name, "main." .. ext)) then
+            return fs.concat(search_name, "main." .. ext)
           end
         else
           return search_name

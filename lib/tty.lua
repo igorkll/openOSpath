@@ -2,8 +2,56 @@ local unicode = require("unicode")
 local event = require("event")
 local component = require("component")
 local computer = require("computer")
+local fs = require("filesystem")
 
 local tty = {}
+
+local image, currentScreenShot, imagePath
+
+local function setImage(path)
+  if fs.exists(path) and imagePath ~= path then
+    imagePath = path
+    local imageDrawer = require("imageDrawer")
+    image = imageDrawer.loadimage(path)
+  elseif not fs.exists(path) then
+    image = nil
+    imagePath = nil
+  end
+end
+
+local function clearImage()
+  if currentScreenShot then currentScreenShot() currentScreenShot = nil end
+end
+
+local function drawImageCureent()
+  if image then
+    local screenShot = require("screenShot")
+
+    local rx, ry = tty.getViewport()
+    local sx, sy = image.getSize()
+    rx = (rx // 2) - (sx // 2)
+    ry = (ry // 2) - (sy // 2)
+    clearImage()
+    currentScreenShot = screenShot.pull(rx, ry, sx, sy)
+    
+    image.draw(rx, ry)
+  end
+end
+
+local mainImagePath = "/etc/image.pic"
+local currentImagePath = "/etc/logo.pic"
+
+local function drawImage()
+  setImage(currentImagePath)
+  drawImageCureent()
+end
+_G.drawImage = drawImage
+event.listen("full_load", function()
+  currentImagePath = mainImagePath
+  drawImage()
+  return false
+end)
+
 tty.window =
 {
   fullscreen = true,
@@ -280,8 +328,10 @@ function tty.stream.scroll(lines)
   local box_height = height - abs_lines
   local fill_top = dy + 1 + (lines < 0 and 0 or box_height)
 
+  clearImage()
   gpu.copy(dx + 1, dy + 1 + math.max(0, lines), width, box_height, 0, -lines)
   gpu.fill(dx + 1, fill_top, width, abs_lines, ' ')
+  drawImage()
 
   tty.setCursor(x, math.max(1, math.min(y, height)))
   return lines
