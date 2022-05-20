@@ -226,6 +226,9 @@ end
 local background = selectColor(0x666666, 0x222222, false)
 
 local objs = {}
+local function getPosFor(num)
+    return ((ry // 2) - (#objs // 2)) + num
+end
 
 local function getPosX(text)
     return ((rx // 2) - (unicode.len(text) // 2)) + 1
@@ -240,9 +243,8 @@ local function setText(text, posY, sizeX)
 end
 
 local function drawAll()
-    local posY = math.floor((ry / 2) - (#objs / 2))
     for i, v in ipairs(objs) do
-        local posY = (posY + i) - 1
+        local posY = getPosFor(i)
         gpu.setBackground(background)
         gpu.fill(1, posY, rx, posY, " ")
         v.draw(posY)
@@ -251,16 +253,14 @@ end
 
 local pointPos
 local function checkUsed(eventData)
-    local posY = math.floor((((ry / 2) - (#objs / 2))) + selectButton) - 1
-    
-    local obj = objs[selectButton]
     if eventData[1] == "key_down" then
+        local posY = getPosFor(selectButton)
         if eventData[4] == 28 or eventData[4] == 57 then
-            obj.use()
+            objs[selectButton].use()
         end
     elseif eventData[1] == "touch" then
         for i, v in ipairs(objs) do
-            local posY = math.floor((((ry / 2) - (#objs / 2))) + i) - 1
+            local posY = getPosFor(i)
             if math.floor(eventData[4]) == posY and (v.start and (math.floor(eventData[3]) >= v.start and math.floor(eventData[3]) <= v.stop) or math.floor(eventData[3]) == pointPos) then
                 v.use()
             end

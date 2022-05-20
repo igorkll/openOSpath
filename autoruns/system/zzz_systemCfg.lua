@@ -10,15 +10,18 @@ local uuid = require("uuid")
 
 ------------------------------------
 
+_G.readonly = fs.get("/").isReadOnly()
+
 if not fs.exists("/free/unical/systemUuid") then
     su.saveFile("/free/unical/systemUuid", uuid.next())
 end
 
+local function getType(checkType)
+    local _, c = component.list(checkType)()
+    return c
+end
+
 if not fs.exists("/free/unical/deviceType") then
-    local function getType(checkType)
-        local _, c = component.list(checkType)()
-        return c
-    end
     su.saveFile("/free/unical/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
 end
 
@@ -26,13 +29,17 @@ if not fs.exists("/free/unical/deviceAddress") then
     su.saveFile("/free/unical/deviceAddress", computer.address())
 end
 
+su.saveFile("/free/current/systemUuid", uuid.next())
+su.saveFile("/free/current/deviceAddress", computer.address())
+su.saveFile("/free/current/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
+
 ------------------------------------
 
 if not _G.recoveryMod then
     if fs.exists("/free/flags/error") then
         shell.execute("error", _ENV, su.getFile("/free/flags/error"))
     elseif fs.get("/").isReadOnly() then
-        os.execute("error \"drive is readonly\"")
+        --os.execute("error \"drive is readonly\"")
     end
 end
 
@@ -98,7 +105,7 @@ end
 
 _G.updateRepo = systemCfg.updateRepo
 
-if not _G.recoveryMod then
+if not _G.recoveryMod and not _G.readonly then
     local isInternet = su.isInternet()
     if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
         if fs.exists("/free/flags/updateStart") then

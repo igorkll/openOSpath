@@ -2,6 +2,7 @@ local event = require("event")
 local networks = require("networks")
 local fs = require("filesystem")
 local proxyFS = require("proxyFS")
+local su = require("superUtiles")
 
 -----------------------------------
 
@@ -62,82 +63,82 @@ function lib.create(network, index, folder, readonly, maxSize, freeSize, maxFile
 
     -----------------------------------
 
-    local function listen(_, net, mainkey, index, side, command, ...)
+    local function listen(_, net, mainkey, index, unicalCode, side, command, ...)
         if net == obj.network.name and mainkey == appkey and index == obj.index and side == "call" then
             local arg = {...}
             if command == "open" then
                 local path, mode = arg[1], arg[2]
                 local isWrite = mode:sub(1, 1) == "w"
-                if obj.readonly and isWrite then returnValue(nil, "filesystem is readonly") return end
-                if not openFileAllow(isWrite) then returnValue(nil, "open in not allow") return end
+                if obj.readonly and isWrite then returnValue(unicalCode, nil, "filesystem is readonly") return end
+                if not openFileAllow(isWrite) then returnValue(unicalCode, nil, "open in not allow") return end
 
                 local file, err = obj.proxyFS.open(path, mode)
-                if not file then returnValue(nil, err) return end
+                if not file then returnValue(unicalCode, nil, err) return end
 
                 table.insert(obj.openFiles, file)
-                returnValue(#obj.openFiles)
+                returnValue(unicalCode, #obj.openFiles)
             elseif command == "close" then
                 local index = arg[1]
                 local file = obj.openFiles[index]
-                if not file then returnValue(nil, "file is not open") return end
+                if not file then returnValue(unicalCode, nil, "file is not open") return end
                 file:close()
                 table.remove(obj.openFiles, index)
-                returnCommand("nup")
+                returnCommand(unicalCode, "nup")
             elseif command == "read" then
                 local index, num = arg[1], arg[2]
                 local file = obj.openFiles[index]
-                if not file then returnValue(nil, "file is not open") return end
-                returnValue(file:read(num))
+                if not file then returnValue(unicalCode, nil, "file is not open") return end
+                returnValue(unicalCode, file:read(num))
             elseif command == "write" then
                 local index, data = arg[1], arg[2]
                 local file = obj.openFiles[index]
 
-                if not file then returnValue(nil, "file is not open") return end
-                if not openFileAllow(true) then returnValue(nil, "write in not allow") return end
+                if not file then returnValue(unicalCode, nil, "file is not open") return end
+                if not openFileAllow(true) then returnValue(unicalCode, nil, "write in not allow") return end
 
-                returnValue(file:write(data))
+                returnValue(unicalCode, file:write(data))
             elseif command == "seek" then
                 local index, data1, data2 = arg[1], arg[2], arg[3]
                 local file = obj.openFiles[index]
-                if not file then returnValue(nil, "file is not open") return end
-                returnValue(file:seek(data1, data2))
+                if not file then returnValue(unicalCode, nil, "file is not open") return end
+                returnValue(unicalCode, file:seek(data1, data2))
             elseif command == "spaceUsed" then
-                returnValue(getFS().spaseUsed())
+                returnValue(unicalCode, getFS().spaseUsed())
             elseif command == "spaceTotal" then
-                returnValue(getFS().spaseTotal())
+                returnValue(unicalCode, getFS().spaseTotal())
             elseif command == "size" then
                 local path = arg[1]
-                returnValue(obj.proxyFS.size(path))
+                returnValue(unicalCode, obj.proxyFS.size(path))
             elseif command == "makeDirectory" then
                 local path = arg[1]
-                if obj.readonly then returnValue(nil, "filesystem is readonly") return end
-                returnValue(obj.proxyFS.makeDirectory(path))
+                if obj.readonly then returnValue(unicalCode, nil, "filesystem is readonly") return end
+                returnValue(unicalCode, obj.proxyFS.makeDirectory(path))
             elseif command == "remove" then
                 local path = arg[1]
-                if obj.readonly then returnValue(nil, "filesystem is readonly") return end
-                returnValue(obj.proxyFS.remove(path))
+                if obj.readonly then returnValue(unicalCode, nil, "filesystem is readonly") return end
+                returnValue(unicalCode, obj.proxyFS.remove(path))
             elseif command == "rename" then
                 local path, path2 = arg[1], arg[2]
-                if obj.readonly then returnValue(nil, "filesystem is readonly") return end
-                returnValue(obj.proxyFS.rename(path, path2))
+                if obj.readonly then returnValue(unicalCode, nil, "filesystem is readonly") return end
+                returnValue(unicalCode, obj.proxyFS.rename(path, path2))
             elseif command == "exists" then
                 local path = arg[1]
-                returnValue(obj.proxyFS.exists(path))
+                returnValue(unicalCode, obj.proxyFS.exists(path))
             elseif command == "isDirectory" then
                 local path = arg[1]
-                returnValue(obj.proxyFS.isDirectory(path))
+                returnValue(unicalCode, obj.proxyFS.isDirectory(path))
             elseif command == "isReadOnly" then
-                returnValue(obj.readonly)
+                returnValue(unicalCode, obj.readonly)
             elseif command == "lastModified" then
                 local path = arg[1]
-                returnValue(obj.proxyFS.lastModified(path))
+                returnValue(unicalCode, obj.proxyFS.lastModified(path))
             elseif command == "list" then
                 local path = arg[1]
-                returnValue(obj.proxyFS.list(path))
+                returnValue(unicalCode, obj.proxyFS.list(path))
             elseif command == "getLabel" then
-                returnValue(index)
+                returnValue(unicalCode, index)
             elseif command == "setLabel" then
-                returnCommand("nup")
+                returnCommand(unicalCode, "nup")
             end
         end
     end
@@ -163,7 +164,9 @@ function lib.getDistFs(network, index)
     end
 
     local function call(...)
-        send("call", ...)
+        local unicalCode = su.generateRandomID()
+        send(unicalCode, "call", ...)
+        return unicalCode
     end
 
     -----------------------------------
@@ -173,11 +176,11 @@ function lib.getDistFs(network, index)
     for i = 1, #functions do
         local name = functions[i]
         pfs[name] = function(...)
-            call(name, ...)
-            local eventData = {event.pull(4, "network_message", obj.network.name, appkey, obj.index, "return")}
-            local out = {table.unpack(eventData, 6, #eventData)}
+            local unicalCode = call(name, ...)
+            local eventData = {event.pull(4, "network_message", obj.network.name, appkey, obj.index, "return", nil, unicalCode)}
+            local out = {table.unpack(eventData, 8, #eventData)}
             if out[1] == "out" then
-                return table.unpack(eventData, 7, #eventData)
+                return table.unpack(eventData, 9, #eventData)
             else
                 return nil, "no connections"
             end

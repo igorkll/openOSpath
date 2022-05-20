@@ -24,13 +24,17 @@ end
 ----------------------------------------------------------
 
 local oldb = gpu.getBackground()
-local oldf = gpu.getBackground()
+local oldf = gpu.getForeground()
+local depth = gpu.getDepth()
 
-if gpu.getDepth() == 8 then
+if depth == 8 then
     gpu.setBackground(0x777777)
     gpu.setForeground(0xFFFFFF)
+elseif depth == 4 then
+    gpu.setBackground(0xAAAAAA)
+    gpu.setForeground(0xFFFFFF)
 else
-    gpu.setBackground(0xA5A5A5)
+    gpu.setBackground(0xFFFFFF)
     gpu.setForeground(0)
 end
 

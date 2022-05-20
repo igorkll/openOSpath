@@ -2,6 +2,7 @@ local networks = require("networks")
 local event = require("event")
 local vcomponent = require("vcomponent")
 local component = require("component")
+local su = require("superUtiles")
 
 -----------------------------------------
 
@@ -28,10 +29,10 @@ function lib.host(network, name, uuid)
     obj.name = name
     obj.uuid = uuid
     obj.listens = {}
-    obj.listens[#obj.listens] = event.register(nil, function(eventName, network_name, lappName, host_name, side, ...) --не table.insert чтоб было меньше скобок
+    obj.listens[#obj.listens] = event.register(nil, function(eventName, network_name, lappName, host_name, side, unicalCode, ...) --не table.insert чтоб было меньше скобок
         if eventName == "network_message" and network_name == obj.network.name and appName == lappName and host_name == obj.name then
             if side == "call" then
-                obj.network.send(appName, obj.name, "return", pcall(component.invoke, obj.uuid, ...))
+                obj.network.send(appName, obj.name, "return", unicalCode, pcall(component.invoke, obj.uuid, ...))
             end
         end
     end, math.huge, math.huge)
@@ -46,7 +47,7 @@ function lib.host(network, name, uuid)
             end
         end
     end, math.huge, math.huge)
-    obj.listens[#obj.listens] = event.register(nil, function(eventName, network_name, lappName, host_name, side, ...) --не table.insert чтоб было меньше скобок
+    obj.listens[#obj.listens] = event.register(nil, function(eventName, network_name, lappName, host_name, side, unicalCode, ...) --не table.insert чтоб было меньше скобок
         if eventName == "network_message" and network_name == obj.network.name and appName == lappName and host_name == obj.name then
             if side == "check" then
                 local doc = {}
@@ -56,7 +57,7 @@ function lib.host(network, name, uuid)
                     doc[k] = component.doc(obj.uuid, k)
                 end
 
-                obj.network.send(appName, obj.name, "returnCheck", component.type(obj.uuid), obj.uuid, methods, doc)
+                obj.network.send(appName, obj.name, "returnCheck", unicalCode, component.type(obj.uuid), obj.uuid, methods, doc)
             end
         end
     end, math.huge, math.huge)
@@ -65,7 +66,7 @@ function lib.host(network, name, uuid)
         for i = 1, #obj.listens do
             event.cancel(obj.listens[i])
         end
-        obj.network.send(appName, obj.name, "kill")
+        obj.network.send(appName, obj.name, "killed")
         table_remove(lib.hosted, obj)
     end
 
@@ -92,9 +93,12 @@ function lib.connect(network, name)
             end
         end
     end, math.huge, math.huge)
-    obj.listens[#obj.listens] = event.register(nil, function(eventName, network_name, lappName, host_name, side, ...) --не table.insert чтоб было меньше скобок
+
+    local checkUnicalCode = su.generateRandomID()
+    obj.network.send(appName, obj.name, "check", checkUnicalCode)
+    obj.listens[#obj.listens] = event.register(nil, function(eventName, network_name, lappName, host_name, side, unicalCode, ...) --не table.insert чтоб было меньше скобок
         local args = {...}
-        if eventName == "network_message" and network_name == obj.network.name and appName == lappName and host_name == obj.name then
+        if eventName == "network_message" and network_name == obj.network.name and appName == lappName and host_name == obj.name and checkUnicalCode == unicalCode then
             if side == "returnCheck" then
                 obj.uuid = args[2]
                 obj.componentName = args[1]
@@ -102,8 +106,9 @@ function lib.connect(network, name)
                 obj.proxy = {}
                 for k, v in pairs(args[3]) do
                     obj.proxy[k] = function(...)
-                        obj.network.send(appName, obj.name, "call", k, ...)
-                        local dat = {table.unpack({event.pull(4, "network_message", obj.network.name, appName, obj.name, "return")}, 6)}
+                        local unicalCallCode = su.generateRandomID()
+                        obj.network.send(appName, obj.name, "call", unicalCallCode, k, ...)
+                        local dat = {table.unpack({event.pull(4, "network_message", obj.network.name, appName, obj.name, "return", unicalCallCode)}, 6)}
                         if #dat == 0 then
                             error("no conection", 0)
                         end
@@ -120,7 +125,7 @@ function lib.connect(network, name)
             end
         end
     end, math.huge, math.huge)
-    obj.network.send(appName, obj.name, "check")
+    
 
     function obj.kill()
         for i = 1, #obj.listens do

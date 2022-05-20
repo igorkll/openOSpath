@@ -46,7 +46,8 @@ local uptime = computer.uptime
 -- because of that, we must re-pushSignal when we use this, else things break badly
 local pull = computer.pullSignal
 local last_sleep = uptime()
-local function status(msg)
+local function status(msg, time)
+  if _G.smartEfi and _G.status then _G.status(msg, time or -1) end
   --[[
   if gpu and false then
     gpu.set(1, y, msg)
@@ -70,11 +71,11 @@ local function status(msg)
   end
 end
 
-status("Booting " .. _OSVERSION .. "...")
+status("Booting " .. _OSVERSION, 0.5)
 
 -- Custom low-level dofile implementation reading from our ROM.
 local function dofile(file)
-  status("> " .. file)
+  status("Run boot script " .. file)
   local program, reason = raw_loadfile(file)
   if program then
     local result = table.pack(pcall(program))
@@ -88,7 +89,7 @@ local function dofile(file)
   end
 end
 
-status("Initializing package management...")
+status("Initializing package management")
 
 -- Load file system related libraries we need to load other stuff moree
 -- comfortably. This is basically wrapper stuff for the file streams
@@ -115,13 +116,13 @@ do
   _G.io = dofile("/lib/io.lua")
 end
 
-status("Initializing file system...")
+status("Initializing file system")
 
 -- Mount the ROM and temporary file systems to allow working on the file
 -- system module from this point on.
 require("filesystem").mount(computer.getBootAddress(), "/")
 
-status("Running boot scripts...")
+status("Running boot scripts")
 
 -- Run library startup scripts. These mostly initialize event handlers.
 local function rom_invoke(method, ...)
@@ -140,13 +141,13 @@ for i = 1, #scripts do
   dofile(scripts[i])
 end
 
-status("Initializing components...")
+status("Initializing components")
 
 for c, t in component.list() do
   computer.pushSignal("component_added", c, t)
 end
 
-status("Initializing system...")
+status("Initializing system")
 
 --computer.pushSignal("init") -- so libs know components are initialized.
 --require("event").pull(1, "init") -- Allow init processing.
