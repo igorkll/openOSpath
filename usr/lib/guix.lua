@@ -1468,17 +1468,30 @@ return {create = function()
     
     local oldHook
     function lib.off()
+        if not lib.active then return end
         pcall(component.invoke, lib.screen, "setPrecise", oldPreciseState)
+        lib.active = false
+
         lib.threadsMenager.killAll()
         while true do
             if not lib.scenes[1] then break end
             lib.scenes[1].remove()
         end
-        for i, data in ipairs(lib.exitCallbacks) do runCallback(data) end
-        lib.reset_gpu()
-        term.clear()
-        lib.active = false
+
+        local oldHookState = event.superHook
+        event.superHook = false
+        for i = 1, 2 do os.sleep(0.1) end
+        event.superHook = oldHookState
+
         process.info().data.signal = oldHook
+        
+        for i, data in ipairs(lib.exitCallbacks) do runCallback(data) end
+
+        lib.reset_gpu()
+        lib.gpu.setBackground(0)
+        lib.gpu.setForeground(0xFFFFFF)
+        
+        term.clear()
     end
     function lib.exit()
         lib.off()

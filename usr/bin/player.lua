@@ -1,116 +1,212 @@
-local gui = require("gui_new").create()
+local guix = require("guix")
 local midi = require("midi2")
+local shell = require("shell")
 local fs = require("filesystem")
-local event = require("event")
+local su = require("superUtiles")
 local component = require("component")
+local note = require("note")
+local computer = require("computer")
 
------------------------------------------------
-
-local tones = {}
-local device = {}
-
-for i = 1, component.noise.channel_count do
-    local function channel(n,d)
-        tones[i] = {n,d}
-    end
-    device[i] = channel
+local args, options = shell.parse(...)
+if #args == 0 then
+    print("Usage: player midfilepath")
+    return
 end
+gui = guix.create()
+local path = shell.resolve(args[1], "mid")
 
-local function flush()
-    component.noise.play(tones)
-    tones = {}
-end
-device.flush = flush
+if not fs.exists(path) then io.stderr:write("file not found") return end
+if fs.isDirectory(path) then io.stderr:write("is directory") return end
 
-local obj
-local objthread
+local modes = {"all devices", "combined types", "one device"}
+local modnum = 1
 
------------------------------------------------
-
-local main = gui.createScene()
-local name = main.createLabel(10, 1, 32, 1, "name")
-local selectButton = main.createButton(1, 1, 8, 1, "select", nil, nil, nil, nil, nil, nil, function()
-    local files = {}
-    local midipath = "/usr/midi"
-    for data in fs.list(midipath) do
-        files[#files + 1] = data
-    end
-    local selected = gui.context(true, 1, 1, files, true)
-    if selected then
-        obj = midi.create(fs.concat(midipath, selected), device)
-        obj.min = 20
-        obj.max = 2000
-        name.text = selected
-        name.draw()
-    end
+local soundDevices = {}
+local beeps = {}
+table.insert(soundDevices, function(n, d)
+    table.insert(beeps, {n, d})
 end)
-local playButton = main.createButton(1, 2, 8, 1, "play", nil, nil, nil, nil, nil, nil, function()
-    if objthread then objthread:kill() objthread = nil end 
-    if obj and not objthread then objthread = obj.createThread(true) end
-end)
-local stopButton = main.createButton(1, 3, 8, 1, "stop", nil, nil, nil, nil, nil, nil, function()
-    if objthread then objthread:kill() objthread = nil end
-end)
+function soundDevices.flush()
+    local devicesCount = 0
+    for address in component.list("note_block") do devicesCount = devicesCount + 1 end
+    for address in component.list("iron_noteblock") do devicesCount = devicesCount + 1 end
+    for address in component.list("beep") do devicesCount = devicesCount + 1 end
 
-local speed = main.createSeekBar(11, 4, 24, nil, nil, 0.1, 2, 1)
-local notespeed = main.createSeekBar(11, 5, 24, nil, nil, 0.1, 2, 1)
-local pitch = main.createSeekBar(11, 6, 24, nil, nil, 0.1, 2, 1)
-
-local speedlabel = main.createLabel(1, 4, 10, 1, "speed")
-local notespeedlabel = main.createLabel(1, 5, 10, 1, "notespeed")
-local pitchlabel = main.createLabel(1, 6, 10, 1, "pitch")
-
-local speedlabelvalue = main.createLabel(25 + 10, 4, 10, 1, "")
-local notespeedlabelvalue = main.createLabel(25 + 10, 5, 10, 1, "")
-local pitchlabelvalue = main.createLabel(25 + 10, 6, 10, 1, "")
-
-local function textConstructor(num)
-    return "channel: "..tostring(num)..", "..tostring(component.noise.getMode(num))
-end
-
-local modeButtons = {}
-for i = 1, component.noise.channel_count do
-    local button = main.createButton(1, 6 + i, 16, 1, textConstructor(i))
-    button.callbacks[#button.callbacks + 1] = function()
-        local _, num = gui.context(true, 18, 6 + i, {"  1  ", "  2  ", "  3  ", "  4  "}, true)
-        if num then
-            component.noise.setMode(i, num)
-            button.text = textConstructor(i)
-            button.draw()
+    if devicesCount > 0 then
+        if modnum == 1 then
+            for i = 1, #beeps do
+                local beep = beeps[i]
+                for address in component.list("note_block") do
+                    component.invoke(address, "trigger", (note.midi(beep[1]) + 6 - 60) % 24 + 1)
+                end
+                for address in component.list("iron_noteblock") do
+                    component.invoke(address, "playNote", (note.midi(beep[1]) + 6 - 60) % 24)
+                end
+                for address in component.list("beep") do
+                    component.invoke(address, "beep", {[beep[1]] = beep[2]})
+                end
+            end
+            beeps = {}
+        elseif modnum == 2 then
+            do
+                local beeps = su.simpleTableClone(beeps)
+                local interator = component.list("note_block")
+                while #beeps > 0 do
+                    local address = interator()
+                    if not address then break end
+                    component.invoke(address, "trigger", (note.midi(beeps[1][1]) + 6 - 60) % 24 + 1)
+                    table.remove(beeps, 1)
+                end
+            end
+            do
+                local beeps = su.simpleTableClone(beeps)
+                local interator = component.list("iron_noteblock")
+                while #beeps > 0 do
+                    local address = interator()
+                    if not address then break end
+                    component.invoke(address, "playNote", (note.midi(beeps[1][1]) + 6 - 60) % 24)
+                    table.remove(beeps, 1)
+                end
+            end
+            do
+                local beeps = su.simpleTableClone(beeps)
+                local interator = component.list("beep")
+                while #beeps > 0 do
+                    local address = interator()
+                    if not address then break end
+                    component.invoke(address, "beep", {[beeps[1][1]] = beeps[1][2]})
+                    table.remove(beeps, 1)
+                end
+            end
+            beeps = {}
+        elseif modnum == 3 then
+            local beepsfuncs = {}
+            for address in component.list("note_block") do
+                table.insert(beepsfuncs, function(n, d)
+                    component.invoke(address, "trigger", (note.midi(n) + 6 - 60) % 24 + 1)
+                end)
+            end
+            for address in component.list("iron_noteblock") do
+                table.insert(beepsfuncs, function(n, d)
+                    component.invoke(address, "playNote", (note.midi(n) + 6 - 60) % 24)
+                end)
+            end
+            for address in component.list("beep") do
+                table.insert(beepsfuncs, function(n, d)
+                    component.invoke(address, "beep", {[n] = d})
+                end)
+            end
+            while #beeps > 0 do
+                beepsfuncs[1](beeps[1][1], beeps[1][2])
+                table.remove(beepsfuncs, 1)
+                table.remove(beeps, 1)
+            end
         end
-    end
-    modeButtons[i] = button
-end
-
-local setAllModes = main.createButton(1, 15, 11, 1, "setAllModes")
-local function callback()
-    local _, num = gui.context(true, 13, 15, {"  1  ", "  2  ", "  3  ", "  4  "})
-    if num then
-        for i = 1, component.noise.channel_count do
-            component.noise.setMode(i, num)
-            modeButtons[i].text = textConstructor(i)
-            modeButtons[i].draw()
+    else
+        for i = 1, #beeps do
+            computer.beep(beeps[i][1], beeps[i][2])
         end
+        beeps = {}
     end
 end
-setAllModes.callbacks[#setAllModes.callbacks + 1] = callback
 
-gui.select(1)
+local mid = midi.create(path, soundDevices)
+mid.min = 20
+mid.max = 2000
 
------------------------------------------------
+local th
 
-while true do
-    local eventData = {event.pull(0.5)}
-    gui.uploadEvent(table.unpack(eventData))
-    if obj then
-        obj.speed = speed.getState()
-        obj.noteduraction = notespeed.getState()
-        obj.pitch = pitch.getState()
-    end
-    speedlabelvalue.text = tostring(math.floor(speed.getState() * 9) / 8)
-    notespeedlabelvalue.text = tostring(math.floor(notespeed.getState() * 9) / 8)
-    pitchlabelvalue.text = tostring(math.floor(pitch.getState() * 9) / 8)
-    speedlabelvalue.draw()
-    notespeedlabelvalue.draw()
-    pitchlabelvalue.draw()
+local function play()
+    if th then th:resume() return end
+    th = mid.createThread(true)
 end
+
+local function stop()
+    if not th then return end
+    th:kill()
+    th = nil
+end
+
+local function pause()
+    if not th then return end
+    th:suspend()
+end
+
+-----------------------------------------
+
+if gui.gpu.getDepth() > 1 then
+    gui.gpu.setPaletteColor(0, 0x000000)
+    gui.gpu.setPaletteColor(1, 0xFFFFFF)
+
+    gui.gpu.setPaletteColor(2, 0x003300)
+    gui.gpu.setPaletteColor(3, 0x005500)
+    gui.gpu.setPaletteColor(4, 0x00FF00)
+
+    gui.gpu.setPaletteColor(5, 0x330000)
+    gui.gpu.setPaletteColor(6, 0x550000)
+    gui.gpu.setPaletteColor(7, 0xFF0000)
+end
+
+rx, ry = math.max(gui.userX, 50), math.max(gui.userY, 16)
+local resolutionOk = pcall(gui.gpu.setResolution, rx, ry)
+if not resolutionOk then rx, ry = gui.gpu.maxResolution() end
+
+scene = gui.createScene(gui.selectColor(0x003300, nil, false), rx, ry)
+sceneCenterX, sceneCenterY = scene.getCenter()
+
+startbutton = scene.createButton(sceneCenterX - 16, 1, 32, 1, "play", play)
+startbutton.backColor = gui.selectColor(0x005500, nil, true)
+startbutton.foreColor = gui.selectColor(0x00FF00, nil, false)
+startbutton.invertBackColor = gui.selectColor(0x550000, nil, false)
+startbutton.invertForeColor = gui.selectColor(0xFF0000, nil, true)
+
+stopbutton = scene.createButton(sceneCenterX - 16, 2, 32, 1, "stop", stop)
+stopbutton.backColor = gui.selectColor(0x005500, nil, true)
+stopbutton.foreColor = gui.selectColor(0x00FF00, nil, false)
+stopbutton.invertBackColor = gui.selectColor(0x550000, nil, false)
+stopbutton.invertForeColor = gui.selectColor(0xFF0000, nil, true)
+
+pausebutton = scene.createButton(sceneCenterX - 16, 3, 32, 1, "pause", pause)
+pausebutton.backColor = gui.selectColor(0x005500, nil, true)
+pausebutton.foreColor = gui.selectColor(0x00FF00, nil, false)
+pausebutton.invertBackColor = gui.selectColor(0x550000, nil, false)
+pausebutton.invertForeColor = gui.selectColor(0xFF0000, nil, true)
+
+devicemodelabel = scene.createLabel(sceneCenterX - 16, 5, 32, 1, "sound mode: " .. modes[modnum])
+devicemodelabel.backColor = gui.selectColor(0x005500, nil, true)
+devicemodelabel.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+devicemodbutton = scene.createButton(sceneCenterX - 16, 6, 32, 1, "change mode", function()
+    modnum = ((modnum) % #modes) + 1
+    devicemodelabel.text = "sound mode: " .. modes[modnum]
+    devicemodelabel.draw()
+end)
+devicemodbutton.backColor = gui.selectColor(0x005500, nil, true)
+devicemodbutton.foreColor = gui.selectColor(0x00FF00, nil, false)
+devicemodbutton.invertBackColor = gui.selectColor(0x550000, nil, false)
+devicemodbutton.invertForeColor = gui.selectColor(0xFF0000, nil, true)
+
+-----------------------------------------
+
+local addSeekToSeek = 0
+if ry <= 16 then
+    addSeekToSeek = 4
+end
+
+speedseek = scene.createSeekbar(1, (sceneCenterY - 1) + addSeekToSeek, scene.sizeX, "speed    ", function(value) mid.speed = value end, 0, 0.2, 2, 1)
+notespeedseek = scene.createSeekbar(1, (sceneCenterY) + addSeekToSeek, scene.sizeX, "notespeed", function(value) mid.noteduraction = value end, 0, 0.2, 2, 1)
+pitchseek = scene.createSeekbar(1, (sceneCenterY + 1) + addSeekToSeek, scene.sizeX, "pitch    ", function(value) mid.pitch = value end, 0, 0.2, 2, 1)
+
+speedseek.backColor = gui.selectColor(0x005500, nil, true)
+speedseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+notespeedseek.backColor = gui.selectColor(0x005500, nil, true)
+notespeedseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+pitchseek.backColor = gui.selectColor(0x005500, nil, true)
+pitchseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+-----------------------------------------
+
+gui.select(scene)
+gui.run()
