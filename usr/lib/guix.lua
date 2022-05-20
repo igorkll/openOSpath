@@ -1415,19 +1415,21 @@ return {create = function()
     lib.lastScroll = {}
     lib.lastAny = {}
 
-    lib.createListen(nil, function(eventName, ...)
-        if eventName == "touch" then
-            lib.lastTouch = {eventName, ...}
-            lib.lastAny = {eventName, ...}
-        elseif eventName == "drop" then
-            lib.lastDrop = {eventName, ...}
-            lib.lastAny = {eventName, ...}
-        elseif eventName == "drag" then
-            lib.lastDrag = {eventName, ...}
-            lib.lastAny = {eventName, ...}
-        elseif eventName == "scroll" then
-            lib.lastScroll = {eventName, ...}
-            lib.lastAny = {eventName, ...}
+    lib.createListen(nil, function(eventName, uuid, ...)
+        if uuid == lib.screen then
+            if eventName == "touch" then
+                lib.lastTouch = {eventName, uuid, ...}
+                lib.lastAny = {eventName, uuid, ...}
+            elseif eventName == "drop" then
+                lib.lastDrop = {eventName, uuid, ...}
+                lib.lastAny = {eventName, uuid, ...}
+            elseif eventName == "drag" then
+                lib.lastDrag = {eventName, uuid, ...}
+                lib.lastAny = {eventName, uuid, ...}
+            elseif eventName == "scroll" then
+                lib.lastScroll = {eventName, uuid, ...}
+                lib.lastAny = {eventName, uuid, ...}
+            end
         end
     end)
 
