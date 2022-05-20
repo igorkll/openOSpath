@@ -178,9 +178,8 @@ function lib.getDistFs(network, index)
         pfs[name] = function(...)
             local unicalCode = call(name, ...)
             local eventData = {event.pull(4, "network_message", obj.network.name, appkey, obj.index, "return", nil, unicalCode)}
-            local out = {table.unpack(eventData, 8, #eventData)}
-            if out[1] == "out" then
-                return table.unpack(eventData, 9, #eventData)
+            if eventData[6] == "out" then
+                return table.unpack(eventData, 8, #eventData)
             else
                 return nil, "no connections"
             end

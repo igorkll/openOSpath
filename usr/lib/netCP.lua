@@ -108,7 +108,7 @@ function lib.connect(network, name)
                     obj.proxy[k] = function(...)
                         local unicalCallCode = su.generateRandomID()
                         obj.network.send(appName, obj.name, "call", unicalCallCode, k, ...)
-                        local dat = {table.unpack({event.pull(4, "network_message", obj.network.name, appName, obj.name, "return", unicalCallCode)}, 6)}
+                        local dat = {table.unpack({event.pull(4, "network_message", obj.network.name, appName, obj.name, "return", unicalCallCode)}, 7)}
                         if #dat == 0 then
                             error("no conection", 0)
                         end
