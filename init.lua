@@ -147,7 +147,7 @@ if fs.exists("/free/flags/updateEnd") then --запуска файла допо�
     end
     fs.remove("/free/flags/updateEnd")
     if afterUpdate then
-        computer.shutdown(true)
+        computer.shutdown("fast")
         return
     end
 end

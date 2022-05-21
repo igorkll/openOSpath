@@ -74,5 +74,5 @@ if read and read ~= "n" then
     --os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
     --os.execute("/tmp/getinstaller " .. url .. " / -q")
     os.execute("fastupdate -f -n " .. url .. " " .. versionPath)
-    computer.shutdown(true)
+    computer.shutdown("fast")
 end

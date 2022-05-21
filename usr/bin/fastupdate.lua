@@ -131,6 +131,6 @@ if options.f or outData.version > inData.version then
     isUpdate = true
 end
 for _, t in ipairs(threads) do t:kill() end
-if isUpdate and not options.n then computer.shutdown(true) end
+if isUpdate and not options.n then computer.shutdown("fast") end
 if isUpdate and not options.t then term.clear() end
 return isUpdate
