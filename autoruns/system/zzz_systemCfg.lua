@@ -118,7 +118,7 @@ local function drawLogo(noChangeResolution)
             rx, ry = gpu.maxResolution()
         end
         if math.floor(gpu.getDepth()) ~= 1 then
-            gpu.setBackground(su.selectColor(nil, 0x555555, 0x000000, false))
+            gpu.setBackground(su.selectColor(nil, 0x888888, 0xAAAAAA, false))
             gpu.setForeground(0xFFFFFF)
             gpu.fill(1, 1, rx, ry, " ")
             if fs.exists("/etc/logo.pic") then
@@ -147,20 +147,7 @@ local function drawLogo(noChangeResolution)
         end
     end
 end
-drawLogo()
-
-if _G.systemCfg.startSound and fs.exists("/etc/startSound.mid") then
-    local function beep(n, d)
-        if component.isAvailable("beep") then
-            component.beep.beep({[n] = d})
-        else
-            computer.beep(n, d)
-        end
-    end
-    require("midi2").create("/etc/startSound.mid", {beep}).play()
-else
-    os.sleep(2)
-end
+--drawLogo()
 
 _G.updateRepo = systemCfg.updateRepo
 
@@ -191,8 +178,13 @@ if term.isAvailable() and fs.exists("/etc/resolution.cfg") then
     local data = su.getFile("/etc/resolution.cfg")
     if data == "reset" then
         os.execute("reset")
-    elseif data == "rax" then
-        os.execute("rax")
+    elseif data:sub(1, 3) == "rax" then
+        local _, size = table.unpack(su.split(data, ";"))
+        if size then
+            os.execute("rax " .. tostring(size))
+        else
+            os.execute("rax")
+        end
     elseif data:sub(1, 10) == "resolution" then
         local _, rx, ry = table.unpack(su.split(data, ";"))
         rx = tonumber(rx)
@@ -208,5 +200,25 @@ else
 end
 
 drawLogo(true)
+if _G.systemCfg.startSound then
+    if fs.exists("/etc/startSound.mid") then
+        local function beep(n, d)
+            if component.isAvailable("beep") then
+                component.beep.beep({[n] = d})
+            else
+                computer.beep(n, d)
+            end
+        end
+        require("midi2").create("/etc/startSound.mid", {beep}).play()
+    else
+        computer.beep(2000, 0.5)
+        for i = 1, 4 do
+            computer.beep(500, 0.01)
+        end
+        computer.beep(1000, 1)
+    end
+else
+    os.sleep(2)
+end
 
 if fs.exists("/etc/runCommand.dat") then os.execute(su.getFile("/etc/runCommand.dat")) end

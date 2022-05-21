@@ -23,4 +23,4 @@ local height = scale * math.min(
 local rx, ry = math.floor(height * proportion), math.floor(height)
 gpu.setResolution(rx, ry)
 
-require("superUtiles").saveFile("/etc/resolution.cfg", "rax")
+require("superUtiles").saveFile("/etc/resolution.cfg", "rax;" .. tostring(scale))

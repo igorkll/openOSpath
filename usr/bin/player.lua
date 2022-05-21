@@ -13,9 +13,10 @@ if #args == 0 then
     return
 end
 gui = guix.create()
+gui.soundOn = false
 local path = shell.resolve(args[1], "mid")
 
-if not fs.exists(path) then io.stderr:write("file not found") return end
+if not path or not fs.exists(path) then io.stderr:write("file not found") return end
 if fs.isDirectory(path) then io.stderr:write("is directory") return end
 
 local modes = {"all devices", "combined types", "one device"}
