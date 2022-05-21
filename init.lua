@@ -42,7 +42,7 @@ do --спяший режим
     local table_unpack = table.unpack
     local checkArg = checkArg
 
-    local uptimeAdd = 0
+    uptimeAdd = 0
     function computer.uptime()
         return computer_uptime() + uptimeAdd
     end
@@ -67,6 +67,8 @@ do --спяший режим
         computer.sleep(time, true, true)
     end
 end
+
+computer.rawPullSignal = computer.pullSignal
 
 -----------------------------------
 
