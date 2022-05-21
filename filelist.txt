@@ -59,6 +59,7 @@
 /usr/midi/midi1.mid
 /usr/bin/twicks.lua
 /usr/bin/go.lua
+/usr/bin/worm.lua
 /usr/bin/warnings.lua
 /usr/bin/users.lua
 /usr/bin/eves.lua
