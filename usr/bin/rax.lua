@@ -20,4 +20,7 @@ local height = scale * math.min(
 )
 
 -- Выставляем полученное разрешение
-gpu.setResolution(math.floor(height * proportion), math.floor(height))
+local rx, ry = math.floor(height * proportion), math.floor(height)
+gpu.setResolution(rx, ry)
+
+require("superUtiles").saveFile("/etc/resolution.cfg", "rax")

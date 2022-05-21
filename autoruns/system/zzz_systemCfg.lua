@@ -103,29 +103,52 @@ end
 
 --os.execute("lock -c")
 
-if _G.systemCfg.logo and term.isAvailable() then
-    local img
-    local gpu = term.gpu()
-    if math.floor(gpu.getDepth()) ~= 1 then
-        if fs.exists("/etc/logo.pic") then
-            img = require("imageDrawer").loadimage("/etc/logo.pic")
-        elseif fs.exists("/etc/logoBW.pic") then
-            img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+local function drawLogo(noChangeResolution)
+    if _G.systemCfg.logo and term.isAvailable() then
+        local img
+        local gpu = term.gpu()
+        local rx, ry
+        if noChangeResolution then
+            rx, ry = gpu.getResolution()
+        elseif not component.isAvailable("tablet") then
+            gpu.setResolution(50, 16)
+            rx, ry = 50, 16
+        else
+            gpu.setResolution(gpu.maxResolution())
+            rx, ry = gpu.maxResolution()
         end
-    else
-        if fs.exists("/etc/logoBW.pic") then
-            img = require("imageDrawer").loadimage("/etc/logoBW.pic")
-        elseif fs.exists("/etc/logo.pic") then
-            img = require("imageDrawer").loadimage("/etc/logo.pic")
+        if math.floor(gpu.getDepth()) ~= 1 then
+            gpu.setBackground(su.selectColor(nil, 0x555555, 0x000000, false))
+            gpu.setForeground(0xFFFFFF)
+            gpu.fill(1, 1, rx, ry, " ")
+            if fs.exists("/etc/logo.pic") then
+                img = require("imageDrawer").loadimage("/etc/logo.pic")
+            elseif fs.exists("/etc/logoBW.pic") then
+                img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+            end
+        else
+            gpu.setBackground(0)
+            gpu.setForeground(0xFFFFFF)
+            gpu.fill(1, 1, rx, ry, "#")
+
+            if fs.exists("/etc/logoBW.pic") then
+                img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+            elseif fs.exists("/etc/logo.pic") then
+                img = require("imageDrawer").loadimage("/etc/logo.pic")
+            end
         end
-    end
-    if img then
-        local rx, ry = gpu.getResolution()
-        local cx, cy = img.getSize()
-        cx, cy = (rx // 2) - (cx // 2), (ry // 2) - (cy // 2)
-        img.draw(cx, cy)
+        if img then
+            local rx, ry = gpu.getResolution()
+            local cx, cy = img.getSize()
+            cx, cy = (rx / 2) - (cx / 2), (ry / 2) - (cy / 2)
+            cx = math.floor(cx) + 1
+            cy = math.floor(cy) + 1
+            img.draw(cx, cy)
+        end
     end
 end
+drawLogo()
+
 if _G.systemCfg.startSound and fs.exists("/etc/startSound.mid") then
     local function beep(n, d)
         if component.isAvailable("beep") then
@@ -135,6 +158,8 @@ if _G.systemCfg.startSound and fs.exists("/etc/startSound.mid") then
         end
     end
     require("midi2").create("/etc/startSound.mid", {beep}).play()
+else
+    os.sleep(2)
 end
 
 _G.updateRepo = systemCfg.updateRepo
@@ -159,3 +184,29 @@ end
 event.superHook = systemCfg.superHook
 event.hook = systemCfg.hook
 _G.shellAllow = systemCfg.shellAllow
+
+if term.isAvailable() and fs.exists("/etc/resolution.cfg") then
+    local gpu = term.gpu()
+
+    local data = su.getFile("/etc/resolution.cfg")
+    if data == "reset" then
+        os.execute("reset")
+    elseif data == "rax" then
+        os.execute("rax")
+    elseif data:sub(1, 10) == "resolution" then
+        local _, rx, ry = table.unpack(su.split(data, ";"))
+        rx = tonumber(rx)
+        ry = tonumber(ry)
+        if rx and ry then
+            if not pcall(gpu.setResolution, rx, ry) then
+                os.execute("reset")
+            end
+        end
+    end
+else
+    os.execute("reset")
+end
+
+drawLogo(true)
+
+if fs.exists("/etc/runCommand.dat") then os.execute(su.getFile("/etc/runCommand.dat")) end
