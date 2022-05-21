@@ -21,6 +21,8 @@ if fs.isDirectory(path) then io.stderr:write("is directory") return end
 
 local modes = {"all devices", "combined types", "one device"}
 local modnum = 1
+local volume = 1
+local noteInstrument = 0
 
 local soundDevices = {}
 local beeps = {}
@@ -41,7 +43,7 @@ function soundDevices.flush()
                     component.invoke(address, "trigger", (note.midi(beep[1]) + 6 - 60) % 24 + 1)
                 end
                 for address in component.list("iron_noteblock") do
-                    component.invoke(address, "playNote", (note.midi(beep[1]) + 6 - 60) % 24)
+                    component.invoke(address, "playNote", noteInstrument, (note.midi(beep[1]) + 6 - 60) % 24, volume)
                 end
                 for address in component.list("beep") do
                     component.invoke(address, "beep", {[beep[1]] = beep[2]})
@@ -65,7 +67,7 @@ function soundDevices.flush()
                 while #beeps > 0 do
                     local address = interator()
                     if not address then break end
-                    component.invoke(address, "playNote", (note.midi(beeps[1][1]) + 6 - 60) % 24)
+                    component.invoke(address, "playNote", noteInstrument, (note.midi(beeps[1][1]) + 6 - 60) % 24, volume)
                     table.remove(beeps, 1)
                 end
             end
@@ -89,7 +91,7 @@ function soundDevices.flush()
             end
             for address in component.list("iron_noteblock") do
                 table.insert(beepsfuncs, function(n, d)
-                    component.invoke(address, "playNote", (note.midi(n) + 6 - 60) % 24)
+                    component.invoke(address, "playNote", noteInstrument, (note.midi(n) + 6 - 60) % 24, volume)
                 end)
             end
             for address in component.list("beep") do
@@ -197,6 +199,8 @@ end
 speedseek = scene.createSeekbar(1, (sceneCenterY - 1) + addSeekToSeek, scene.sizeX, "speed    ", function(value) mid.speed = value end, 0, 0.2, 2, 1)
 notespeedseek = scene.createSeekbar(1, (sceneCenterY) + addSeekToSeek, scene.sizeX, "notespeed", function(value) mid.noteduraction = value end, 0, 0.2, 2, 1)
 pitchseek = scene.createSeekbar(1, (sceneCenterY + 1) + addSeekToSeek, scene.sizeX, "pitch    ", function(value) mid.pitch = value end, 0, 0.2, 2, 1)
+noteinsseek = scene.createSeekbar(1, (sceneCenterY + 2) + addSeekToSeek, scene.sizeX, "note inst", function(value) noteInstrument = value end, 0, 0, 6, 0)
+volumeseek = scene.createSeekbar(1, (sceneCenterY + 3) + addSeekToSeek, scene.sizeX, "volume   ", function(value) volume = value end, 0, 0.1, 1, 1)
 
 speedseek.backColor = gui.selectColor(0x005500, nil, true)
 speedseek.foreColor = gui.selectColor(0x00FF00, nil, false)
@@ -206,6 +210,16 @@ notespeedseek.foreColor = gui.selectColor(0x00FF00, nil, false)
 
 pitchseek.backColor = gui.selectColor(0x005500, nil, true)
 pitchseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+pitchseek.backColor = gui.selectColor(0x005500, nil, true)
+pitchseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+volumeseek.backColor = gui.selectColor(0x005500, nil, true)
+volumeseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+
+noteinsseek.backColor = gui.selectColor(0x005500, nil, true)
+noteinsseek.foreColor = gui.selectColor(0x00FF00, nil, false)
+noteinsseek.onlyIntegers = true
 
 -----------------------------------------
 
