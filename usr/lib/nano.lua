@@ -27,7 +27,7 @@ lib.raw_send = function(...)
     ok = false
     local modem = getModem()
     local port = math.random(1, 65535)
-    local strength = modem.setStrength(2)
+    local strength = modem.setStrength(8)
     local isOpen = modem.open(port)
 
     modem.broadcast(port, "nanomachines", "setResponsePort", port)
