@@ -209,7 +209,7 @@ local function install(url)
     local data = assert(wget(url))
     for i, v in ipairs(split(data, "\n")) do
         status("downloading " .. v)
-        local filedata, err = wget(mainurl .. v)
+        local filedata, err = wget(url .. v)
         if not filedata then
             status("error to get file " .. err)
             os.sleep(0.5)
