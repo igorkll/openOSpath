@@ -173,7 +173,7 @@ local function hue(h)
             return gray
         end
 
-        local levelR, levelG, levelB = r // 64, g // 64, b // 64
+        local levelR, levelG, levelB = math.floor(r / 64), math.floor(g / 64), math.floor(b / 64)
         if (levelR >= 2) and (levelG ~= 0 and levelG ~= 3) and (levelB ~= 0 and levelB ~= 3) then
             return colors.pink
         elseif (levelR == 3) and (levelG >= 1 and levelG <= 2) and (levelB <= 1) then
@@ -227,11 +227,11 @@ local background = selectColor(0x666666, 0x222222, false)
 
 local objs = {}
 local function getPosFor(num)
-    return ((ry // 2) - (#objs // 2)) + num
+    return (math.floor(ry / 2) - math.floor(#objs / 2)) + num
 end
 
 local function getPosX(text)
-    return ((rx // 2) - (unicode.len(text) // 2)) + 1
+    return (math.floor(rx / 2) - math.floor(unicode.len(text) / 2)) + 1
 end
 
 local selectButton = 1
@@ -300,7 +300,7 @@ for i, v in ipairs(names) do
     if unicode.len(v) > maxStrLen then maxStrLen = unicode.len(v) end
 end
 pointPos = maxStrLen - 1
-pointPos = ((rx // 2) - (pointPos // 2)) - 1
+pointPos = (math.floor(rx / 2) - math.floor(pointPos / 2)) - 1
 
 local function buttonUp()
     if selectButton > 1 then selectButton = selectButton - 1 end
@@ -457,7 +457,7 @@ function status(text)
     gpu.setBackground(background)
     gpu.setForeground(0xFFFFFF)
     term.clear()
-    setText(text, ry // 2)
+    setText(text, math.floor(ry / 2))
 end
 
 ------------------------------------------------------main
