@@ -206,7 +206,7 @@ local status
 local function install(url)
     status("install at url " .. url)
     os.sleep(1)
-    local data = assert(wget(url))
+    local data = assert(wget(url .. "/filelist.txt"))
     for i, v in ipairs(split(data, "\n")) do
         status("downloading " .. v)
         local filedata, err = wget(url .. v)
@@ -339,7 +339,7 @@ for i, v in ipairs(names) do
 end
 
 local installers = {function() --updata
-    install("https://raw.githubusercontent.com/igorkll/openOS/main/filelist.txt")
+    install("https://raw.githubusercontent.com/igorkll/openOS/main")
 end, function() --efi
     status("downloading efi")
     local efiCode = assert(wget("https://raw.githubusercontent.com/igorkll/topBiosV5/main/smartEfi.bin"))
@@ -350,7 +350,7 @@ end, function() --efi
     eeprom.setData(fs.get("/").address)
     eeprom.set(efiLoader)
 end, function() --install mod
-    install(mainurl .. "/filelist.txt")
+    install(mainurl)
     status("saving config file")
     saveFile("/autoruns/user/set.lua", "local mainurl = \"" .. mainurl .. "\"\n" .. [[
 local fs = require("filesystem")
