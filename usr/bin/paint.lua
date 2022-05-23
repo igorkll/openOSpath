@@ -214,16 +214,16 @@ local editbutton = main.createButton(7, 1, 6, 1, "edit", nil, nil, false, nil, n
             local oldscene = gui.getScene()
             gui.select(0)
 
-            io.write("sizeX")
+            io.write("sizeX: ")
             local sizeX = tonumber(io.read() or "")
-            if not sizeX then 
+            if not sizeX or sizeX <= 0 then 
                 gui.splas("input error")
                 gui.select(oldscene)
                 return 
             end
-            io.write("sizeY")
+            io.write("sizeY: ")
             local sizeY = tonumber(io.read() or "")
-            if not sizeY then 
+            if not sizeY or sizeY <= 0 then 
                 gui.splas("input error")
                 gui.select(oldscene)
                 return 
