@@ -347,6 +347,7 @@ end, function() --efi
     
     status("installing efi")
     saveFile("/.efi", efiCode)
+    saveFile("/.efiData", fs.get("/").address)
     eeprom.setData(fs.get("/").address)
     eeprom.set(efiLoader)
 end, function() --install mod
