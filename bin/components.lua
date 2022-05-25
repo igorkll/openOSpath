@@ -22,7 +22,12 @@ end
 
 padTo = padTo + 8 - padTo % 8
 for address, name in pairs(components) do
-  io.write(text.padRight(name, padTo) .. address .. '\n')
+  if options.s then
+    io.write(name .. " ")
+    io.write(address .. "\n")
+  else
+    io.write(text.padRight(name, padTo) .. address .. '\n')
+  end
 
   if options.l then
     local proxy = component.proxy(address)
@@ -41,7 +46,12 @@ for address, name in pairs(components) do
 
     for _, name in ipairs(methods) do
       local doc = component.doc(address, name) or tostring(proxy[name])
-      io.write("  " .. text.padRight(name, padTo) .. doc .. '\n')
+      if options.s then
+        io.write(name .. " ")
+        io.write(doc .. "\n")
+      else
+        io.write("  " .. text.padRight(name, padTo) .. doc .. '\n')
+      end
     end
   end
 
