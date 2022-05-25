@@ -29,9 +29,15 @@ if not fs.exists("/free/unical/deviceAddress") then
     su.saveFile("/free/unical/deviceAddress", computer.address())
 end
 
+if not fs.exists("/free/unical/fsAddress") then
+    su.saveFile("/free/unical/fsAddress", fs.get("/").address)
+end
+
 su.saveFile("/free/current/systemUuid", uuid.next())
 su.saveFile("/free/current/deviceAddress", computer.address())
 su.saveFile("/free/current/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
+su.saveFile("/free/current/fsAddress", fs.get("/").address)
+
 
 ------------------------------------
 

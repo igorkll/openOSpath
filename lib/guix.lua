@@ -96,10 +96,6 @@ return {create = function()
     end
 
     function lib.selectColor(mainColor, miniColor, bw)
-        return su.selectColor(lib.gpu, mainColor, miniColor, bw)
-    end
-
-    function lib.selectColor(mainColor, miniColor, bw)
         local depth = lib.depth
         if type(bw) == "boolean" then bw = bw and 0xFFFFFF or 0x000000 end
         if not miniColor then miniColor = mainColor end
@@ -1014,6 +1010,7 @@ return {create = function()
                 if lib.scene ~= scene or lib.block then return end
                 if not obj.active or obj.killed then return end
                 if obj.used then return end
+
                 scene.createThread(function()
                     obj.used = true
                     obj.button.text = ""
@@ -1032,7 +1029,7 @@ return {create = function()
                     if not read then
                         setText()
                         lib.redraw()
-                        obj.used = false
+                        obj.ending = true
                         return
                     end
                     if unicode.sub(read, unicode.len(read), unicode.len(read)) == "\n" then --вдруг поведения билиотеки измениться
@@ -1041,17 +1038,19 @@ return {create = function()
                     obj.userInput = read
                     setText()
                     lib.redraw()
-                    obj.used = false
+                    obj.ending = true
                     obj.ok = true
                 end)
                 scene.createTimer(0.2, function()
-                    if not obj.used then
+                    if obj.ending then
+                        obj.used = false
+                        obj.ending = nil
                         if obj.ok then
-                            obj.ok = nil
                             runCallback(obj.callback, obj.userInput, nikname)
                         else
                             runCallback(obj.cancel, nikname)
                         end
+                        obj.ok = nil
                         return false
                     end
                 end)

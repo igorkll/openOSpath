@@ -39,7 +39,7 @@ local function unlockScreen(skipAllow, powerOff)
 
     local state = false
 
-    if math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or options.s then
+    if --[[math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or]] options.s then
         if not term.keyboard() then
             print("не найдена клавиатура, необходимая для авторизации")
             computer.shutdown()
@@ -240,7 +240,7 @@ local function unlockScreen(skipAllow, powerOff)
 end
 
 local function usersMenager()
-    if math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or options.s then
+    if --[[math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or]] options.s then
         while true do
             term.clear()
             print("users")
@@ -311,7 +311,8 @@ local function usersMenager()
                 window.remove()
                 gui.redraw()
             end)
-            close.backColor = 0xFF0000
+            close.backColor = gui.selectColor(0xFF0000, nil, false)
+            close.foreColor = gui.selectColor(0xFFFFFF, nil, true)
             window.attachObj(1, 1, close)
 
             gui.redraw()
@@ -320,7 +321,7 @@ local function usersMenager()
         local refresh
 
         local list = main.createList(2, 2, main.sizeX - 2, main.sizeY - 4, function(str, button)
-            if button == 1 and gui.context(1, 1, {"remove", "cancel"}) == "remove" then
+            if button == 1 and gui.context(gui.lastTouch[3], gui.lastTouch[4], {"remove", "cancel"}) == "remove" then
                 local function table_remove(tbl, obj)
                     for i = 1, #tbl do
                         if tbl[i] == obj then
@@ -343,7 +344,9 @@ local function usersMenager()
 
         local b1 = main.createInputbox(2, main.sizeY - 1, (main.sizeX // 2) - 2, 1, "add user", function(str)
             if su.inTable(lockCfg.users, str) then
-                createWindow("пользователь уже в списке")
+                gui.splash("пользователь уже в списке")
+            elseif str == "" then
+                gui.splash("нельзя использовать пустое имя")
             else
                 table.insert(lockCfg.users, str)
                 refresh()
@@ -353,7 +356,7 @@ local function usersMenager()
 
         local b2 = main.createButton((main.sizeX // 2) + 1, main.sizeY - 1, (main.sizeX // 2) - 2, 1, "auto add", function(_, _, button, nik)
             if su.inTable(lockCfg.users, nik) then
-                createWindow("вы уже в списке")
+                gui.splash("вы уже в списке")
             else
                 table.insert(lockCfg.users, nik)
                 refresh()
@@ -369,7 +372,7 @@ local function usersMenager()
 end
 
 local function setPasswordScreen()
-    if math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or options.s then
+    if --[[math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or]] options.s then
         term.clear()
         print("введите новый пароль")
         local read = io.read()
@@ -429,7 +432,7 @@ local function setPasswordScreen()
 end
 
 local function setMainuserScreen()
-    if math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or options.s then
+    if --[[math.floor(computer.getDeviceInfo()[term.screen()].width) == 1 or]] options.s then
         term.clear()
         print("способ")
         print("1.ввести ник")
