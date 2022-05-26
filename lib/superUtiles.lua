@@ -167,16 +167,16 @@ lib.saveGpu = function(gpuAddress)
 
     return function()
         if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
-        gpu.setResolution(rx, ry)
-        gpu.setViewport(vx, vy)
-        gpu.setDepth(depth)
-        gpu.setBackground(back, isPalB)
-        gpu.setForeground(fore, isPalF)
         for i = 0, 15 do
             if pallete[i] then
                 gpu.setPaletteColor(i, pallete[i])
             end
         end
+        gpu.setResolution(rx, ry)
+        gpu.setViewport(vx, vy)
+        gpu.setDepth(depth)
+        gpu.setBackground(back, isPalB)
+        gpu.setForeground(fore, isPalF)
     end
 end
 
