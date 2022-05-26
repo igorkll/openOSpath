@@ -16,7 +16,7 @@ function lib.create(r, y)
 
     obj.colors.back = 0xFFFFFF
     obj.colors.main = 0
-    obj.colors.sub = su.selectColor(nil, 0x888888, 0x222222, false)
+    obj.colors.sub = su.selectColor(nil, 0x888888, 0xAAAAAA, false)
 
     ----------------------
 
