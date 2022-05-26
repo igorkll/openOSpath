@@ -33,10 +33,15 @@ if not fs.exists("/free/unical/fsAddress") then
     su.saveFile("/free/unical/fsAddress", fs.get("/").address)
 end
 
+if not fs.exists("/free/unical/startEepromAddress") then
+    su.saveFile("/free/unical/startEepromAddress", _G.startEepromAddress or "nil")
+end
+
 su.saveFile("/free/current/systemUuid", uuid.next())
 su.saveFile("/free/current/deviceAddress", computer.address())
 su.saveFile("/free/current/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
 su.saveFile("/free/current/fsAddress", fs.get("/").address)
+su.saveFile("/free/current/startEepromAddress", _G.startEepromAddress or "nil")
 
 
 ------------------------------------

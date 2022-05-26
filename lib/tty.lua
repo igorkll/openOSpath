@@ -65,6 +65,8 @@ function tty.stream.read()
 
   local ok, result, reason = xpcall(core.read, debug.traceback, cursor)
 
+  if not ok and result then result = require("superUtiles").adapteTraceback(result) end
+
   if not ok or not result then
     pcall(cursor.update, cursor)
   end

@@ -54,12 +54,12 @@ function lib.create(address, maxPacketSize, dupProtectTimeout, dupProtectUpdateT
             local unicallCode = su.generateRandomID()
             addcode(unicallCode)
             if component.type(obj.address) == "tunnel" then
-                proxy.send(unicallCode, endflag, randomCode, i, part)
+                proxy.send("bigModem", unicallCode, endflag, randomCode, i, part)
             else
                 if targetAddress == true then
-                    proxy.broadcast(port, unicallCode, endflag, randomCode, i, part)
+                    proxy.broadcast(port, "bigModem", unicallCode, endflag, randomCode, i, part)
                 else
-                    proxy.send(targetAddress, port, unicallCode, endflag, randomCode, i, part)
+                    proxy.send(targetAddress, port, "bigModem", unicallCode, endflag, randomCode, i, part)
                 end
             end
         end
@@ -70,8 +70,8 @@ function lib.create(address, maxPacketSize, dupProtectTimeout, dupProtectUpdateT
     end
 
     local buffer = {}
-    table.insert(obj.listens, event.listen("modem_message", function(_, uuid, sender, port, dist, unicallCode, endflag, randomCode, index, dat)
-        if uuid ~= obj.address or not addcode(unicallCode) then return end
+    table.insert(obj.listens, event.listen("modem_message", function(_, uuid, sender, port, dist, appName, unicallCode, endflag, randomCode, index, dat)
+        if appName ~= "bigModem" or uuid ~= obj.address or not addcode(unicallCode) then return end
         if not buffer[randomCode] then buffer[randomCode] = {} end
         buffer[randomCode][index] = dat
         if endflag then

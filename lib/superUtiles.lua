@@ -209,6 +209,7 @@ function lib.toParts(str, max)
         end
     end
     table.insert(strs, temp)
+    if #strs[#strs] == 0 then table.remove(strs, #strs) end
     return strs
 end
 
@@ -376,6 +377,31 @@ function lib.isTouchScreen(address)
     local dat = math.floor(inf[address].width) ~= 1
     inf = nil
     return dat
+end
+
+function lib.adapteTraceback(data)
+    data = tostring(data)
+    if term.isAvailable() then
+        local rx, ry = term.gpu().getResolution()
+        
+        local data2 = {}
+        data = lib.split(data, "\n")
+        for i = 1, #data do
+            local subdat = lib.toParts(data[i], rx - 1)
+            for i = 1, #subdat do
+                table.insert(data2, subdat[i])
+            end
+        end
+
+        --data = lib.toParts(data, rx - 1)
+        --data = table.concat(data, "\n")
+        --data = lib.split(data, "\n")
+        while #data2 > (ry - 4) do table.remove(data2, #data2) end
+        data = table.concat(data2, "\n")
+    end
+    --if data:sub(#data, #data) ~= "\n" then data = data .. "\n" end
+    --data = data:upper()
+    return data
 end
 
 return lib

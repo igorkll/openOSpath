@@ -49,7 +49,7 @@ function process.load(path, env, init, name)
         end
       end
       -- local command
-      function loadfile2(filename, ...)
+      local function loadfile2(filename, ...)
         if filename:sub(1,1) ~= "/" then
           filename = (os.getenv("PWD") or "/") .. "/" .. filename
         end
@@ -92,14 +92,14 @@ function process.load(path, env, init, name)
             return msg.code or 0
           end
           local stack = debug.traceback():gsub("^([^\n]*\n)[^\n]*\n[^\n]*\n","%1")
-          io.stderr:write(string.format("%s:\n%s", msg or "", stack))
+          io.stderr:write(tostring(require("superUtiles").adapteTraceback(string.format("%s:\n%s", msg or "", stack))))
           return 128 -- syserr
         end, ...)
     }
 
     --result[1] is false if the exception handler also crashed
     if not result[1] and type(result[2]) ~= "number" then
-      pcall(require("event").onError, string.format("process library exception handler crashed: %s", tostring(result[2])))
+      pcall(require("event").onError, string.format("process library exception handler crashed: %s", result[2]))
     end
 
     -- onError opens a file, you can't open a file without a process, we close the process last
@@ -172,8 +172,8 @@ function process.internal.continue(co, ...)
     result = table.pack(coroutine.resume(co, table.unpack(args, 1, args.n)))
     if coroutine.status(co) ~= "dead" then
       args = table.pack(coroutine.yield(table.unpack(result, 2, result.n)))
-    elseif not result[1] then
-      io.stderr:write(result[2])
+    elseif not result[1] and result[2] then
+      io.stderr:write(require("superUtiles").adapteTraceback(result[2]))
     end
   end
   return table.unpack(result, 2, result.n)

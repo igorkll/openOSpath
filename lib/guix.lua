@@ -113,20 +113,27 @@ return {create = function()
         mainObj.listens = {}
         mainObj.threads = {}
 
-        function mainObj.createTimer(time, callback)
+        function mainObj.createTimer(time, callback, times)
             local obj = {}
             obj.on = not scene or lib.scene == scene
+            obj.times = times or math.huge
             obj.id = event.timer(time, function(...)
+                obj.times = obj.times - 1
                 if not obj.on or lib.startTime > computer.uptime() then return end
+
+                local killed = false
+                if obj.times <= 0 then obj.kill() killed = true end --досрочьный kill вдруг функйия будет блокируюшия
+
                 local stopState = callback(...)
 
-                if stopState == false then
-                    table_remove(mainObj.timers, obj)
+                if stopState == false or obj.times <= 0 then
+                    if not killed then obj.kill() end
                     return false
                 end
-            end, math.huge)
+            end, math.huge) --и да я сам реализовываю каунтер
             function obj.kill()
                 event.cancel(obj.id)
+                obj.on = false
                 table_remove(mainObj.timers, obj)
             end
 
@@ -142,12 +149,13 @@ return {create = function()
                 local stopState = callback(inputEventType, ...)
 
                 if stopState == false then
-                    table_remove(mainObj.listens, obj)
+                    obj.kill()
                     return false
                 end
             end, math.huge, math.huge)
             function obj.kill()
                 event.cancel(obj.id)
+                obj.on = false
                 table_remove(mainObj.listens, obj)
             end
 
@@ -1585,9 +1593,7 @@ return {create = function()
         local oldScene = lib.scene
         lib.select(scene)
         os.sleep(time or 2)
-        if oldScene then
-            lib.select(oldScene)
-        end
+        if oldScene then lib.select(oldScene) end
     end
 
     function lib.splash(text, color, time, sx, sy)
@@ -1601,8 +1607,42 @@ return {create = function()
             local x, y = scene.getCenter()
             scene.createLabel(1, y, sx, 1, text)
         end
-        lib.pushScene(scene)
+        lib.pushScene(scene, time)
         scene.remove()
+    end
+
+    function lib.yesno(text, sx, sy)
+        if not sx then sx = lib.maxX end
+        if not sy then sy = lib.maxY end
+
+        local scene = lib.createScene(0xFFFFFF, sx, sy)
+        local cx, cy = scene.getCenter()
+
+        if text then scene.createLabel(1, 1, sx, 1, text) end
+
+        local state = nil
+
+        local yes = scene.createButton(1, (cy - 1) - 2, sx, 3, "yes", function() state = true end)
+        local no = scene.createButton(1, (cy - 1) + 2, sx, 3, "no", function() state = false end)
+        yes.backColor = lib.selectColor(0x00FF00, nil, false)
+        yes.foreColor = 0xFFFFFF
+        yes.invertBackColor = lib.selectColor(0x0000FF, nil, true)
+        yes.invertForeColor = 0
+
+        no.backColor = lib.selectColor(0xFF0000, nil, false)
+        no.foreColor = 0xFFFFFF
+        no.invertBackColor = lib.selectColor(0x0000FF, nil, true)
+        no.invertForeColor = 0
+
+        local oldScene = lib.scene
+        lib.select(scene)
+        
+        while state == nil do os.sleep(0.1) end
+
+        if oldScene then lib.select(oldScene) end
+        scene.remove()
+
+        return state
     end
 
     -------------------------------------twicks active

@@ -2,6 +2,8 @@ if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end 
 
 -----------------------------------mods
 
+_G.startEepromAddress = component.list("eeprom")()
+
 do
     local atan = math.atan
     function math.atan2(y, x)

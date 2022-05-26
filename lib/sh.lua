@@ -37,7 +37,7 @@ function sh.internal.command_result_as_code(ec, reason)
     code = ec
   end
 
-  if reason and code ~= 0 then io.stderr:write(reason, "\n") end
+  if reason and code ~= 0 then io.stderr:write(require("superUtiles").adapteTraceback(reason)) end
   return code
 end
 
