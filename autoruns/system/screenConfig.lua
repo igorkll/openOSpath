@@ -19,10 +19,6 @@ local function setGS(screen, gpu)
 
     local gpuProxy = component.proxy(gpu)
     local screenProxy = component.proxy(screen)
-    for i = 0, 15 do --сброс палитры, она должна быть определена в автозагрузке и точька
-        local count = su.mapClip(i, 0, 15, 0, 255)
-        gpuProxy.setPaletteColor(i, colorPic.colorBlend(count, count, count))
-    end
 
     term.bind(gpuProxy)
 
@@ -30,6 +26,21 @@ local function setGS(screen, gpu)
     connectedGpu = gpu
     
     if screenProxy.setPrecise then pcall(screenProxy.setPrecise, false) end
+
+    if fs.exists("/etc/depth.cfg") then
+        local depth = tonumber(su.getFile("/etc/depth.cfg"))
+        if depth then
+            if depth > math.floor(gpuProxy.maxDepth(depth)) then
+                depth = math.floor(gpuProxy.maxDepth(depth))
+                su.saveFile("/etc/depth.cfg", tostring(depth))
+            end
+            gpuProxy.setDepth(depth)
+        end
+    else
+        su.saveFile("/etc/depth.cfg", tostring(math.floor(gpuProxy.getDepth())))
+    end
+
+    os.execute("resetPalette")
     term.clear()
 end
 
