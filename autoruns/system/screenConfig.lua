@@ -27,20 +27,7 @@ local function setGS(screen, gpu)
     
     if screenProxy.setPrecise then pcall(screenProxy.setPrecise, false) end
 
-    if fs.exists("/etc/depth.cfg") then
-        local depth = tonumber(su.getFile("/etc/depth.cfg"))
-        if depth then
-            if depth > math.floor(gpuProxy.maxDepth(depth)) then
-                depth = math.floor(gpuProxy.maxDepth(depth))
-                su.saveFile("/etc/depth.cfg", tostring(depth))
-            end
-            gpuProxy.setDepth(depth)
-        end
-    else
-        su.saveFile("/etc/depth.cfg", tostring(math.floor(gpuProxy.getDepth())))
-    end
-
-    os.execute("resetPalette")
+    os.execute("depth set")
     term.clear()
 end
 
