@@ -4,6 +4,23 @@ if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end 
 
 _G.startEepromAddress = component.list("eeprom")()
 
+_G.origCoroutine = coroutine
+
+computer.superRawPullSignal = computer.pullSignal
+
+do
+    local uptime = computer.uptime
+    local oldInterruptTime = uptime()
+    _G.interruptTime = 1
+
+    function _G.interrupt()
+        if uptime() - oldInterruptTime > _G.interruptTime then
+            os.sleep() --на данный момент в _G его нет но он появиться после полной загрузки
+            oldInterruptTime = uptime()
+        end
+    end
+end
+
 do
     local atan = math.atan
     function math.atan2(y, x)

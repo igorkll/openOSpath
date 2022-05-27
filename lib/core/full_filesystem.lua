@@ -143,6 +143,7 @@ function filesystem.copy(fromPath, toPath, func)
     else
       local function recurse(fromPath, toPath)
         for file in filesystem.list(fromPath) do
+          interrupt()
           local full_path = filesystem.concat(fromPath, file)
           local full_to_path = filesystem.concat(toPath, file)
           func("copy from " .. full_path .. " to " .. full_to_path)
@@ -154,6 +155,7 @@ function filesystem.copy(fromPath, toPath, func)
             local ok, err = filesystem.copy(full_path, full_to_path)
             if not ok then return nil, err end
           end
+          interrupt()
         end
         return true
       end

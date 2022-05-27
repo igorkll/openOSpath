@@ -16,7 +16,6 @@ local function isValide(path)
     return line == "--regFile"
 end
 
-create("/start.lua")
 create("/afterUpdate.lua")
 create("/beforeUpdate.lua")
 

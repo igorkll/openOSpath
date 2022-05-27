@@ -852,6 +852,7 @@ return {create = function()
 
             obj.strs = {}
             obj.screenStrs = {}
+            obj.screenStrsNums = {}
 
             obj.killed = false
             obj.active = true
@@ -870,6 +871,7 @@ return {create = function()
                 end
 
                 obj.screenStrs = {}
+                obj.screenStrsNums = {}
                 local mainStr = (obj.posY + obj.sizeY) - 1
                 local scroll = obj.seekBar.value
                 for i = 1, #obj.strs do
@@ -879,6 +881,7 @@ return {create = function()
                         local str = obj.strs[(#obj.strs - i) + 1]
                         str = unicode.sub(str, 1, obj.sizeX - 1)
                         obj.screenStrs[posY - obj.posY] = str
+                        obj.screenStrsNums[posY - obj.posY] = (#obj.strs - i) + 1
                         if not obj.invisible then lib.gpu.set(obj.posX, posY, str) end
                     end
                 end
@@ -935,6 +938,11 @@ return {create = function()
                 obj.reMatch()
             end
 
+            function obj.removeAtNum(num)
+                table.remove(obj.strs, num)
+                obj.reMatch()
+            end
+
             obj.listens = {}
 
             obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, posX, posY, button)
@@ -960,8 +968,9 @@ return {create = function()
                         local num = posY - obj.posY
                         if preciseState then num = num + 1 end
                         local str = obj.screenStrs[num]
+                        local strnum = obj.screenStrsNums[num]
                         if str then
-                            runCallback(obj.callback, str, button)
+                            runCallback(obj.callback, str, math.floor(button), strnum)
                         end
                     end
                 end
