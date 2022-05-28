@@ -96,6 +96,7 @@ while term.isAvailable() do
   local command = term.read(read_handler)
   if not command then -- eof
     os.exit()
+    return
   end
   local code, reason
   if string.sub(command, 1, 1) == "=" then

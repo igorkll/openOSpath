@@ -1,4 +1,7 @@
 local term = require("term")
+local su = require("superUtiles")
+local fs = require("filesystem")
+local serialization = require("serialization")
 
 ------------------------------------
 
@@ -12,11 +15,32 @@ end
 
 function lib.getColorIndex()
     local depth = lib.getDepth()
-    if depth == 4 then
-        return {0xFFFFFF, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xFEFE6C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C, 0x999999, 0x4C99B2, 0xB266E5, 0x3366CC, 0x9F664C, 0x57A64E, 0xFF3333, 0x000000}
-    else
-        return {0xFFFFFF, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xFEFE8C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C, 0x999999, 0x4C99B2, 0xB266E5, 0x3366CC, 0x9F664C, 0x57A64E, 0xCC4C4C, 0x000000}
+    local function generate()
+        if depth == 4 then
+            return {0xFFFFFF, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xFEFE6C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C, 0x999999, 0x4C99B2, 0xB266E5, 0x3366CC, 0x9F664C, 0x57A64E, 0xFF3333, 0x000000}
+        else
+            return {0xFFFFFF, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xFEFE8C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C, 0x999999, 0x4C99B2, 0xB266E5, 0x3366CC, 0x9F664C, 0x57A64E, 0xCC4C4C, 0x000000}
+        end
     end
+    local colors
+    if depth == 1 then
+        return {0xFFFFFF, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000}
+    elseif depth == 4 then
+        if fs.exists("/etc/palette/colorPic/depth4.cfg") then
+            colors = assert(serialization.unserialize(assert(su.getFile("/etc/palette/colorPic/depth4.cfg"))))
+        else
+            colors = generate()
+            su.saveFile("/etc/palette/colorPic/depth4.cfg", assert(serialization.serialize(colors)))
+        end
+    else
+        if fs.exists("/etc/palette/colorPic/depth8.cfg") then
+            colors = assert(serialization.unserialize(assert(su.getFile("/etc/palette/colorPic/depth8.cfg"))))
+        else
+            colors = generate()
+            su.saveFile("/etc/palette/colorPic/depth8.cfg", assert(serialization.serialize(colors)))
+        end
+    end
+    return colors
 end
 
 function lib.getColors()

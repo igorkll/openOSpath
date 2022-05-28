@@ -10,6 +10,11 @@ local uuid = require("uuid")
 
 ------------------------------------
 
+for address in component.list("modem") do
+    component.invoke(address, "close") --close all ports
+    component.invoke(address, "setStrength", math.huge) --set max strength
+end
+
 _G.readonly = fs.get("/").isReadOnly()
 
 if not fs.exists("/free/unical/systemUuid") then
@@ -42,7 +47,6 @@ su.saveFile("/free/current/deviceAddress", computer.address())
 su.saveFile("/free/current/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
 su.saveFile("/free/current/fsAddress", fs.get("/").address)
 su.saveFile("/free/current/startEepromAddress", _G.startEepromAddress or "nil")
-
 
 ------------------------------------
 

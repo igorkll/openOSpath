@@ -146,8 +146,8 @@ function tty.stream:write(value)
     elseif delim == "\v" then
       y = y + 1
     elseif delim == "\a" and not beeped then
-      computer.beep()
-      beeped = true
+      computer.beep(2000, 0.05)
+      --beeped = true
     elseif delim == "\27" then
       window.output_buffer = delim .. window.output_buffer
     end

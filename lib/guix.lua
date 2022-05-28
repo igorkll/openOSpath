@@ -30,17 +30,37 @@ end
 
 -----------------------------------------
 
-return {create = function()
+return {create = function(minTier)
     local lib = {}
+
+    if not term.isAvailable() then
+        error("term is not available", 0)
+    end
 
     --link
     lib.gpu = term.gpu()
     lib.screen = term.screen()
     lib.keyboard = term.keyboard()
 
+    local maxDepth = math.floor(lib.gpu.maxDepth())
+    if maxDepth == 8 then
+        lib.tier = 3
+    elseif maxDepth == 4 then
+        lib.tier = 2
+    elseif maxDepth == 1 then
+        lib.tier = 1
+    else
+        lib.tier = math.huge
+    end
+
+    if minTier and lib.tier < minTier then
+        io.stderr:write("programm required tier " .. tostring(math.floor(minTier)) .. ", you have tier " .. tostring(math.floor(lib.tier)))
+        os.exit()
+    end
+
     --check params
     local _, oldPreciseState = pcall(component.invoke, lib.screen, "isPrecise") --pcall на всякий случай
-    pcall(component.invoke, lib.screen, "setPrecise", false)
+    pcall(component.invoke, lib.screen, "setPrecise", false) --precise больше не поддерживаться
     local _, preciseState = pcall(component.invoke, lib.screen, "isPrecise")
 
     lib.noTouch = math.floor(tonumber(computer.getDeviceInfo()[lib.screen].width)) == 1
@@ -943,6 +963,15 @@ return {create = function()
                 obj.reMatch()
             end
 
+            function obj.exists(name)
+                for i = 1, #obj.strs do
+                    if obj.strs[i] == name then
+                        return true
+                    end
+                end
+                return false
+            end
+
             obj.listens = {}
 
             obj.listens[#obj.listens + 1] = scene.createListen(nil, function(eventName, uuid, posX, posY, button)
@@ -1520,6 +1549,19 @@ return {create = function()
     function lib.context(posX, posY, inputData)
         lib.block = true
 
+        local function getStr(num)
+            local dat = inputData[num]
+            if not dat then return nil end
+            local str
+            if type(dat) == "table" then
+                str = dat[1]
+            else
+                dat = tostring(dat)
+                str = dat
+            end
+            return str
+        end
+
         local menuData = {strs = {}, on = {}}
         local sizeX, sizeY = 0
         for i = 1, #inputData do
@@ -1540,10 +1582,7 @@ return {create = function()
         for i = 1, #menuData.strs do
             local str = menuData.strs[i]
             if unicode.len(str) < sizeX then
-                local addCount = sizeX - unicode.len(str)
-                for i2 = 1, addCount do
-                    menuData.strs[i] = menuData.strs[i] .. " "
-                end
+                menuData.strs[i] = menuData.strs[i] .. string.rep(" ", sizeX - unicode.len(str))
             end
         end
         sizeY = #menuData.strs
@@ -1578,23 +1617,25 @@ return {create = function()
 
         local out
         while true do
-            local _, _, touchX, touchY, button, nikname = event.pull("touch", lib.screen)
-            if isZone({posX = posX, posY = posY, sizeX = sizeX, sizeY = sizeY}, touchX, touchY) and button == 0 then
-                local num = (touchY - posY) + 1
-                if menuData.on[num] then
-                    out = num
+            local eventName, uuid, touchX, touchY, button, nikname = event.pull()
+            if uuid == lib.screen and (eventName == "touch" or eventName == "scroll") then
+                if eventName == "touch" and button == 0 and isZone({posX = posX, posY = posY, sizeX = sizeX, sizeY = sizeY}, touchX, touchY) then
+                    local num = (touchY - posY) + 1
+                    if menuData.on[num] then
+                        out = num
+                        break
+                    end
+                else
+                    event.push(eventName, lib.screen, touchX, touchY, button, nikname)
                     break
                 end
-            else
-                event.push("touch", lib.screen, touchX, touchY, button, nikname)
-                break
             end
         end
 
         lib.block = false
         lib.redraw()
 
-        return menuData.strs[out], out
+        return getStr(out), out
     end
 
     --utiles

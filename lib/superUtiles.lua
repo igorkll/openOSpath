@@ -167,6 +167,7 @@ lib.saveGpu = function(gpuAddress)
 
     return function()
         if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
+        gpu.setDepth(depth)
         for i = 0, 15 do
             if pallete[i] then
                 gpu.setPaletteColor(i, pallete[i])
@@ -174,7 +175,6 @@ lib.saveGpu = function(gpuAddress)
         end
         gpu.setResolution(rx, ry)
         gpu.setViewport(vx, vy)
-        gpu.setDepth(depth)
         gpu.setBackground(back, isPalB)
         gpu.setForeground(fore, isPalF)
     end
@@ -402,6 +402,23 @@ function lib.adapteTraceback(data)
     --if data:sub(#data, #data) ~= "\n" then data = data .. "\n" end
     --data = data:upper()
     return data
+end
+
+function lib.findWirelessModem()
+    local bestAddress, bestWidth, width
+
+    for address in component.list("modem") do
+        local proxy = component.proxy(address)
+        if proxy.isWireless() then
+            width = proxy.getStrength()
+
+            if not bestWidth or width > bestWidth then
+                bestAddress, bestWidth = address, width
+            end
+        end
+    end
+
+    return component.proxy(bestAddress or "*")
 end
 
 return lib
