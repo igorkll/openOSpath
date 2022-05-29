@@ -86,12 +86,25 @@ end)
 
 ------------------------------------
 
+local function createSystemCfg()
+    return {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}
+end
+
 function _G.saveSystemConfig()
-    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}))
+    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or createSystemCfg()))
 end
 
 if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
-_G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
+
+if fs.exists("/etc/system.cfg") then
+    _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
+else
+    _G.systemCfg = createSystemCfg()
+end
+
+if _G.recoveryMod then
+    _G.systemCfg = createSystemCfg()
+end
 
 ------------------------------------
 

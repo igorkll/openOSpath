@@ -103,7 +103,7 @@ do --активатор загрузчика
         invoke(addr, "close", handle)
         return load(buffer, "=" .. file, "bt", _G)
     end
-    do 
+    if not _G.recoveryMod then
         local path = "/free/twicks/mem/"
         local tbl = component.proxy(computer.getBootAddress()).list(path) or {}
         table.sort(tbl)
@@ -141,7 +141,7 @@ end
 
 fs.makeDirectory("/free/flags")
 
-if fs.exists(afterBootTwicks) then --запуск boot твиков после запуска класической openOS
+if fs.exists(afterBootTwicks) and not _G.recoveryMod then --запуск boot твиков после запуска класической openOS
     for _, data in list(afterBootTwicks) do
         os.execute(fs.concat(afterBootTwicks, data))
     end
@@ -155,7 +155,7 @@ if fs.exists(systemautoruns) then --системная автозагрузка
     end
 end
 
-if fs.exists("/free/flags/updateEnd") then --запуска файла дополнения обновления(для оболочек)
+if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then --запуска файла дополнения обновления(для оболочек)
     local afterUpdate = false
     if fs.exists("/afterUpdate.lua") then
         local ok, err = sdofile("/afterUpdate.lua")
@@ -186,14 +186,16 @@ event.pull(1, "init")
 -----------------------------------
 
 _G.externalAutoruns = true --разришить автозогрузку с внешних насителей
-for address in component.list("filesystem") do
-    event.push("autorun", address) --инициирует автозагрузки
+if not _G.recoveryMod then
+    for address in component.list("filesystem") do
+        event.push("autorun", address) --инициирует автозагрузки
+    end
+    for i = 1, 2 do os.sleep(0.2) end
 end
-for i = 1, 2 do os.sleep(0.2) end
 
 -----------------------------------
 
-if fs.exists(userautoruns) then --автозагрузка пользователя
+if fs.exists(userautoruns) and not _G.recoveryMod then --автозагрузка пользователя
     for _, data in list(userautoruns) do
         os.execute(fs.concat(userautoruns, data))
     end
@@ -201,14 +203,16 @@ end
 
 -----------------------------------
 
-if fs.exists("/.start.lua") then --главная автозагрузка
-    os.execute("/.start.lua")
-elseif fs.exists("/.autorun.lua") then
-    os.execute("/.autorun.lua")
-end
+if not _G.recoveryMod then
+    if fs.exists("/.start.lua") then --главная автозагрузка
+        os.execute("/.start.lua")
+    elseif fs.exists("/.autorun.lua") then
+        os.execute("/.autorun.lua")
+    end
 
-if fs.exists("/autorun.lua") then os.execute("/autorun.lua") end
-if fs.exists("/start.lua") then os.execute("/start.lua") end
+    if fs.exists("/autorun.lua") then os.execute("/autorun.lua") end
+    if fs.exists("/start.lua") then os.execute("/start.lua") end
+end
 
 -----------------------------------
 
@@ -223,20 +227,24 @@ local function waitFoEnter()
 end
 
 event.push("full_load")
-while _G.shellAllow do --запуск shell
+while _G.shellAllow or _G.recoveryMod do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
     end)
     if not result then
+        computer.pullSignal() --для возможности крашнуть комп с ошибкой
         if term.isAvailable() then
             io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
             io.write("Press enter key to continue.\n")
             waitFoEnter()
-        else
-            computer.pullSignal() --для возможности крашнуть комп с ошибкой
         end
     end
 end
-io.write("Shell is not allow, press enter key to reboot.\n")
-waitFoEnter()
+
+if term.isAvailable() then
+    term.gpu().setBackground(0)
+    term.gpu().setForeground(0xFFFFFF)
+    io.write("Shell is not allow, press enter key to reboot.\n")
+    waitFoEnter()
+end
 computer.shutdown(true)
