@@ -51,7 +51,7 @@ if appsList then
             local url = urls[num]
             local data = assert(su.getInternetFile(url))
             assert(su.saveFile(fs.concat("/free/programs/menagers", names[num]), data))
-            setLocalVersion(names[num], updateFlag[num] and versions[num] or -1)
+            setLocalVersion(names[num], versions[num])
 
             gui.stop()
             shell.execute(fs.concat("/free/programs/menagers", names[num]), nil, "install")
@@ -75,9 +75,9 @@ if appsList then
 
             table.insert(urls, url)
             table.insert(names, name)
-            table.insert(versions, version)
+            table.insert(versions, version or false)
 
-            if version and (not getLocalVersion(name) or version > getLocalVersion(name)) then
+            if fs.exists(fs.concat("/free/programs/menagers", name)) and version and (not getLocalVersion(name) or version > getLocalVersion(name)) then
                 internetList.addStr(name .. " (updata, current: " .. tostring(getLocalVersion(name)) .. ", new: " .. tostring(version) .. ")")
                 table.insert(updateFlag, true)
             else

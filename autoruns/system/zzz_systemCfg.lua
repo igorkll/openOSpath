@@ -12,7 +12,9 @@ local uuid = require("uuid")
 
 for address in component.list("modem") do
     component.invoke(address, "close") --close all ports
-    component.invoke(address, "setStrength", math.huge) --set max strength
+    if component.invoke(address, "isWireless") then
+        component.invoke(address, "setStrength", math.huge) --set max strength
+    end
 end
 
 _G.readonly = fs.get("/").isReadOnly()
