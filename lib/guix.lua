@@ -7,6 +7,9 @@ local thread = require("thread")
 local component = require("component")
 local computer = require("computer")
 local keyboard = require("keyboard")
+local colorPic = require("colorPic")
+
+local colors = colorPic.getColors()
 
 -----------------------------------------
 
@@ -118,9 +121,9 @@ return {create = function(minTier)
     function lib.selectColor(mainColor, miniColor, bw)
         local depth = lib.depth
         if type(bw) == "boolean" then bw = bw and 0xFFFFFF or 0x000000 end
-        if not miniColor then miniColor = mainColor end
+
         if depth == 4 then
-            return miniColor
+            return miniColor or mainColor
         elseif depth == 1 then
             return bw or mainColor
         end
@@ -1693,6 +1696,13 @@ return {create = function(minTier)
         scene.remove()
 
         return state
+    end
+
+    function lib.status(text, sx, sy)
+        lib.gpu.setBackground(lib.selectColor(colors.white, nil, true))
+        lib.gpu.setForeground(lib.selectColor(colors.lightGray, nil, false))
+        lib.gpu.fill(1, 1, sx or lib.userX, sy or lib.userY, " ")
+        lib.gpu.set(math.ceil(((sx or lib.userX) / 2) - (unicode.len(text) / 2)), math.ceil((sy or lib.userY) / 2), text)
     end
 
     -------------------------------------twicks active
