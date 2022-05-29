@@ -5,16 +5,6 @@ local unicode = require("unicode")
 
 ----------------------------------------------------
 
-local count = 0
-local function interrupt()
-    count = count + 1
-    if count % 512 == 0 then
-        os.sleep(0.1)
-    end
-end
-
-----------------------------------------------------
-
 local lib = {}
 
 function lib.simpleUnpack(mainpath, data)

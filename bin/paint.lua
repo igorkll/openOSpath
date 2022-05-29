@@ -24,7 +24,7 @@ local image
 local function cleanImage(gpu, posX, posY, sizeX, sizeY)
     gpu.setBackground(0)
     gpu.setForeground(0xFFFFFF)
-    gpu.fill(posX, posY, sizeX, sizeY, "#")
+    gpu.fill(posX, posY, sizeX, sizeY, "░")
 end
 
 ------------------------------------------
@@ -128,7 +128,7 @@ drawzone = main.createDrawZone(1, 2, 1, 1, function(gpu, posX, posY, sizeX, size
     if not image then cleanImage(gpu, posX, posY, sizeX, sizeY) end
     gpu.setBackground(0)
     gpu.setForeground(0xFFFFFF)
-    gpu.fill(posX, posY, sizeX, sizeY, "#")
+    gpu.fill(posX, posY, sizeX, sizeY, "░")
     for linecount = 1, #image do
         local line = image[linecount]
         for pixelcount = 1, #line do
@@ -279,7 +279,7 @@ while true do
         local gpu = gui.gpu
         if button == 1 then
             byte = " "
-            char = "#"
+            char = "░"
         end
         setInImage(image, x, y, byte)
         local oldb = gpu.setBackground((byte ~= " " and colors[selectcolor]) or 0)

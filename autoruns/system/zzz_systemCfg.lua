@@ -144,7 +144,7 @@ local function drawLogo(noChangeResolution)
         else
             gpu.setBackground(0)
             gpu.setForeground(0xFFFFFF)
-            gpu.fill(1, 1, rx, ry, "#")
+            gpu.fill(1, 1, rx, ry, "▒")
 
             if fs.exists("/etc/logoBW.pic") then
                 img = require("imageDrawer").loadimage("/etc/logoBW.pic")
