@@ -60,7 +60,7 @@ function lib.load(path, name, ...)
     if not data then return nil, err end
     data = su.modProgramm(data)
 
-    local func, err = load(data)
+    local func, err = load(data, "=" .. path, nil, su.createEnv())
     if not func then return nil, err end
     os.setenv("_", path)
     local th = thread.create(func, ...)

@@ -35,7 +35,7 @@ if args[1] == "load" then
     local path = shell.resolve(args[2], "lua")
     local data = assert(su.getFile(path))
     data = su.modProgramm(data)
-    local func = assert(load(data))
+    local func = assert(load(data, "=" .. args[2], nil, su.createEnv()))
     os.setenv("_", path)
     local th = thread.create(func, table.unpack(programmArgs))
     th:detach()

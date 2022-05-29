@@ -421,4 +421,12 @@ function lib.findWirelessModem()
     return component.proxy(bestAddress or "*")
 end
 
+function lib.createEnv()
+    local env = {}
+    setmetatable(env, {__index = function(_, key)
+        return _G[key]
+    end})
+    return env
+end
+
 return lib

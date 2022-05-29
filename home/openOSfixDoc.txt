@@ -81,4 +81,62 @@ reset максимальное
 игры
 worm из computer craft порт прослойкой
 
-программ встроеных и api много разберитесь сами покаче
+апишки
+colorPic
+lib.getDepth() возврашает тикушию depth
+lib.getColorIndex() возврашает палитру цвета(цвета на усмотрения системмы) от comp craft в виде {1, 2, 3, ...(16)}
+lib.getColors() тоже самая но с текст ключами например lib.getColors().red
+lib.optimize(color) умная оптимизация цвета
+lib.reverse(color) инверсия
+lib.hsvToRgb(h, s, v) конверор
+lib.colorBlend(r, g, b)
+lib.colorUnBlend(color)
+
+nano
+обрашаейтесь к нанитам по их команде
+доп
+lib.isOk()
+lib.raw_send()
+
+cpselect
+lib.get(filter, message, important)
+
+back запуск приложений в фоне
+lib.list()
+lib.getArray()
+lib.stop(name)
+lib.start(name)
+lib.kill(name)
+lib.getProgramm(name)
+lib.load(path, name, ...)
+lib.loadData(func, name, ...)
+lib.loadSimpleData(data, name, ...)
+
+imageDrawer отрисовка картинок
+lib.loadimage(path)
+img.draw(posX, posY)
+img.getSize()
+
+luaEnv библиотека предоставляюшия api для создания песочьницы lua
+luaEnv.create(boolean(зашита от краша (while true do pcall(function() while true do end end) end)))
+
+screenShot
+obj = screenShot.pull(x, y) --запомнить
+--стераем/перересовывает/закрываем
+obj.push()--возврашаем
+
+superUtiles
+superUtiles.getFile(path)
+superUtiles.saveFile(path, data)
+
+глобалы
+_ENV у каждой программы/демона/библиотеки личьный
+в _G обший
+
+программы
+worm игра из computercraft со вшитой прослойкой совместимости
+arch архиватор
+
+lock настройка блокировки введите lock чтобы заблокировать
+введите lock help для получения под информации
+пароль по умалчанию 0000
