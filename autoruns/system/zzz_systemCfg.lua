@@ -84,6 +84,60 @@ event.listen("shutdown", function()
     updateValue("/free/data/likePowerOffCount")
 end)
 
+if not _G.recoveryMod then
+    local shutdownPart = 8
+
+    local computer_energy = computer.energy
+    function computer.energy()
+        return su.mapClip(computer_energy(), computer.maxEnergy() / shutdownPart, computer.maxEnergy(), 0, computer.maxEnergy())
+    end
+
+    function _G.lowPowerDraw()
+        if term.isAvailable() then
+            local targetPath = "/etc/lowPower.pic"
+            if math.floor(term.gpu().getDepth()) == 1 then
+                targetPath = "/etc/lowPowerBW.pic"
+            end
+
+            if fs.exists(targetPath) then
+                local imageDrawer = require("imageDrawer")
+                local img = imageDrawer.loadimage(targetPath)
+                term.clear()
+
+                local ix, iy = img.getSize()
+                local rx, ry = term.gpu().getResolution()
+                local cx, cy = rx // 2, ry // 2
+                local dx, dy = math.ceil(cx - (ix / 2)), math.ceil(cy - (iy / 2))
+                img.draw(dx, dy)
+                computer.delay(2)
+            else
+                computer.pullSignal = function()
+                    error("not enough energy", 0)
+                end
+                computer.pullSignal()
+            end
+        else
+            computer.pullSignal = function()
+                error("not enough energy", 0)
+            end
+            computer.pullSignal()
+        end
+    end
+
+    local timerID
+    local function check()
+        if computer.energy() <= 0 then
+            if timerID then
+                event.cancel(timerID)
+            end
+            lowPowerDraw()
+            computer.shutdown()
+        end
+    end
+    check()
+    timerID = event.timer(1, check, math.huge)
+end
+
 ------------------------------------
 
 local function createSystemCfg()
@@ -110,7 +164,7 @@ end
 
 function _G.updateNoInternetScreen()
     event.superHook = false
-    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown(true) end
+    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown("fast") end
 
     local rx, ry = 50, 16
     if component.isAvailable("tablet") then
@@ -126,7 +180,7 @@ function _G.updateNoInternetScreen()
     os.sleep(2)
     gui.status("убедитесь что реальный пк подключен к интернету", 0xFFFFFF, color)
     os.sleep(2)
-    computer.shutdown()
+    computer.shutdown("fast")
 end
 
 ------------------------------------

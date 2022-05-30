@@ -7,7 +7,6 @@ local colorPic = require("colorPic")
 local lib = {}
 
 lib.gpu = term.gpu()
-lib.colors = colorPic.getColorIndex()
 
 function lib.loadimage(path)
     checkArg(1, path, "string")
@@ -16,7 +15,7 @@ function lib.loadimage(path)
 
     local obj = {}
     obj.image = {}
-    obj.colors = lib.colors
+    obj.colors = colorPic.getColorIndex()
 
     if path then
         local file = assert(io.open(path))
@@ -37,6 +36,7 @@ function lib.loadimage(path)
         local gpu = lib.gpu
         local image = obj.image
         local colors = obj.colors
+        local depth = math.floor(gpu.getDepth())
 
         local oldb = gpu.getBackground()
         for linecount = 1, #image do
@@ -44,9 +44,29 @@ function lib.loadimage(path)
             for pixelcount = 1, #line do
                 local pixel = line:sub(pixelcount, pixelcount)
                 local number = tonumber(pixel, 16)
+                
                 if number then
-                    gpu.setBackground(colors[number + 1])
-                    gpu.set(posX + (pixelcount - 1), posY + (linecount - 1), " ")
+                    if depth == 1 then
+                        local color = colors[number + 1]
+                        if color == 0xFFFFFF then
+                            gpu.setBackground(0xFFFFFF)
+                            gpu.setForeground(0)
+                            gpu.set(posX + (pixelcount - 1), posY + (linecount - 1), " ")
+                        else
+                            gpu.setBackground(0)
+                            gpu.setForeground(0xFFFFFF)
+                        end
+                        if color == 2 then
+                            gpu.set(posX + (pixelcount - 1), posY + (linecount - 1), "▓")
+                        elseif color == 1 then
+                            gpu.set(posX + (pixelcount - 1), posY + (linecount - 1), "▒")
+                        elseif color == 0 then
+                            gpu.set(posX + (pixelcount - 1), posY + (linecount - 1), " ")
+                        end
+                    else
+                        gpu.setBackground(colors[number + 1])
+                        gpu.set(posX + (pixelcount - 1), posY + (linecount - 1), " ")
+                    end
                 end
             end
         end

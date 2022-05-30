@@ -161,7 +161,7 @@ if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then --запуск
         local ok, err = sdofile("/afterUpdate.lua")
         if not ok then
             su.logTo("/free/logs/afterUpdateError.log", err or "unkown")
-            computer.shutdown(true)
+            computer.shutdown("fast")
             return
         end
         afterUpdate = true
@@ -247,4 +247,4 @@ if term.isAvailable() then
     io.write("Shell is not allow, press enter key to reboot.\n")
     waitFoEnter()
 end
-computer.shutdown(true)
+computer.shutdown("fast")

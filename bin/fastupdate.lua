@@ -116,7 +116,7 @@ if options.f or outData.version > inData.version then
         if not err then err = "unkown" end
         su.logTo("/free/logs/updateError.log", err)
         if not options.n and not options.r then
-            computer.shutdown(true)
+            computer.shutdown("fast")
         else
             for _, t in ipairs(threads) do t:kill() end
             return nil, err

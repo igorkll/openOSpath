@@ -24,7 +24,7 @@ function lib.getColorIndex()
     end
     local colors
     if depth == 1 then
-        return {0xFFFFFF, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000}
+        return {0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 1, 2, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0x000000}
     elseif depth == 4 then
         if fs.exists("/etc/palette/colorPic/depth4.cfg") then
             colors = assert(serialization.unserialize(assert(su.getFile("/etc/palette/colorPic/depth4.cfg"))))
