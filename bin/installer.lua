@@ -387,9 +387,9 @@ local tbl = getTable("/etc/system.cfg")
 tbl.updateRepo = mainurl
 
 fs.remove(require("superUtiles").getPath())
-if getFile("/etc/system.cfg") ~= serialization.serialize(tbl) then
+if serialization.serialize(getTable("/etc/system.cfg")) ~= serialization.serialize(tbl) then
     saveTable("/etc/system.cfg", tbl)
-    computer.shutdown(true)
+    computer.shutdown("fast")
 end
     ]])
 end}

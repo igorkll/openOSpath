@@ -144,8 +144,10 @@ local function createSystemCfg()
     return {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}
 end
 
+local created = createSystemCfg()
+
 function _G.saveSystemConfig()
-    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or createSystemCfg()))
+    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or created))
 end
 
 if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
@@ -153,11 +155,21 @@ if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
 if fs.exists("/etc/system.cfg") then
     _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
 else
-    _G.systemCfg = createSystemCfg()
+    _G.systemCfg = created
 end
 
 if _G.recoveryMod then
-    _G.systemCfg = createSystemCfg()
+    _G.systemCfg = created
+else
+    local oldTable = serialization.serialize(_G.systemCfg)
+    for k, v in pairs(created) do
+        if _G.systemCfg[k] ~= nil then
+            _G.systemCfg[k] = v
+        end
+    end
+    if serialization.serialize(_G.systemCfg) ~= oldTable then
+        _G.saveSystemConfig()
+    end
 end
 
 ------------------------------------
