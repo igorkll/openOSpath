@@ -163,7 +163,7 @@ if _G.recoveryMod then
 else
     local oldTable = serialization.serialize(_G.systemCfg)
     for k, v in pairs(created) do
-        if _G.systemCfg[k] ~= nil then
+        if _G.systemCfg[k] == nil then
             _G.systemCfg[k] = v
         end
     end
