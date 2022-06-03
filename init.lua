@@ -185,10 +185,10 @@ event.pull(1, "init")
 
 -----------------------------------
 
-_G.externalAutoruns = true --разришить автозогрузку с внешних насителей
+_G.filesystemsInit = true --разришить автозогрузку с внешних насителей
 if not _G.recoveryMod then
     for address in component.list("filesystem") do
-        event.push("autorun", address) --инициирует автозагрузки
+        event.push("component_added", address, "filesystem") --инициирует файловых системм
     end
     for i = 1, 2 do os.sleep(0.2) end
 end

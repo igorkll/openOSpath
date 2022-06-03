@@ -4,6 +4,7 @@ local unicode = require("unicode")
 local term = require("term")
 local process = require("process")
 local component = require("component")
+local serialization = require("serialization")
 
 ---------------------------------------
 
@@ -427,6 +428,26 @@ function lib.createEnv()
         return _G[key]
     end})
     return env
+end
+
+function lib.getPerms(path)
+    --if _G.recoveryMod then return {} end
+    local back
+    if type(path) == "table" then
+        fs.mount(path, "/free/tempMounts/perms")
+        path = "/free/tempMounts/perms"
+        function back()
+            fs.umount("/free/tempMounts/perms")
+        end
+    end
+    local path = fs.concat(path, ".perms.cfg")
+    if not fs.exists(path) then
+        if back then back() end
+        return {}
+    end
+    local dat = assert(serialization.unserialize(assert(lib.getFile(path))))
+    if back then back() end
+    return dat
 end
 
 return lib
