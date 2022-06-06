@@ -1,7 +1,9 @@
-local internet = require("internet")
 local thread = require("thread")
 local event = require("event")
 local su = require("superUtiles")
+local component = require("component")
+
+local internet = component.internet
 
 --------------------------------------------
 
@@ -9,15 +11,12 @@ local lib = {}
 
 function lib.create(objname, hostname, port, nikname)
     local obj = {}
-    obj.tcp = assert(internet.open(hostname, port))
+    obj.tcp = assert(internet.connect(hostname, port))
     obj.objname = objname
     obj.channel = nil
 
-    obj.tcp:setTimeout(0.5)
-
     function obj.rawSend(data)
-        obj.tcp:write(data .. "\r\n")
-        obj.tcp:flush()
+        obj.tcp.write(data .. "\r\n")
     end
     obj.rawSend("USER " .. nikname .. " 0 * :" .. nikname)
     obj.rawSend("NICK :" .. nikname)
@@ -40,8 +39,8 @@ function lib.create(objname, hostname, port, nikname)
     obj.thread = thread.create(function()
         local function loop()
             while true do
-                local ok, tcpRead = pcall(function() return obj.tcp:read() end)
-                if ok and tcpRead then
+                local ok, tcpRead = pcall(function() return obj.tcp.read(math.huge) end)
+                if ok and tcpRead and tcpRead ~= "" then
                     if tcpRead:sub(1, 4) == "PING" then
                         obj.rawSend("PONG" .. tcpRead:sub(5, #tcpRead))
                     else
@@ -63,13 +62,14 @@ function lib.create(objname, hostname, port, nikname)
                 else
                     os.sleep(1)
                 end
+                os.sleep(0)
             end
         end
         ::tonew::
         local ok, err = pcall(loop)
         if not ok then
             event.push("irc_thread_crash", obj.objname, err or "unkown")
-            su.logTo("/free/logs/irc", "obj: " .. obj.objname .. ", error: " .. (err or "unkown"))
+            su.logTo("/free/logs/irc.log", "obj: " .. obj.objname .. ", error: " .. (err or "unkown"))
             os.sleep(1)
             goto tonew
         end
