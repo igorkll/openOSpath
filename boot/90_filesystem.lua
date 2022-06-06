@@ -4,6 +4,7 @@ local shell = require("shell")
 local tmp = require("computer").tmpAddress()
 local computer = require("computer")
 local su = require("superUtiles")
+local package = require("package")
 
 local pendingAutoruns = {}
 
@@ -34,6 +35,9 @@ local function autorun(_, address)
     end
 end
 
+local libPaths = {}
+local appPaths = {}
+
 local function onComponentAdded(_, address, componentType)
     if not _G.filesystemsInit then return end
     if componentType == "filesystem" and tmp ~= address then
@@ -54,9 +58,22 @@ local function onComponentAdded(_, address, componentType)
             end
 
             if not perm.doNotIndex and address ~= fs.get("/") and not _G.recoveryMod then
-                local pathsTbl = perm.indexPaths or {"/home/bin", "/usr/bin"}
+                local pathsTbl = perm.indexPaths or {"/home/bin", "/usr/bin", "/bin"}
                 for i, v in ipairs(pathsTbl) do
-                    shell.setPath(shell.getPath() .. ":" .. fs.concat(freeMountPath, v))
+                    local path = fs.concat(freeMountPath, v)
+                    if not appPaths[address] then appPaths[address] = {} end
+                    table.insert(appPaths[address], path)
+                    shell.setPath(shell.getPath() .. ":" .. path)
+                end
+            end
+
+            if not perm.doNotIndexLibs and address ~= fs.get("/") and not _G.recoveryMod then
+                local pathsTbl = perm.indexLibsPath or {"home/lib/?/init.lua", "home/lib/?.lua", "lib/?/init.lua", "lib/?.lua", "usr/lib/?/init.lua", "usr/lib/?.lua"}
+                for i, v in ipairs(pathsTbl) do
+                    local path = fs.concat(freeMountPath, v)
+                    if not libPaths[address] then libPaths[address] = {} end
+                    table.insert(libPaths[address], path)
+                    package.path = package.path .. ";" .. path
                 end
             end
             
@@ -73,6 +90,41 @@ local function onComponentRemoved(_, address, componentType)
             shell.setWorkingDirectory(os.getenv("HOME") or "/")
         end
         fs.umount(address)
+
+        local function restore(str, blacklist, sep)
+            local paths = su.split(str, sep)
+            local newpaths = {}
+            for i, v in ipairs(paths) do
+                if not su.inTable(blacklist, v) then
+                    table.insert(newpaths, v)
+                end
+            end
+            return table.concat(newpaths, sep)
+        end
+
+        shell.setPath(restore(shell.getPath(), appPaths[address], ":"))
+        package.path = restore(package.path, libPaths[address], ";")
+        --[[
+        if appPaths[address] then
+            for _, path in ipairs(su.split(shell.getPath(), ":")) do
+                
+            end
+        end
+        for _, path in ipairs(su.split(package.path, ";")) do
+            local path = su.startAt(dat, "?")
+            if not fs.exists(path) then
+                local tbl = su.split(package.path, ";")
+                for i = 1, #tbl do
+                    if path == su.startAt(tbl[i], "?") then
+                        su.tableRemove(tbl, tbl[i])
+                        tbl = su.tablePress(tbl)
+                        break
+                    end
+                end
+                shell.setPath(table.concat(tbl, ":"))
+            end
+        end
+        ]]
     end
 end
 

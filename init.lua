@@ -1,5 +1,9 @@
 if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end --зашита от моих биосов(они усторели и удин удаляет setArchitecture а другой заставляет его выдать ошибку)
 
+if _VERSION ~= "Lua 5.3" then
+    error("requires Lua 5.3 pull out the processor and press shift plus the right mouse button on it", 0)
+end
+
 -----------------------------------mods
 
 _G.startEepromAddress = component.list("eeprom")()
@@ -8,7 +12,7 @@ _G.origCoroutine = coroutine
 
 computer.superRawPullSignal = computer.pullSignal
 
-do
+do --прирывания
     local uptime = computer.uptime
     local oldInterruptTime = uptime()
     _G.interruptTime = 1
@@ -21,12 +25,50 @@ do
     end
 end
 
-do
+do --atan2 в Lua 5.3
     local atan = math.atan
     function math.atan2(y, x)
         return atan(y / x)
     end
 end
+
+--[[ --лагает, не ставьте клавы рядом
+do --зашита от многократных нажатий кнопок
+    local component = component
+    local computer = computer
+    local table = table
+    local computer_pullSignal = computer.pullSignal
+    local uptime = computer.uptime
+
+    _G.keyboardsBlockTime = {}
+
+    function computer.pullSignal(time)
+        local term = require("term")
+        local su = require("superUtiles")
+
+        if not time then time = math.huge end
+        local inTime = uptime()
+
+        ::tonew::
+        local eventData = {computer_pullSignal(time - (uptime() - inTime))}
+
+        if eventData[2] and su.inTable(term.keyboards(), eventData[2]) then --системма работает только на основном мониторе, нада на стороньнем пилити сами я пас
+            if keyboardsBlockTime[eventData[2] ] then
+                if uptime() - keyboardsBlockTime[eventData[2] ] < 0.5 then
+                    goto tonew
+                end
+            end
+            for i, v in ipairs(term.keyboards()) do --накладывает delay на все клавиатуры
+                if v ~= eventData[2] then --кроме той на которой был произведен ввод
+                    keyboardsBlockTime[v] = uptime()
+                end
+            end
+        end
+
+        return table.unpack(eventData)
+    end
+end
+]]
 
 do --для таблиц в event
     local buffer = {}
@@ -87,6 +129,14 @@ do --спяший режим
     end
 end
 
+do --для запуска древнючего софта
+    local component = component
+    local computer = computer
+    function computer.isRobot()
+        return component.isAvailable("robot")
+    end
+end
+
 computer.rawPullSignal = computer.pullSignal
 
 -----------------------------------
@@ -140,6 +190,8 @@ end
 -----------------------------------
 
 fs.makeDirectory("/free/flags")
+fs.makeDirectory("/usr/bin")
+fs.makeDirectory("/usr/lib")
 
 if fs.exists(afterBootTwicks) and not _G.recoveryMod then --запуск boot твиков после запуска класической openOS
     for _, data in list(afterBootTwicks) do
@@ -193,6 +245,20 @@ if not _G.recoveryMod then
     for i = 1, 2 do os.sleep(0.2) end
 end
 
+local shell = require("shell")
+local package = require("package")
+
+shell.setPath(shell.getPath() .. ":/tmp/bin")
+shell.setPath(shell.getPath() .. ":/tmp/usr/bin")
+shell.setPath(shell.getPath() .. ":/tmp/home/bin")
+
+package.path = package.path .. ";/tmp/lib/?.lua"
+package.path = package.path .. ";/tmp/lib/?/init.lua"
+package.path = package.path .. ";/tmp/usr/lib/?.lua"
+package.path = package.path .. ";/tmp/usr/lib/?/init.lua"
+package.path = package.path .. ";/tmp/home/lib/?.lua"
+package.path = package.path .. ";/tmp/home/lib/?/init.lua"
+
 -----------------------------------
 
 if fs.exists(userautoruns) and not _G.recoveryMod then --автозагрузка пользователя
@@ -220,7 +286,7 @@ local function waitFoEnter()
     os.sleep(0.5)
     while true do
         local _, uuid, _, code = event.pull("key_down")
-        if term.keyboard() and uuid == term.keyboard() and code == 28 then
+        if term.keyboard() and su.inTable(term.keyboards(), uuid) and code == 28 then
             break
         end
     end

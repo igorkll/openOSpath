@@ -199,20 +199,11 @@ end
 
 --os.execute("lock -c")
 
-local function drawLogo(noChangeResolution)
+local function drawLogo()
     if _G.systemCfg.logo and term.isAvailable() then
         local img
         local gpu = term.gpu()
-        local rx, ry
-        if noChangeResolution then
-            rx, ry = gpu.getResolution()
-        elseif not component.isAvailable("tablet") then
-            gpu.setResolution(50, 16)
-            rx, ry = 50, 16
-        else
-            gpu.setResolution(gpu.maxResolution())
-            rx, ry = gpu.maxResolution()
-        end
+        local rx, ry = gpu.getResolution()
         if math.floor(gpu.getDepth()) ~= 1 then
             gpu.setBackground(su.selectColor(nil, 0x888888, 0xAAAAAA, false))
             gpu.setForeground(0xFFFFFF)
@@ -243,7 +234,6 @@ local function drawLogo(noChangeResolution)
         end
     end
 end
---drawLogo()
 
 _G.updateRepo = systemCfg.updateRepo
 
@@ -264,38 +254,12 @@ if not _G.recoveryMod and not _G.readonly then
     end
 end
 
+drawLogo()
+
 event.superHook = systemCfg.superHook
 event.hook = systemCfg.hook
 _G.shellAllow = systemCfg.shellAllow
 
-if term.isAvailable() and fs.exists("/etc/resolution.cfg") then
-    local gpu = term.gpu()
-
-    local data = su.getFile("/etc/resolution.cfg")
-    if data == "reset" then
-        os.execute("reset")
-    elseif data:sub(1, 3) == "rax" then
-        local _, size = table.unpack(su.split(data, ";"))
-        if size then
-            os.execute("rax " .. tostring(size))
-        else
-            os.execute("rax")
-        end
-    elseif data:sub(1, 10) == "resolution" then
-        local _, rx, ry = table.unpack(su.split(data, ";"))
-        rx = tonumber(rx)
-        ry = tonumber(ry)
-        if rx and ry then
-            if not pcall(gpu.setResolution, rx, ry) then
-                os.execute("reset")
-            end
-        end
-    end
-else
-    os.execute("reset")
-end
-
-drawLogo(true)
 if _G.systemCfg.startSound then
     if fs.exists("/etc/startSound.mid") then
         local function beep(n, d)
@@ -313,8 +277,13 @@ if _G.systemCfg.startSound then
         end
         computer.beep(1000, 1)
     end
-else
+elseif term.isAvailable() and _G.systemCfg.logo then
     os.sleep(2)
+end
+if term.isAvailable() then
+    term.gpu().setBackground(0)
+    term.gpu().setForeground(0xFFFFFF)
+    term.clear()
 end
 
 if fs.exists("/etc/runCommand.dat") then os.execute(su.getFile("/etc/runCommand.dat")) end

@@ -27,7 +27,7 @@ local function setGS(screen, gpu)
     
     if screenProxy.setPrecise then pcall(screenProxy.setPrecise, false) end
 
-    os.execute("depth set")
+    os.execute("rescreen")
     term.clear()
 end
 

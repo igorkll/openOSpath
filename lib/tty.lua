@@ -195,7 +195,38 @@ function tty.bind(gpu)
   screen_reset(gpu)
 end
 
+tty.currentKeyboards = {}
+function tty.keyboards()
+  return tty.currentKeyboards
+end
+
+function _G.refreshKeyboards()
+  require("superUtiles").clearTable(tty.currentKeyboards)
+  if not tty.screen() then return end
+  for i, v in ipairs(component.invoke(tty.screen(), "getKeyboards")) do
+    table.insert(tty.currentKeyboards, v)
+  end
+end
+
+event.listen("component_removed", function(_, address, ctype)
+  if ctype == "keyboard" or ctype == "gpu" or ctype == "screen" then
+    refreshKeyboards()
+  end
+end)
+
+event.listen("component_added", function(_, address, ctype)
+  if ctype == "keyboard" or ctype == "gpu" or ctype == "screen" then
+    refreshKeyboards()
+  end
+end)
+
+event.listen("term_available", function()
+  refreshKeyboards()
+end)
+
 function tty.keyboard()
+  do return tty.keyboards()[1] end
+
   -- this method needs to be safe even if there is no terminal window (e.g. no gpu)
   local window = tty.window
 
@@ -294,5 +325,7 @@ local function bfd() return nil, "tty: invalid operation" end
 tty.stream.close = bfd
 tty.stream.seek = bfd
 tty.stream.handle = "tty"
+
+event.timer(0, refreshKeyboards)
 
 return tty

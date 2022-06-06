@@ -148,7 +148,7 @@ lib.splitText = function(str, sep)
     return parts
 end
 
-lib.saveGpu = function(gpuAddress)
+lib.saveGpu = function(gpuAddress, ignorePalette)
     local gpu
     if gpuAddress then
         gpu = component.proxy(gpuAddress)
@@ -162,16 +162,20 @@ lib.saveGpu = function(gpuAddress)
     local screen = gpu.getScreen()
     local depth = gpu.getDepth()
     local pallete = {}
-    for i = 0, 15 do
-        pallete[i] = gpu.getPaletteColor(i)
+    if not ignorePalette then
+        for i = 0, 15 do
+            pallete[i] = gpu.getPaletteColor(i)
+        end
     end
 
     return function()
         if screen and gpu.getScreen() ~= screen then gpu.bind(screen, false) end
         gpu.setDepth(depth)
-        for i = 0, 15 do
-            if pallete[i] then
-                gpu.setPaletteColor(i, pallete[i])
+        if not ignorePalette then
+            for i = 0, 15 do
+                if pallete[i] then
+                    gpu.setPaletteColor(i, pallete[i])
+                end
             end
         end
         gpu.setResolution(rx, ry)
@@ -400,7 +404,7 @@ function lib.adapteTraceback(data)
         while #data2 > (ry - 4) do table.remove(data2, #data2) end
         data = table.concat(data2, "\n")
     end
-    --if data:sub(#data, #data) ~= "\n" then data = data .. "\n" end
+    if data:sub(#data, #data) ~= "\n" then data = data .. "\n" end
     --data = data:upper()
     return data
 end
@@ -448,6 +452,87 @@ function lib.getPerms(path)
     local dat = assert(serialization.unserialize(assert(lib.getFile(path))))
     if back then back() end
     return dat
+end
+
+function lib.endAt(str, char)
+    local tbl = lib.split(str, char)
+    return tbl[#tbl]
+end
+
+function lib.startAt(str, char)
+    local tbl = lib.split(str, char)
+    return tbl[1]
+end
+
+function lib.tableRemove(tbl, dat)
+    local count = 0
+    for k, v in pairs(tbl) do
+        if v == dat then
+            count = count + 1
+            tbl[k] = nil
+        end
+    end
+    return count > 0
+end
+
+function lib.tablePress(tbl)
+    local newtbl = {}
+    for k, v in pairs(tbl) do
+        if tonumber(v) then
+            table.insert(newtbl, v)
+        end
+    end
+    return newtbl
+end
+
+function lib.clearTable(tbl)
+    for k, v in pairs(tbl) do
+        tbl[k] = nil
+    end
+end
+
+function lib.getMountPoints(address)
+    local paths = {}
+    for proxy, path in fs.mounts() do
+        if proxy.address == address then
+            table.insert(paths, path)
+        end
+    end
+    return paths
+end
+
+function lib.getMountPoint(address)
+    local paths = lib.getMountPoints(address)
+    local ints = {}
+    for i = 1, #paths do
+        table.insert(ints, unicode.len(paths[i]))
+    end
+    local path = math.min(table.unpack(ints))
+    for i = 1, #paths do
+        if ints[i] == path then
+            path = paths[i]
+            break
+        end
+    end
+    return path
+end
+
+function lib.getFsFiles(address)
+    local files = {}
+
+    local function recurse(lfs, path, tbl)
+        for _, file in ipairs(lfs.list(path)) do
+            local full_path = fs.concat(path, file)
+            if fs.isDirectory(full_path) then
+                recurse(lfs, full_path, tbl)
+            else
+                table.insert(tbl, full_path)
+            end
+        end
+    end
+    recurse(component.proxy(address), "/", files)
+
+    return files
 end
 
 return lib

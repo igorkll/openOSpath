@@ -44,6 +44,7 @@ return {create = function(minTier)
     lib.gpu = term.gpu()
     lib.screen = term.screen()
     lib.keyboard = term.keyboard()
+    lib.keyboards = term.keyboards()
 
     local maxDepth = math.floor(lib.gpu.maxDepth())
     if maxDepth == 8 then
@@ -286,7 +287,9 @@ return {create = function(minTier)
         obj.thread = lib.createThread(function()
             while true do
                 obj.draw()
-                local eventName, uuid, char, code, nikname = event.pull(0.5, nil, lib.keyboard)
+                ::tonew::
+                local eventName, uuid, char, code, nikname = event.pull(0.5)
+                if not su.inTable(lib.keyboards, uuid) then goto tonew end
                 obj.posCheck()
 
                 if keyboard.isControlDown() then

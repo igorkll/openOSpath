@@ -28,6 +28,9 @@ shell.setAlias("grep", "grep --color")
 shell.setAlias("more", "less --noback")
 --shell.setAlias("reset", "resolution `cat /dev/components/by-type/gpu/0/maxResolution`")
 
+shell.setAlias("bg", "back")
+shell.setAlias("background", "back")
+
 os.setenv("EDITOR", "/bin/edit")
 os.setenv("HISTSIZE", "64")
 os.setenv("HOME", "/home")

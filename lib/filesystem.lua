@@ -99,6 +99,23 @@ function filesystem.concat(...)
   return filesystem.canonical(table.concat(set, "/"))
 end
 
+function filesystem.xconcat(...)
+  local set = table.pack(...)
+  for index, value in ipairs(set) do
+    checkArg(index, value, "string")
+  end
+  for index, value in ipairs(set) do
+    if value:sub(1, 1) == "/" and index > 1 then
+      local newset = {}
+      for i = index, #set do
+        table.insert(newset, set[i])
+      end
+      return filesystem.xconcat(table.unpack(newset))
+    end
+  end
+  return filesystem.canonical(table.concat(set, "/"))
+end
+
 function filesystem.get(path)
   local node = findNode(path)
   if node.fs then

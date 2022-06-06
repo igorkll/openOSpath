@@ -49,6 +49,7 @@ function process.load(path, env, init, name)
         end
       end
       -- local command
+      --[[
       local function loadfile2(filename, ...)
         if filename:sub(1,1) ~= "/" then
           filename = (os.getenv("PWD") or "/") .. "/" .. filename
@@ -72,7 +73,8 @@ function process.load(path, env, init, name)
         local str = table.concat(buffer)
         return load("local function mainchunk(...) "..str.."\nend\nlocal out = {mainchunk(...)}\nos.exit()\nreturn table.unpack(out)", "=" .. filename, ...)
       end
-      return assert(loadfile2(program, "bt", env))(...)
+      ]]
+      return assert(loadfile(program, "bt", env))(...)
     end
   else -- path is code
     code = path
@@ -92,6 +94,8 @@ function process.load(path, env, init, name)
             return msg.code or 0
           end
           local stack = debug.traceback():gsub("^([^\n]*\n)[^\n]*\n[^\n]*\n","%1")
+          local term = require("term")
+          if term.isAvailable() then term.gpu().setBackground(0) end
           io.stderr:write(tostring(require("superUtiles").adapteTraceback(string.format("%s:\n%s", msg or "", stack))))
           return 128 -- syserr
         end, ...)

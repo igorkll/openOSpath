@@ -250,7 +250,7 @@ function core_cursor.read(cursor)
 
     if name then
       local filter_address = address_check[name]
-      if not filter_address or filter_address() == pack[2] then
+      if not filter_address or filter_address() == pack[2] or ((name == "key_down" or name == "clipboard") and require("superUtiles").inTable(tty.keyboards(), pack[2])) then
         local ret, why = cursor:handle(name, table.unpack(pack, 3, pack.n))
         if not ret then
           return ret, why
