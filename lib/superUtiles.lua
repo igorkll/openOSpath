@@ -431,6 +431,10 @@ function lib.createEnv()
     setmetatable(env, {__index = function(_, key)
         return _G[key]
     end})
+    env.load = function(data, name, mode, lenv)
+        if not lenv then lenv = env end --для коректной таблицы env
+        return load(data, name, mode, lenv)
+    end
     return env
 end
 
