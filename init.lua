@@ -115,7 +115,7 @@ do --спяший режим
         local inTime = computer_uptime()
         while computer_uptime() - inTime < time do
             local eventData = {computer_pullSignal(time - (computer_uptime() - inTime))}
-            if saveEvent then
+            if saveEvent and #eventData > 0 then
                 computer_pushSignal(table_unpack(eventData))
             end
         end
