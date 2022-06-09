@@ -1,3 +1,4 @@
+local cryptoData = require("cryptoData")
 local component = require("component")
 local unicode = require("unicode")
 

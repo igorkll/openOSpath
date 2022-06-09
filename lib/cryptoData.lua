@@ -1,6 +1,7 @@
 local su = require("superUtiles")
 local component = require("component")
 local event = require("event")
+local fs = require("filesystem")
 
 --------------------------------------------
 
@@ -64,17 +65,28 @@ local origInvoke = component.invoke
 function component.invoke(address, method, ...)
     if fakeMethods[address] then
         if fakeMethods[address][method] then
-            return fakeMethods[address][method](address, method, ...)
+            return fakeMethods[address][method](address, function(...)
+                return origInvoke(address, method, ...)
+            end, method, ...)
         end
     end
     return origInvoke(address, method, ...)
 end
 
-function lib.addFilterMethod(address, method, func)
+function lib.addFilterMethod(address, methodName, toFunc)
     local proxy, err = component.proxy(address)
     if not proxy then return nil, err end
     
+    if not fakeMethods[address] then fakeMethods[address] = {} end
+    fakeMethods[address][methodName] = toFunc
 
+    return function()
+        if fakeMethods[address][methodName] then
+            fakeMethods[address][methodName] = nil
+            return true
+        end
+        return false
+    end
 end
 
 --ограничения прав доступа
@@ -112,14 +124,16 @@ function lib.getGlobalReadOnlyFiles()
     local list = {}
 
     for k, v in ipairs(readonlyLists) do
-        table.insert(list, v)
+        for k, v in ipairs(v) do
+            table.insert(list, v)
+        end
     end
 
     return list
 end
 
 function lib.isReadOnly(path)
-    return su.inTable(lib.getGlobalReadOnlyFiles(), path)
+    return su.inTable(lib.getGlobalReadOnlyFiles(), fs.canonical(path))
 end
 
 function lib.addReadOnlyList(globalPassword, tbl)
@@ -145,5 +159,25 @@ function lib.resetReadOnlyList(globalPassword, tbl)
     end
     return false, "uncorrect global password"
 end
+
+local function customFsMethod(_, method, methodName, ...)
+    local tbl = {...}
+    if methodName == "open" then
+        if tbl[2]:sub(1, 1) == "w" and tbl[2]:sub(1, 1) == "a" and lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
+    elseif methodName == "copy" then
+        if lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
+    elseif methodName == "rename" then
+        if lib.isReadOnly(tbl[1]) or lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
+    elseif methodName == "remove" then
+        if lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
+    end
+    return method(...)
+end
+
+local address = fs.get("/").address
+lib.addFilterMethod(address, "open", customFsMethod)
+lib.addFilterMethod(address, "copy", customFsMethod)
+lib.addFilterMethod(address, "rename", customFsMethod)
+lib.addFilterMethod(address, "remove", customFsMethod)
 
 return lib
