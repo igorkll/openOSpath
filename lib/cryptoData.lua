@@ -134,6 +134,7 @@ end
 function lib.isReadOnly(path)
     local fs = require("filesystem")
     local su = require("superUtiles")
+    if path:sub(1, 1) ~= "/" then path = "/" .. path end
     return su.inTable(lib.getGlobalReadOnlyFiles(), fs.canonical(path))
 end
 
@@ -166,7 +167,7 @@ end
 local function customFsMethod(_, method, methodName, ...)
     local tbl = {...}
     if methodName == "open" then
-        if tbl[2]:sub(1, 1) == "w" and tbl[2]:sub(1, 1) == "a" and lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
+        if (tbl[2]:sub(1, 1) == "w" or tbl[2]:sub(1, 1) == "a") and lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
     elseif methodName == "copy" then
         if lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
     elseif methodName == "rename" then
