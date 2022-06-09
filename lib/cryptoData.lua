@@ -271,7 +271,7 @@ local function customEepromMethod(_, method, methodName, ...)
     return method(...)
 end
 
-if not _G.recoveryMod then
+if not _G.recoveryMod and false then --disabled
     local address = computer.getBootAddress()
     lib.addFilterMethod(address, "open", customFsMethod)
     lib.addFilterMethod(address, "copy", customFsMethod)
