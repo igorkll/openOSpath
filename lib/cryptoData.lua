@@ -75,10 +75,8 @@ function component.invoke(address, method, ...)
 end
 
 function lib.addFilterMethod(address, methodName, toFunc)
-    local proxy, err = component.proxy(address)
-    if not proxy then return nil, err end
-    
     if not fakeMethods[address] then fakeMethods[address] = {} end
+    if fakeMethods[address][methodName] then return false end
     fakeMethods[address][methodName] = toFunc
 
     return function()
@@ -94,7 +92,12 @@ end
 
 local globalPermitsPassword
 local readonlyEnable = true
-local readonlyLists = {}
+local eepromCrypto = true
+local readonlyLists = {
+{"/bin", "/lib", "/boot", "/autoruns/system",
+"/init.lua", "/etc/motd", "/etc/profile.lua",
+"/etc/palette", "/etc/logoBW.pic", "/etc/logo.pic",
+"/etc/lowPower.pic", "/etc/system.cfg"}}
 
 function lib.setGlobalPermitsPassword(password)
     if globalPermitsPassword then
@@ -142,7 +145,6 @@ function lib.getRealReadOnlyTables(password)
 end
 
 function lib.isReadOnly(path)
-    if not readonlyEnable then return false end
     local fs = require("filesystem")
     local su = require("superUtiles")
     if path:sub(1, 1) ~= "/" then path = "/" .. path end
@@ -196,25 +198,74 @@ function lib.setReadOnlyState(password, state)
     return false, "uncorrect global password"
 end
 
+function lib.setEepromCrypto(password, state)
+    if not globalPermitsPassword or globalPermitsPassword == password then
+        eepromCrypto = state
+        return true
+    end
+    return false, "uncorrect global password"
+end
+
 local function customFsMethod(_, method, methodName, ...)
     local tbl = {...}
-    if methodName == "open" then
-        if (tbl[2]:sub(1, 1) == "w" or tbl[2]:sub(1, 1) == "a") and lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
-    elseif methodName == "copy" then
-        if lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
-    elseif methodName == "rename" then
-        if lib.isReadOnly(tbl[1]) or lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
-    elseif methodName == "remove" then
-        if lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
+    if readonlyEnable then
+        if methodName == "open" then
+            if (tbl[2]:sub(1, 1) == "w" or tbl[2]:sub(1, 1) == "a") and lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
+        elseif methodName == "copy" then
+            if lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
+        elseif methodName == "rename" then
+            if lib.isReadOnly(tbl[1]) or lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
+        elseif methodName == "remove" then
+            if tbl[1] == "" or tbl[1] == "/" or tbl[1] == "." or tbl[1] == ".." then return nil, "format canceled" end
+            if lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
+        end
     end
     return method(...)
 end
 
-local address = computer.getBootAddress()
-lib.addFilterMethod(address, "open", customFsMethod)
-lib.addFilterMethod(address, "copy", customFsMethod)
-lib.addFilterMethod(address, "rename", customFsMethod)
-lib.addFilterMethod(address, "remove", customFsMethod)
+local function customEepromMethod(_, method, methodName, ...)
+    local tbl = {...}
+    if eepromCrypto then
+        if methodName == "set" then
+            return nil, "storage is readonly"
+        elseif methodName == "get" then
+            return nil, "dump is not allow"
+        elseif methodName == "setData" then
+            return nil, "eeprom-data readonly"
+        elseif methodName == "getData" then
+            return nil, "data dump is not allow"
+        elseif methodName == "getChecksum" then
+            return nil, "getChecksum is not allow"
+        elseif methodName == "makeReadonly" then
+            return nil, "makeReadonly is not allow"
+        elseif methodName == "setLabel" then
+            return nil, "label is readonly"
+        elseif methodName == "getLabel" then
+            return nil, "getLabel is not allow"
+        end
+    end
+    return method(...)
+end
+
+if not _G.recoveryMod then
+    local address = computer.getBootAddress()
+    lib.addFilterMethod(address, "open", customFsMethod)
+    lib.addFilterMethod(address, "copy", customFsMethod)
+    lib.addFilterMethod(address, "rename", customFsMethod)
+    lib.addFilterMethod(address, "remove", customFsMethod)
+
+    local eepromAddress = component.list("eeprom")()
+    if eepromAddress then
+        lib.addFilterMethod(eepromAddress, "setLabel", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "getLabel", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "set", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "get", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "setData", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "getData", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "getChecksum", customEepromMethod)
+        lib.addFilterMethod(eepromAddress, "makeReadonly", customEepromMethod)
+    end
+end
 
 local newlib = tprotect.protect(lib)
 return newlib
