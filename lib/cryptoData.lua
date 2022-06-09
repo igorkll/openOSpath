@@ -91,6 +91,7 @@ end
 --ограничения прав доступа
 
 local globalPermitsPassword
+local readonlyEnable = true
 local readonlyLists = {}
 
 function lib.setGlobalPermitsPassword(password)
@@ -132,6 +133,7 @@ function lib.getGlobalReadOnlyFiles()
 end
 
 function lib.isReadOnly(path)
+    if not readonlyEnable then return false end
     local fs = require("filesystem")
     local su = require("superUtiles")
     if path:sub(1, 1) ~= "/" then path = "/" .. path end
@@ -160,6 +162,14 @@ function lib.resetReadOnlyList(globalPassword, tbl)
         else
             return false, "list is not found"
         end
+    end
+    return false, "uncorrect global password"
+end
+
+function lib.setReadOnlyState(password, state)
+    if not globalPermitsPassword or globalPermitsPassword == password then
+        readonlyEnable = state
+        return true
     end
     return false, "uncorrect global password"
 end
