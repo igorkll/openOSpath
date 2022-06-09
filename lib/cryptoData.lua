@@ -1,7 +1,5 @@
-local su = require("superUtiles")
 local component = require("component")
 local event = require("event")
-local fs = require("filesystem")
 
 --------------------------------------------
 
@@ -133,10 +131,13 @@ function lib.getGlobalReadOnlyFiles()
 end
 
 function lib.isReadOnly(path)
+    local fs = require("filesystem")
+    local su = require("superUtiles")
     return su.inTable(lib.getGlobalReadOnlyFiles(), fs.canonical(path))
 end
 
 function lib.addReadOnlyList(globalPassword, tbl)
+    local su = require("superUtiles")
     if not globalPermitsPassword or globalPermitsPassword == globalPassword then
         if not su.inTable(readonlyLists, tbl) then
             table.insert(readonlyLists, tbl)
@@ -149,6 +150,7 @@ function lib.addReadOnlyList(globalPassword, tbl)
 end
 
 function lib.resetReadOnlyList(globalPassword, tbl)
+    local su = require("superUtiles")
     if not globalPermitsPassword or globalPermitsPassword == globalPassword then
         if su.inTable(readonlyLists, tbl) then
             su.tableRemove(readonlyLists, tbl)
@@ -174,10 +176,14 @@ local function customFsMethod(_, method, methodName, ...)
     return method(...)
 end
 
-local address = fs.get("/").address
-lib.addFilterMethod(address, "open", customFsMethod)
-lib.addFilterMethod(address, "copy", customFsMethod)
-lib.addFilterMethod(address, "rename", customFsMethod)
-lib.addFilterMethod(address, "remove", customFsMethod)
+event.listen("init", function()
+    local fs = require("filesystem")
+    local address = fs.get("/").address
+    lib.addFilterMethod(address, "open", customFsMethod)
+    lib.addFilterMethod(address, "copy", customFsMethod)
+    lib.addFilterMethod(address, "rename", customFsMethod)
+    lib.addFilterMethod(address, "remove", customFsMethod)
+    return false
+end)
 
 return lib
