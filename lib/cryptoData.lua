@@ -4,6 +4,12 @@ local computer = require("computer")
 local tprotect = raw_dofile("/lib/tprotect.lua")
 _G.package.loaded.tprotect = tprotect
 
+local bit32 = raw_dofile("/lib/bit32.lua")
+_G.package.loaded.bit32 = bit32
+
+local uuid = raw_dofile("/lib/uuid.lua")
+_G.package.loaded.uuid = uuid
+
 --------------------------------------------
 
 local lib = {}
@@ -90,14 +96,15 @@ end
 
 --ограничения прав доступа
 
-local globalPermitsPassword
+local globalPermitsPassword = uuid.next()
 local readonlyEnable = true
 local eepromCrypto = true
 local readonlyLists = {
 {"/bin", "/lib", "/boot", "/autoruns/system",
 "/init.lua", "/etc/motd", "/etc/profile.lua",
 "/etc/palette", "/etc/logoBW.pic", "/etc/logo.pic",
-"/etc/lowPower.pic", "/etc/system.cfg"}}
+"/etc/lowPower.pic", "/etc/system.cfg", "/filelist.txt",
+"/version.cfg"}}
 
 function lib.setGlobalPermitsPassword(password)
     if globalPermitsPassword then
@@ -161,6 +168,15 @@ function lib.isReadOnly(path)
         end
     end
 
+    if not state then
+        for _, file in ipairs(lib.getGlobalReadOnlyFiles()) do
+            if file:sub(1, #path) == path then
+                state = true
+                break
+            end
+        end
+    end
+
     return state
 end
 
@@ -206,6 +222,14 @@ function lib.setEepromCrypto(password, state)
     return false, "uncorrect global password"
 end
 
+function lib.isPassword()
+    return not not globalPermitsPassword
+end
+
+function lib.requirePassword()
+    return false, "cancel"
+end
+
 local function customFsMethod(_, method, methodName, ...)
     local tbl = {...}
     if readonlyEnable then
@@ -216,7 +240,7 @@ local function customFsMethod(_, method, methodName, ...)
         elseif methodName == "rename" then
             if lib.isReadOnly(tbl[1]) or lib.isReadOnly(tbl[2]) then return nil, "file is readonly" end
         elseif methodName == "remove" then
-            if tbl[1] == "" or tbl[1] == "/" or tbl[1] == "." or tbl[1] == ".." then return nil, "format canceled" end
+            --if tbl[1] == "" or tbl[1] == "/" or tbl[1] == "." or tbl[1] == ".." then return nil, "format canceled" end
             if lib.isReadOnly(tbl[1]) then return nil, "file is readonly" end
         end
     end
