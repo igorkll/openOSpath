@@ -61,7 +61,14 @@ end
 local fakeMethods = {}
 local origInvoke = component.invoke
 
-
+function component.invoke(address, method, ...)
+    if fakeMethods[address] then
+        if fakeMethods[address][method] then
+            return fakeMethods[address][method](address, method, ...)
+        end
+    end
+    return origInvoke(address, method, ...)
+end
 
 function lib.addFilterMethod(address, method, func)
     local proxy, err = component.proxy(address)
