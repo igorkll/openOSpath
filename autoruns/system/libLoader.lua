@@ -1,3 +1,4 @@
+require("tprotect")
 require("regFile")
 require("twicks")
 local component = require("component")

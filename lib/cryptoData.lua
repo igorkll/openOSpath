@@ -1,6 +1,8 @@
 local component = require("component")
 local computer = require("computer")
 --local event = require("event")
+local tprotect = raw_dofile("/lib/tprotect.lua")
+_G.package.loaded.tprotect = tprotect
 
 --------------------------------------------
 
@@ -132,12 +134,32 @@ function lib.getGlobalReadOnlyFiles()
     return list
 end
 
+function lib.getRealReadOnlyTables(password)
+    if not globalPermitsPassword or globalPermitsPassword == password then
+        return readonlyLists
+    end
+    return false, "uncorrect global password"
+end
+
 function lib.isReadOnly(path)
     if not readonlyEnable then return false end
     local fs = require("filesystem")
     local su = require("superUtiles")
     if path:sub(1, 1) ~= "/" then path = "/" .. path end
-    return su.inTable(lib.getGlobalReadOnlyFiles(), fs.canonical(path))
+    path = fs.canonical(path)
+
+    local state = su.inTable(lib.getGlobalReadOnlyFiles(), path)
+
+    if not state then
+        for _, file in ipairs(lib.getGlobalReadOnlyFiles()) do
+            if path:sub(1, #file) == file then
+                state = true
+                break
+            end
+        end
+    end
+
+    return state
 end
 
 function lib.addReadOnlyList(globalPassword, tbl)
@@ -194,4 +216,5 @@ lib.addFilterMethod(address, "copy", customFsMethod)
 lib.addFilterMethod(address, "rename", customFsMethod)
 lib.addFilterMethod(address, "remove", customFsMethod)
 
-return lib
+local newlib = tprotect.protect(lib)
+return newlib
