@@ -1,13 +1,74 @@
 if computer.setArchitecture then pcall(computer.setArchitecture, "Lua 5.3") end --зашита от моих биосов(они усторели и удин удаляет setArchitecture а другой заставляет его выдать ошибку)
 
+if _VERSION ~= "Lua 5.3" then
+    error("requires Lua 5.3 pull out the processor and press shift plus the right mouse button on it", 0)
+end
+
 -----------------------------------mods
 
-do
+_G.startEepromAddress = component.list("eeprom")()
+
+_G.origCoroutine = coroutine
+
+computer.superRawPullSignal = computer.pullSignal
+
+do --прирывания
+    local uptime = computer.uptime
+    local oldInterruptTime = uptime()
+    _G.interruptTime = 1
+
+    function _G.interrupt()
+        if uptime() - oldInterruptTime > _G.interruptTime then
+            os.sleep() --на данный момент в _G его нет но он появиться после полной загрузки
+            oldInterruptTime = uptime()
+        end
+    end
+end
+
+do --atan2 в Lua 5.3
     local atan = math.atan
     function math.atan2(y, x)
         return atan(y / x)
     end
 end
+
+--[[ --лагает, не ставьте клавы рядом
+do --зашита от многократных нажатий кнопок
+    local component = component
+    local computer = computer
+    local table = table
+    local computer_pullSignal = computer.pullSignal
+    local uptime = computer.uptime
+
+    _G.keyboardsBlockTime = {}
+
+    function computer.pullSignal(time)
+        local term = require("term")
+        local su = require("superUtiles")
+
+        if not time then time = math.huge end
+        local inTime = uptime()
+
+        ::tonew::
+        local eventData = {computer_pullSignal(time - (uptime() - inTime))}
+
+        if eventData[2] and su.inTable(term.keyboards(), eventData[2]) then --системма работает только на основном мониторе, нада на стороньнем пилити сами я пас
+            if keyboardsBlockTime[eventData[2] ] then
+                if uptime() - keyboardsBlockTime[eventData[2] ] < 0.5 then
+                    goto tonew
+                end
+            end
+            for i, v in ipairs(term.keyboards()) do --накладывает delay на все клавиатуры
+                if v ~= eventData[2] then --кроме той на которой был произведен ввод
+                    keyboardsBlockTime[v] = uptime()
+                end
+            end
+        end
+
+        return table.unpack(eventData)
+    end
+end
+]]
 
 do --для таблиц в event
     local buffer = {}
@@ -42,7 +103,7 @@ do --спяший режим
     local table_unpack = table.unpack
     local checkArg = checkArg
 
-    local uptimeAdd = 0
+    uptimeAdd = 0
     function computer.uptime()
         return computer_uptime() + uptimeAdd
     end
@@ -68,6 +129,16 @@ do --спяший режим
     end
 end
 
+do --для запуска древнючего софта
+    local component = component
+    local computer = computer
+    function computer.isRobot()
+        return component.isAvailable("robot")
+    end
+end
+
+computer.rawPullSignal = computer.pullSignal
+
 -----------------------------------
 
 do --активатор загрузчика
@@ -82,7 +153,7 @@ do --активатор загрузчика
         invoke(addr, "close", handle)
         return load(buffer, "=" .. file, "bt", _G)
     end
-    do 
+    if not _G.recoveryMod then
         local path = "/free/twicks/mem/"
         local tbl = component.proxy(computer.getBootAddress()).list(path) or {}
         table.sort(tbl)
@@ -119,8 +190,10 @@ end
 -----------------------------------
 
 fs.makeDirectory("/free/flags")
+fs.makeDirectory("/usr/bin")
+fs.makeDirectory("/usr/lib")
 
-if fs.exists(afterBootTwicks) then --запуск boot твиков после запуска класической openOS
+if fs.exists(afterBootTwicks) and not _G.recoveryMod then --запуск boot твиков после запуска класической openOS
     for _, data in list(afterBootTwicks) do
         os.execute(fs.concat(afterBootTwicks, data))
     end
@@ -134,20 +207,20 @@ if fs.exists(systemautoruns) then --системная автозагрузка
     end
 end
 
-if fs.exists("/free/flags/updateEnd") then --запуска файла дополнения обновления(для оболочек)
+if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then --запуска файла дополнения обновления(для оболочек)
     local afterUpdate = false
     if fs.exists("/afterUpdate.lua") then
         local ok, err = sdofile("/afterUpdate.lua")
         if not ok then
             su.logTo("/free/logs/afterUpdateError.log", err or "unkown")
-            computer.shutdown(true)
+            computer.shutdown("fast")
             return
         end
         afterUpdate = true
     end
     fs.remove("/free/flags/updateEnd")
     if afterUpdate then
-        computer.shutdown(true)
+        computer.shutdown("fast")
         return
     end
 end
@@ -164,29 +237,47 @@ event.pull(1, "init")
 
 -----------------------------------
 
-_G.externalAutoruns = true --разришить автозогрузку с внешних насителей
-for address in component.list("filesystem") do
-    event.push("autorun", address) --инициирует автозагрузки
+_G.filesystemsInit = true --разришить автозогрузку с внешних насителей
+if not _G.recoveryMod then
+    for address in component.list("filesystem") do
+        event.push("component_added", address, "filesystem") --инициирует файловых системм
+    end
+    for i = 1, 2 do os.sleep(0.2) end
 end
-for i = 1, 2 do os.sleep(0.2) end
+
+local shell = require("shell")
+local package = require("package")
+
+shell.setPath(shell.getPath() .. ":/tmp/bin")
+shell.setPath(shell.getPath() .. ":/tmp/usr/bin")
+shell.setPath(shell.getPath() .. ":/tmp/home/bin")
+
+package.path = package.path .. ";/tmp/lib/?.lua"
+package.path = package.path .. ";/tmp/lib/?/init.lua"
+package.path = package.path .. ";/tmp/usr/lib/?.lua"
+package.path = package.path .. ";/tmp/usr/lib/?/init.lua"
+package.path = package.path .. ";/tmp/home/lib/?.lua"
+package.path = package.path .. ";/tmp/home/lib/?/init.lua"
 
 -----------------------------------
 
-if fs.exists("/.start.lua") then --главная автозагрузка
-    os.execute("/.start.lua")
-elseif fs.exists("/.autorun.lua") then
-    os.execute("/.autorun.lua")
-end
-
-if fs.exists("/autorun.lua") then os.execute("/autorun.lua") end
-if fs.exists("/start.lua") then os.execute("/start.lua") end
-
------------------------------------
-
-if fs.exists(userautoruns) then --автозагрузка пользователя
+if fs.exists(userautoruns) and not _G.recoveryMod then --автозагрузка пользователя
     for _, data in list(userautoruns) do
         os.execute(fs.concat(userautoruns, data))
     end
+end
+
+-----------------------------------
+
+if not _G.recoveryMod then
+    if fs.exists("/.start.lua") then --главная автозагрузка
+        os.execute("/.start.lua")
+    elseif fs.exists("/.autorun.lua") then
+        os.execute("/.autorun.lua")
+    end
+
+    if fs.exists("/autorun.lua") then os.execute("/autorun.lua") end
+    if fs.exists("/start.lua") then os.execute("/start.lua") end
 end
 
 -----------------------------------
@@ -195,26 +286,31 @@ local function waitFoEnter()
     os.sleep(0.5)
     while true do
         local _, uuid, _, code = event.pull("key_down")
-        if term.keyboard() and uuid == term.keyboard() and code == 28 then
+        if term.keyboard() and su.inTable(term.keyboards(), uuid) and code == 28 then
             break
         end
     end
 end
 
-while _G.shellAllow do --запуск shell
+event.push("full_load")
+while _G.shellAllow or _G.recoveryMod do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()
     end)
     if not result then
+        computer.pullSignal() --для возможности крашнуть комп с ошибкой
         if term.isAvailable() then
             io.stderr:write((reason ~= nil and tostring(reason) or "unknown error") .. "\n")
             io.write("Press enter key to continue.\n")
             waitFoEnter()
-        else
-            computer.pullSignal() --для возможности крашнуть комп с ошибкой
         end
     end
 end
-io.write("Shell is not allow, press enter key to reboot.\n")
-waitFoEnter()
-computer.shutdown(true)
+
+if term.isAvailable() then
+    term.gpu().setBackground(0)
+    term.gpu().setForeground(0xFFFFFF)
+    io.write("Shell is not allow, press enter key to reboot.\n")
+    waitFoEnter()
+end
+computer.shutdown("fast")

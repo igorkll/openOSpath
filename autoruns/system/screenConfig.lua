@@ -4,6 +4,7 @@ local term = require("term")
 local computer = require("computer")
 local fs = require("filesystem")
 local su = require("superUtiles")
+local colorPic = require("colorPic")
 
 if not component.isAvailable("gpu") or not component.isAvailable("screen") then return end
 
@@ -16,14 +17,17 @@ local function setGS(screen, gpu)
     component.setPrimary("screen", screen)
     component.invoke(gpu, "bind", screen)
 
-    term.bind(component.proxy(gpu))
+    local gpuProxy = component.proxy(gpu)
+    local screenProxy = component.proxy(screen)
+
+    term.bind(gpuProxy)
 
     connectedScreen = screen
     connectedGpu = gpu
+    
+    if screenProxy.setPrecise then pcall(screenProxy.setPrecise, false) end
 
-    local proxyScreen = component.proxy(screen)
-    if proxyScreen.setPrecise then pcall(proxyScreen.setPrecise, false) end
-
+    os.execute("rescreen")
     term.clear()
 end
 

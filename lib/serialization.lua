@@ -1,13 +1,5 @@
 local serialization = {}
 
-local count = 0
-local function interrupt()
-    count = count + 1
-    if count % 1024 == 0 then
-        os.sleep(0.1)
-    end
-end
-
 -- delay loaded tables fail to deserialize cross [C] boundaries (such as when having to read files that cause yields)
 local local_pairs = function(tbl)
   local mt = getmetatable(tbl)

@@ -10,15 +10,25 @@ local uuid = require("uuid")
 
 ------------------------------------
 
+for address in component.list("modem") do
+    component.invoke(address, "close") --close all ports
+    if component.invoke(address, "isWireless") then
+        component.invoke(address, "setStrength", math.huge) --set max strength
+    end
+end
+
+_G.readonly = fs.get("/").isReadOnly()
+
 if not fs.exists("/free/unical/systemUuid") then
     su.saveFile("/free/unical/systemUuid", uuid.next())
 end
 
+local function getType(checkType)
+    local _, c = component.list(checkType)()
+    return c
+end
+
 if not fs.exists("/free/unical/deviceType") then
-    local function getType(checkType)
-        local _, c = component.list(checkType)()
-        return c
-    end
     su.saveFile("/free/unical/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
 end
 
@@ -26,13 +36,27 @@ if not fs.exists("/free/unical/deviceAddress") then
     su.saveFile("/free/unical/deviceAddress", computer.address())
 end
 
+if not fs.exists("/free/unical/fsAddress") then
+    su.saveFile("/free/unical/fsAddress", fs.get("/").address)
+end
+
+if not fs.exists("/free/unical/startEepromAddress") then
+    su.saveFile("/free/unical/startEepromAddress", _G.startEepromAddress or "nil")
+end
+
+su.saveFile("/free/current/systemUuid", uuid.next())
+su.saveFile("/free/current/deviceAddress", computer.address())
+su.saveFile("/free/current/deviceType", getType("tablet") or getType("robot") or getType("drone") or getType("microcontroller") or "computer")
+su.saveFile("/free/current/fsAddress", fs.get("/").address)
+su.saveFile("/free/current/startEepromAddress", _G.startEepromAddress or "nil")
+
 ------------------------------------
 
 if not _G.recoveryMod then
     if fs.exists("/free/flags/error") then
-        shell.execute("error", _ENV, su.getFile("/free/flags/error"))
+        shell.execute("error", nil, su.getFile("/free/flags/error"))
     elseif fs.get("/").isReadOnly() then
-        os.execute("error \"drive is readonly\"")
+        --os.execute("error \"drive is readonly\"")
     end
 end
 
@@ -60,20 +84,99 @@ event.listen("shutdown", function()
     updateValue("/free/data/likePowerOffCount")
 end)
 
+if not _G.recoveryMod then
+    local shutdownPart = 8
+
+    local computer_energy = computer.energy
+    function computer.energy()
+        return su.mapClip(computer_energy(), computer.maxEnergy() / shutdownPart, computer.maxEnergy(), 0, computer.maxEnergy())
+    end
+
+    function _G.lowPowerDraw()
+        if term.isAvailable() then
+            local targetPath = "/etc/lowPower.pic"
+            if math.floor(term.gpu().getDepth()) == 1 then
+                targetPath = "/etc/lowPowerBW.pic"
+            end
+
+            if fs.exists(targetPath) then
+                local imageDrawer = require("imageDrawer")
+                local img = imageDrawer.loadimage(targetPath)
+                term.clear()
+
+                local ix, iy = img.getSize()
+                local rx, ry = term.gpu().getResolution()
+                local cx, cy = rx // 2, ry // 2
+                local dx, dy = math.ceil(cx - (ix / 2)), math.ceil(cy - (iy / 2))
+                img.draw(dx, dy)
+                computer.delay(2)
+            else
+                computer.pullSignal = function()
+                    error("not enough energy", 0)
+                end
+                computer.pullSignal()
+            end
+        else
+            computer.pullSignal = function()
+                error("not enough energy", 0)
+            end
+            computer.pullSignal()
+        end
+    end
+
+    local timerID
+    local function check()
+        if computer.energy() <= 0 then
+            if timerID then
+                event.cancel(timerID)
+            end
+            lowPowerDraw()
+            computer.shutdown()
+        end
+    end
+    check()
+    timerID = event.timer(1, check, math.huge)
+end
+
 ------------------------------------
 
+local function createSystemCfg()
+    return {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}
+end
+
+local created = createSystemCfg()
+
 function _G.saveSystemConfig()
-    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg"}))
+    su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or created))
 end
 
 if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
-_G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
+
+if fs.exists("/etc/system.cfg") then
+    _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
+else
+    _G.systemCfg = created
+end
+
+if _G.recoveryMod then
+    _G.systemCfg = created
+else
+    local oldTable = serialization.serialize(_G.systemCfg)
+    for k, v in pairs(created) do
+        if _G.systemCfg[k] == nil then
+            _G.systemCfg[k] = v
+        end
+    end
+    if serialization.serialize(_G.systemCfg) ~= oldTable then
+        _G.saveSystemConfig()
+    end
+end
 
 ------------------------------------
 
 function _G.updateNoInternetScreen()
     event.superHook = false
-    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown(true) end
+    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown("fast") end
 
     local rx, ry = 50, 16
     if component.isAvailable("tablet") then
@@ -89,16 +192,52 @@ function _G.updateNoInternetScreen()
     os.sleep(2)
     gui.status("убедитесь что реальный пк подключен к интернету", 0xFFFFFF, color)
     os.sleep(2)
-    computer.shutdown()
+    computer.shutdown("fast")
 end
 
 ------------------------------------
 
 --os.execute("lock -c")
 
+local function drawLogo()
+    if _G.systemCfg.logo and term.isAvailable() then
+        local img
+        local gpu = term.gpu()
+        local rx, ry = gpu.getResolution()
+        if math.floor(gpu.getDepth()) ~= 1 then
+            gpu.setBackground(su.selectColor(nil, 0x888888, 0xAAAAAA, false))
+            gpu.setForeground(0xFFFFFF)
+            gpu.fill(1, 1, rx, ry, " ")
+            if fs.exists("/etc/logo.pic") then
+                img = require("imageDrawer").loadimage("/etc/logo.pic")
+            elseif fs.exists("/etc/logoBW.pic") then
+                img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+            end
+        else
+            gpu.setBackground(0)
+            gpu.setForeground(0xFFFFFF)
+            gpu.fill(1, 1, rx, ry, "▒")
+
+            if fs.exists("/etc/logoBW.pic") then
+                img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+            elseif fs.exists("/etc/logo.pic") then
+                img = require("imageDrawer").loadimage("/etc/logo.pic")
+            end
+        end
+        if img then
+            local rx, ry = gpu.getResolution()
+            local cx, cy = img.getSize()
+            cx, cy = (rx / 2) - (cx / 2), (ry / 2) - (cy / 2)
+            cx = math.floor(cx) + 1
+            cy = math.floor(cy) + 1
+            img.draw(cx, cy)
+        end
+    end
+end
+
 _G.updateRepo = systemCfg.updateRepo
 
-if not _G.recoveryMod then
+if not _G.recoveryMod and not _G.readonly then
     local isInternet = su.isInternet()
     if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
         if fs.exists("/free/flags/updateStart") then
@@ -115,6 +254,36 @@ if not _G.recoveryMod then
     end
 end
 
+drawLogo()
+
 event.superHook = systemCfg.superHook
 event.hook = systemCfg.hook
 _G.shellAllow = systemCfg.shellAllow
+
+if _G.systemCfg.startSound then
+    if fs.exists("/etc/startSound.mid") then
+        local function beep(n, d)
+            if component.isAvailable("beep") then
+                component.beep.beep({[n] = d})
+            else
+                computer.beep(n, d)
+            end
+        end
+        require("midi2").create("/etc/startSound.mid", {beep}).play()
+    else
+        computer.beep(2000, 0.5)
+        for i = 1, 4 do
+            computer.beep(500, 0.01)
+        end
+        computer.beep(1000, 1)
+    end
+elseif term.isAvailable() and _G.systemCfg.logo then
+    os.sleep(2)
+end
+if term.isAvailable() then
+    term.gpu().setBackground(0)
+    term.gpu().setForeground(0xFFFFFF)
+    term.clear()
+end
+
+if fs.exists("/etc/runCommand.dat") then os.execute(su.getFile("/etc/runCommand.dat")) end
