@@ -1,4 +1,5 @@
-local cryptoData = require("cryptoData")
+_G.package.loaded.cryptoData = raw_dofile("/lib/cryptoData.lua")
+local cryptoData = _G.package.loaded.cryptoData
 local component = require("component")
 local unicode = require("unicode")
 

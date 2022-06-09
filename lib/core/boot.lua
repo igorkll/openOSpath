@@ -97,11 +97,13 @@ status("Initializing package management")
 local package = dofile("/lib/package.lua")
 
 do
+  _G.raw_dofile = dofile
   -- Unclutter global namespace now that we have the package module and a filesystem
   _G.component = nil
   _G.computer = nil
   _G.process = nil
   _G.unicode = nil
+
   -- Inject the package modules into the global namespace, as in Lua.
   _G.package = package
 
@@ -114,6 +116,7 @@ do
 
   -- Inject the io modules
   _G.io = dofile("/lib/io.lua")
+  _G.raw_dofile = nil
 end
 
 status("Initializing file system")

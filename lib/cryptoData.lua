@@ -1,5 +1,6 @@
 local component = require("component")
-local event = require("event")
+local computer = require("computer")
+--local event = require("event")
 
 --------------------------------------------
 
@@ -176,14 +177,10 @@ local function customFsMethod(_, method, methodName, ...)
     return method(...)
 end
 
-event.listen("init", function()
-    local fs = require("filesystem")
-    local address = fs.get("/").address
-    lib.addFilterMethod(address, "open", customFsMethod)
-    lib.addFilterMethod(address, "copy", customFsMethod)
-    lib.addFilterMethod(address, "rename", customFsMethod)
-    lib.addFilterMethod(address, "remove", customFsMethod)
-    return false
-end)
+local address = computer.getBootAddress()
+lib.addFilterMethod(address, "open", customFsMethod)
+lib.addFilterMethod(address, "copy", customFsMethod)
+lib.addFilterMethod(address, "rename", customFsMethod)
+lib.addFilterMethod(address, "remove", customFsMethod)
 
 return lib
