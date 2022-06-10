@@ -30,6 +30,7 @@ shell.setAlias("more", "less --noback")
 
 shell.setAlias("bg", "back")
 shell.setAlias("background", "back")
+shell.setAlias("splash", "/etc/motd")
 
 os.setenv("EDITOR", "/bin/edit")
 os.setenv("HISTSIZE", "64")
