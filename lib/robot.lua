@@ -9,6 +9,7 @@ local robot = {}
 local count = 0
 _G.robotInterruptAt = 1
 _G.robotInterruptOff = false
+_G.robotInterruptTime = 0.1
 local function interrupt()
     count = count + 1
     if not _G.robotInterruptOff and (count % _G.robotInterruptAt == 0) then
