@@ -102,7 +102,7 @@ return {create = function()
     end
 
     local inputBuf = {}
-    function lib.input(text, crypto)
+    function lib.input(text, crypto, emptyAllow)
         local buffer, center, select = "", lib.ry // 2, 0
 
         local function redraw()
@@ -124,7 +124,7 @@ return {create = function()
             if eventName then
                 if eventName == "key_down" and su.inTable(lib.keyboards, uuid) then
                     if code == 28 then
-                        if #buffer > 0 then
+                        if #buffer > 0 or emptyAllow then
                             if not crypto and buffer ~= inputBuf[1] and buffer ~= "" then
                                 table.insert(inputBuf, 1, buffer)
                             end
