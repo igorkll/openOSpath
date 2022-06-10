@@ -7,6 +7,9 @@ local term = require("term")
 local computer = require("computer")
 local shell = require("shell")
 local uuid = require("uuid")
+local colorPic = require("colorPic")
+
+local colors = colorPic.getColors()
 
 ------------------------------------
 
@@ -205,7 +208,7 @@ local function drawLogo()
         local gpu = term.gpu()
         local rx, ry = gpu.getResolution()
         if math.floor(gpu.getDepth()) ~= 1 then
-            gpu.setBackground(su.selectColor(nil, 0x888888, 0xAAAAAA, false))
+            gpu.setBackground(su.selectColor(nil, colors.lightGray, nil, false))
             gpu.setForeground(0xFFFFFF)
             gpu.fill(1, 1, rx, ry, " ")
             if fs.exists("/system/images/logo.pic") then

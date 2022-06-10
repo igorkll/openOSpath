@@ -5,6 +5,7 @@ local term = require("term")
 local event = require("event")
 local process = require("process")
 local computer = require("computer")
+local colorPic = require("colorPic")
 
 local function formatString(str, size, mode)
     local str1 = " "
@@ -34,6 +35,8 @@ return {create = function()
 
     lib.depth = math.floor(lib.gpu.getDepth())
     lib.rx, lib.ry = lib.gpu.getResolution()
+
+    lib.colors = colorPic.getColors()
     
     function lib.selectColor(mainColor, simpleColor, bw)
         if type(bw) == "boolean" then bw = bw and 0xFFFFFF or 0 end
@@ -48,7 +51,7 @@ return {create = function()
 
     lib.blackColor = 0
     lib.whiteColor = 0xFFFFFF
-    lib.grayColor = lib.selectColor(0x888888, 0xAAAAAA, false)
+    lib.grayColor = lib.selectColor(lib.colors.lightGray, nil, false)
 
     function lib.setColor(back, fore)
         lib.gpu.setBackground(back or lib.whiteColor)
@@ -79,6 +82,7 @@ return {create = function()
         end
 
         lib.clear()
+        lib.setColor(lib.whiteColor, lib.grayColor)
         for i, v in ipairs(texts) do
             lib.setText(v, ((lib.ry // 2) - (#texts // 2)) + (i - 1))
         end
@@ -110,6 +114,7 @@ return {create = function()
             end
 
             local drawtext = text .. ": " .. buffer .. "_"
+            lib.setColor(lib.whiteColor, lib.grayColor)
             lib.setText(drawtext, center)
         end
 
@@ -234,6 +239,14 @@ return {create = function()
             end
         end
         return pos - 1, inStrs[pos - 1]
+    end
+
+    function lib.yesno(label, simple, num)
+        if simple then
+            return lib.menu(label, {"no", "yes"}, num) == 2
+        else
+            return lib.menu(label, {"no", "no", "yes", "no"}, num) == 3
+        end
     end
 
     function lib.exit()
