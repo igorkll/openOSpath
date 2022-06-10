@@ -41,22 +41,27 @@ end
 
 ---------------------------------------------
 
+local num
 while true do
-    local num = gui.menu("Settings", {"сброс на заводские настройки", "выход"})
+    num = gui.menu("Settings", {"сброс на заводские настройки", "автозагрузка с внешних насителей", "выход"}, num)
     if num == 1 then
         gui.status([[
 вы уверены что хотите сбросить устройство?
 вы потеряете все свои данные и программы
 все настройки также собьються
 это поможет очистить устройство от вирусов
-однако не от все
+однако не от всех
 так же помните что сбрасываються только данных
 пользователя все изменения внесенные в ос
 не будут сброшены]], true)
         if gui.yesno("вы уверены произвести сброс настроек?") then
             resetSettings()
+            computer.shutdown(true)
         end
     elseif num == 2 then
+        local newstate = gui.yesno("выберите состояния внешней автозагрузки", true, fs.isAutorunEnabled() and 2 or 1)
+        fs.setAutorunEnabled(newstate)
+    elseif num == 3 then
         gui.exit()
     end
 end
