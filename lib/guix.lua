@@ -9,8 +9,6 @@ local computer = require("computer")
 local keyboard = require("keyboard")
 local colorPic = require("colorPic")
 
-local colors = colorPic.getColors()
-
 -----------------------------------------
 
 local function orValue(value, standart)
@@ -88,8 +86,11 @@ return {create = function(minTier)
     lib.maxX, lib.maxY = lib.gpu.maxResolution()
     lib.depth = math.floor(lib.gpu.getDepth())
     lib.reset_gpu = su.saveGpu(lib.gpu.address)
-    lib.gpu.setBackground(0)
-    lib.gpu.setForeground(0xFFFFFF)
+
+    lib.colors = colorPic.getColors()
+    local colors = lib.colors --да говнокод знаю
+    lib.gpu.setBackground(colors.black)
+    lib.gpu.setForeground(colors.white)
     term.clear()
 
     --functions
@@ -121,7 +122,7 @@ return {create = function(minTier)
 
     function lib.selectColor(mainColor, miniColor, bw)
         local depth = lib.depth
-        if type(bw) == "boolean" then bw = bw and 0xFFFFFF or 0x000000 end
+        if type(bw) == "boolean" then bw = bw and colors.white or colors.black end
 
         if depth == 4 then
             return miniColor or mainColor
@@ -362,7 +363,7 @@ return {create = function(minTier)
 
     function lib.createScene(sceneColor, sizeX, sizeY)
         local scene = {}
-        scene.sceneColor = sceneColor or 0x000000
+        scene.sceneColor = sceneColor or colors.black
         scene.sizeX = sizeX or lib.maxX
         scene.sizeY = sizeY or lib.maxY
         scene.redrawAll = false
@@ -415,10 +416,10 @@ return {create = function(minTier)
             obj.mode = mode or 0
             obj.state = orValue(state, false)
 
-            obj.backColor = 0xFFFFFF
-            obj.foreColor = 0x000000
-            obj.invertBackColor = lib.selectColor(0x555555, 0x222222, false)
-            obj.invertForeColor = 0xFFFFFF
+            obj.backColor = colors.white
+            obj.foreColor = colors.black
+            obj.invertBackColor = lib.selectColor(colors.gray, nil, false)
+            obj.invertForeColor = colors.white
 
             obj.drawer = false
 
@@ -576,10 +577,10 @@ return {create = function(minTier)
             obj.text = text or ""
             obj.state = true
 
-            obj.backColor = 0xFFFFFF
-            obj.foreColor = 0x000000
-            obj.invertBackColor = lib.selectColor(0x555555, 0x222222, false)
-            obj.invertForeColor = 0xFFFFFF
+            obj.backColor = colors.white
+            obj.foreColor = colors.black
+            obj.invertBackColor = lib.selectColor(colors.gray, nil, false)
+            obj.invertForeColor = colors.white
 
             obj.active = true
             obj.killed = false
@@ -682,8 +683,8 @@ return {create = function(minTier)
             end
             obj.realSize = obj.size - obj.labelSize
 
-            obj.backColor = 0xFFFFFF
-            obj.foreColor = 0x000000
+            obj.backColor = colors.white
+            obj.foreColor = colors.black
 
             obj.killed = false
             obj.active = true
@@ -854,8 +855,8 @@ return {create = function(minTier)
             obj.sizeY = sizeY
             obj.callback = callback
 
-            obj.backColor = 0xFFFFFF
-            obj.foreColor = 0x000000
+            obj.backColor = colors.white
+            obj.foreColor = colors.black
 
             obj.autoScroll = true
             obj.autoRedraw = true
@@ -1539,8 +1540,8 @@ return {create = function(minTier)
         for i, data in ipairs(lib.exitCallbacks) do runCallback(data) end
 
         lib.reset_gpu()
-        lib.gpu.setBackground(0)
-        lib.gpu.setForeground(0xFFFFFF)
+        lib.gpu.setBackground(colors.black)
+        lib.gpu.setForeground(colors.white)
         
         term.clear()
     end
@@ -1597,8 +1598,8 @@ return {create = function(minTier)
         if posX + (sizeX - 1) > rx then posX = posX - (sizeX - 1) end
         if posY + (sizeY - 1) > ry then posY = posY - (sizeY - 1) end
 
-        lib.gpu.setBackground(lib.selectColor(0xa0a0a0, 0x222222, false))
-        lib.gpu.setForeground(lib.selectColor(0, nil, true))
+        lib.gpu.setBackground(lib.selectColor(colors.gray, nil, false))
+        lib.gpu.setForeground(lib.selectColor(colors.black, nil, true))
         local char = " "
         if lib.depth == 1 then
             char = "#"
@@ -1608,14 +1609,14 @@ return {create = function(minTier)
         for i = 1, sizeY do
             local pos = posY + (i - 1)
             if lib.depth == 1 then
-                lib.gpu.setBackground(menuData.on[i] and 0xFFFFFF or 0x000000)
-                lib.gpu.setForeground(menuData.on[i] and 0x000000 or 0xFFFFFF)
+                lib.gpu.setBackground(menuData.on[i] and colors.white or colors.black)
+                lib.gpu.setForeground(menuData.on[i] and colors.black or colors.white)
             else
-                lib.gpu.setBackground(0xFFFFFF)
+                lib.gpu.setBackground(colors.white)
                 if menuData.on[i] then
-                    lib.gpu.setForeground(0x000000)
+                    lib.gpu.setForeground(colors.black)
                 else
-                    lib.gpu.setForeground(lib.selectColor(0x696969, 0xAAAAAA))
+                    lib.gpu.setForeground(lib.selectColor(colors.lightGray, nil, false))
                 end
             end
             lib.gpu.set(posX, pos, menuData.strs[i])
@@ -1656,7 +1657,7 @@ return {create = function(minTier)
         if not sx then sx = lib.maxX end
         if not sy then sy = lib.maxY end
         if not time then time = 2 end
-        if not color then color = 0xFFFFFF end
+        if not color then color = colors.white end
 
         local scene = lib.createScene(color, sx, sy)
         if text then
@@ -1671,7 +1672,7 @@ return {create = function(minTier)
         if not sx then sx = lib.maxX end
         if not sy then sy = lib.maxY end
 
-        local scene = lib.createScene(0xFFFFFF, sx, sy)
+        local scene = lib.createScene(colors.white, sx, sy)
         local cx, cy = scene.getCenter()
 
         if text then scene.createLabel(1, 1, sx, 1, text) end
@@ -1680,14 +1681,14 @@ return {create = function(minTier)
 
         local yes = scene.createButton(1, (cy - 1) - 2, sx, 3, "yes", function() state = true end)
         local no = scene.createButton(1, (cy - 1) + 2, sx, 3, "no", function() state = false end)
-        yes.backColor = lib.selectColor(0x00FF00, nil, false)
-        yes.foreColor = 0xFFFFFF
-        yes.invertBackColor = lib.selectColor(0x0000FF, nil, true)
+        yes.backColor = lib.selectColor(colors.green, nil, false)
+        yes.foreColor = colors.white
+        yes.invertBackColor = lib.selectColor(colors.blue, nil, true)
         yes.invertForeColor = 0
 
-        no.backColor = lib.selectColor(0xFF0000, nil, false)
-        no.foreColor = 0xFFFFFF
-        no.invertBackColor = lib.selectColor(0x0000FF, nil, true)
+        no.backColor = lib.selectColor(colors.red, nil, false)
+        no.foreColor = colors.white
+        no.invertBackColor = lib.selectColor(colors.blue, nil, true)
         no.invertForeColor = 0
 
         local oldScene = lib.scene
@@ -1702,6 +1703,7 @@ return {create = function(minTier)
     end
 
     function lib.status(text, sx, sy)
+        lib.gpu.setResolution(sx or lib.userX, sy or lib.userY)
         lib.gpu.setBackground(lib.selectColor(colors.white, nil, true))
         lib.gpu.setForeground(lib.selectColor(colors.lightGray, nil, false))
         lib.gpu.fill(1, 1, sx or lib.userX, sy or lib.userY, " ")
