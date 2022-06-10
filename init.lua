@@ -192,6 +192,7 @@ end
 fs.makeDirectory("/free/flags")
 fs.makeDirectory("/usr/bin")
 fs.makeDirectory("/usr/lib")
+fs.makeDirectory("/autoruns/user")
 
 if fs.exists(afterBootTwicks) and not _G.recoveryMod then --запуск boot твиков после запуска класической openOS
     for _, data in list(afterBootTwicks) do

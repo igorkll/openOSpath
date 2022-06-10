@@ -94,9 +94,9 @@ if not _G.recoveryMod then
 
     function _G.lowPowerDraw()
         if term.isAvailable() then
-            local targetPath = "/etc/lowPower.pic"
+            local targetPath = "/system/images/lowPower.pic"
             if math.floor(term.gpu().getDepth()) == 1 then
-                targetPath = "/etc/lowPowerBW.pic"
+                targetPath = "/system/images/lowPowerBW.pic"
             end
 
             if fs.exists(targetPath) then
@@ -208,20 +208,20 @@ local function drawLogo()
             gpu.setBackground(su.selectColor(nil, 0x888888, 0xAAAAAA, false))
             gpu.setForeground(0xFFFFFF)
             gpu.fill(1, 1, rx, ry, " ")
-            if fs.exists("/etc/logo.pic") then
-                img = require("imageDrawer").loadimage("/etc/logo.pic")
-            elseif fs.exists("/etc/logoBW.pic") then
-                img = require("imageDrawer").loadimage("/etc/logoBW.pic")
+            if fs.exists("/system/images/logo.pic") then
+                img = require("imageDrawer").loadimage("/system/images/logo.pic")
+            elseif fs.exists("/system/images/logoBW.pic") then
+                img = require("imageDrawer").loadimage("/system/images/logoBW.pic")
             end
         else
             gpu.setBackground(0)
             gpu.setForeground(0xFFFFFF)
             gpu.fill(1, 1, rx, ry, "▒")
 
-            if fs.exists("/etc/logoBW.pic") then
-                img = require("imageDrawer").loadimage("/etc/logoBW.pic")
-            elseif fs.exists("/etc/logo.pic") then
-                img = require("imageDrawer").loadimage("/etc/logo.pic")
+            if fs.exists("/system/images/logoBW.pic") then
+                img = require("imageDrawer").loadimage("/system/images/logoBW.pic")
+            elseif fs.exists("/system/images/logo.pic") then
+                img = require("imageDrawer").loadimage("/system/images/logo.pic")
             end
         end
         if img then
