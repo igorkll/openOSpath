@@ -17,7 +17,7 @@ for address in component.list("filesystem") do
         local lfs = fs.get(full_path)
 
         local drive = (lfs.getLabel() or "noLabel") .. ":" .. lfs.address:sub(1, 5)
-        print(#programms + 1, "name: " .. file, "drive: " .. drive, "mount: " .. (su.getMountPoint(proxy.address) or "none"))
+        print(tostring(#programms + 1) .. ".", "programm: " .. file, su.getFullInfoParts(address))
         table.insert(programms, full_path)
         table.insert(drives, drive)
         table.insert(names, file)

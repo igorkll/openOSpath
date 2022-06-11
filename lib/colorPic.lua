@@ -2,18 +2,21 @@ local term = require("term")
 local su = require("superUtiles")
 local fs = require("filesystem")
 local serialization = require("serialization")
+local event = require("event")
 
 ------------------------------------
 
 local lib = {}
 
 function lib.getDepth()
+    if not term.isAvailable() then return 8 end
     local gpu = term.gpu()
     local depth = math.floor(gpu.getDepth())
     return depth
 end
 
 function lib.getColorIndex()
+    if lib.colorCache then return lib.colorCache end
     local depth = lib.getDepth()
     local function generate()
         do return {0xFFFFFF, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xFEFE6C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C, 0x999999, 0x4C99B2, 0xB266E5, 0x3333FF, 0x9F664C, 0x57A64E, 0xFF3333, 0x000000} end --да я писал в торопях
@@ -41,8 +44,16 @@ function lib.getColorIndex()
             su.saveFile("/etc/palette/colorPic/depth8.cfg", assert(serialization.serialize(colors)))
         end
     end
+    lib.colorCache = colors
     return colors
 end
+
+function lib.removeCache()
+    lib.colorCache = nil
+end
+
+event.listen("gpu_bound", lib.removeCache)
+event.listen("depthChanged", lib.removeCache)
 
 function lib.getColors()
     local colorsIndex = lib.getColorIndex()

@@ -110,8 +110,8 @@ if options.f or outData.version > inData.version then
     end
 
     if not options.a then su.saveFile("/free/flags/updateStart", "") end
-    os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
-    local ok, err = pcall(dofile, "/tmp/getinstaller.lua", url, "/", "-q") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
+    --os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
+    local ok, err = pcall(dofile, "/bin/getinstaller.lua", url, "/", "-q") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
     if not ok then
         if not err then err = "unkown" end
         su.logTo("/free/logs/updateError.log", err)

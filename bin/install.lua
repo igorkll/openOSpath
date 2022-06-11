@@ -11,19 +11,10 @@ local deviceinfo = computer.getDeviceInfo()
 local loots = {}
 local targets = {}
 
-local function isLoot(address)
-    local perms = su.getPerms(component.proxy(address))
-    return not perms.noLoot and (perms.loot or (deviceinfo[address] and deviceinfo[address].clock == "20/20/20"))
-end
-
-local function getData(proxy) --часть кода из mineOS efi
-    return proxy.isReadOnly() and "R" or "R/W", "type: " .. (proxy.spaceTotal() >= 1048576 and "HDD" or proxy.spaceTotal() >= 65536 and "FDD" or "SYS"), "mount: " .. (su.getMountPoint(proxy.address) or "none")
-end
-
 for address in component.list("filesystem") do
     local proxy = component.proxy(address)
     local perms = su.getPerms(proxy)
-    local loot = isLoot(address)
+    local loot = su.isLoot(address)
     if loot then
         table.insert(loots, address)
     elseif not perms.nonTarget and not proxy.isReadOnly() then
@@ -48,7 +39,7 @@ print("устоновочные начители")
 for i, address in ipairs(loots) do
     local proxy = component.proxy(address)
     local label = proxy.getLabel() or address:sub(1, 5)
-    print(tostring(i) .. ". " .. label, getData(proxy))
+    print(tostring(i) .. ". ", su.getFullInfoParts(address))
 end
 print("-----------------")
 
@@ -71,7 +62,7 @@ print("диск куда может быть произведена устоно
 for i, address in ipairs(targets) do
     local proxy = component.proxy(address)
     local label = proxy.getLabel() or address:sub(1, 5)
-    print(tostring(i) .. ". " .. label, getData(proxy))
+    print(tostring(i) .. ". ", su.getFullInfoParts(address))
 end
 print("-----------------")
 
@@ -92,7 +83,7 @@ end
 local fromProxy = component.proxy(from)
 local targetProxy = component.proxy(target)
 local driveName = fromProxy.getLabel() or from:sub(1, 5)
-local targetDriveName = (fromProxy.getLabel() or "noLabel") .. ":" .. from:sub(1, 5)
+local targetDriveName = (targetProxy.getLabel() or "noLabel") .. ":" .. target:sub(1, 5)
 
 if targetProxy.exists(fs.concat("/free/uninstallers", driveName)) then
     print("-----------------")

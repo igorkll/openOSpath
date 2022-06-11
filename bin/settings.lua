@@ -3,6 +3,7 @@ local fs = require("filesystem")
 local su = require("superUtiles")
 local computer = require("computer")
 local twicks = require("twicks")
+local event = require("event")
 
 ---------------------------------------------
 
@@ -43,7 +44,16 @@ end
 
 local num
 while true do
-    num = gui.menu("Settings", {"сброс на заводские настройки", "автозагрузка с внешних насителей", "выход"}, num)
+    num = gui.menu("Settings", {
+    "сброс на заводские настройки",
+    "автозагрузка с внешних насителей",
+    "автообновления",
+    "логотип при загрузке",
+    "звук при загрузки",
+    "ctrl+atl+c прирывания",
+    "ctrl+c прирывания",
+    "выход"},
+    num)
     if num == 1 then
         gui.status([[
 вы уверены что хотите сбросить устройство?
@@ -59,9 +69,31 @@ while true do
             computer.shutdown(true)
         end
     elseif num == 2 then
-        local newstate = gui.yesno("выберите состояния внешней автозагрузки", true, fs.isAutorunEnabled() and 2 or 1)
+        local newstate = gui.yesno("внешнея автозагрузки", true, fs.isAutorunEnabled() and 2 or 1)
         fs.setAutorunEnabled(newstate)
     elseif num == 3 then
+        local cfg = assert(su.getTable("/etc/system.cfg"))
+        cfg.autoupdate = gui.yesno("автообновления", true, cfg.autoupdate and 2 or 1)
+        assert(su.saveTable("/etc/system.cfg", cfg))
+    elseif num == 4 then
+        local cfg = assert(su.getTable("/etc/system.cfg"))
+        cfg.logo = gui.yesno("логотип при загрузке", true, cfg.logo and 2 or 1)
+        assert(su.saveTable("/etc/system.cfg", cfg))
+    elseif num == 5 then
+        local cfg = assert(su.getTable("/etc/system.cfg"))
+        cfg.startSound = gui.yesno("звук при загрузки", true, cfg.startSound and 2 or 1)
+        assert(su.saveTable("/etc/system.cfg", cfg))
+    elseif num == 6 then
+        local cfg = assert(su.getTable("/etc/system.cfg"))
+        cfg.superHook = gui.yesno("ctrl+atl+c прирывания", true, cfg.superHook and 2 or 1)
+        assert(su.saveTable("/etc/system.cfg", cfg))
+        event.superHook = cfg.superHook
+    elseif num == 7 then
+        local cfg = assert(su.getTable("/etc/system.cfg"))
+        cfg.hook = gui.yesno("ctrl+c прирывания", true, cfg.hook and 2 or 1)
+        assert(su.saveTable("/etc/system.cfg", cfg))
+        event.hook = cfg.hook
+    elseif num == 8 then
         gui.exit()
     end
 end

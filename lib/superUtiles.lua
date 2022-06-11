@@ -539,4 +539,69 @@ function lib.getFsFiles(address)
     return files
 end
 
+function lib.getTable(path)
+    local data, err = lib.getFile(path)
+    if not data then return nil, err end
+    return serialization.unserialize(data)
+end
+
+function lib.saveTable(path, tbl)
+    local ok, data = pcall(serialization.serialize, tbl)
+    if not ok or not data then return nil, data end
+    return lib.saveFile(path, data)
+end
+
+function lib.getTargetResolution()
+    local rx, ry = 50, 16
+    if component.isAvailable("tablet") then
+        rx, ry = term.gpu().maxResolution()
+    end
+    return rx, ry
+end
+
+function lib.isLoot(address)
+    local deviceinfo = require("computer").getDeviceInfo()
+    
+    local perms = lib.getPerms(component.proxy(address))
+    return not perms.noLoot and (perms.loot or (deviceinfo[address] and deviceinfo[address].clock == "20/20/20"))
+end
+
+function lib.getType(address)
+    if address == computer.tmpAddress() then return "TMPFS" end
+    if lib.isLoot(address) then return "loot disk" end
+
+    local path = lib.getMountPoint(address)
+    local filepath = fs.concat(path, "free/current/deviceType")
+    if fs.exists(filepath) then
+        local deviceType = assert(lib.getFile(filepath))
+        local str = "openOSmod"
+        if fs.exists(fs.concat(path, "OS.lua")) then
+            str = str .. " & mineOS"
+        end
+        str = str .. " & " .. deviceType
+        return str
+    end
+    if fs.exists(fs.concat(path, "OS.lua")) and fs.exists(fs.concat(path, "init.lua")) then
+        return "otherOS & mineOS & unknown devive"
+    elseif fs.exists(fs.concat(path, "OS.lua")) then
+        return "mineOS & unknown devive"
+    elseif fs.exists(fs.concat(path, "init.lua")) then
+        return "otherOS & unknown devive"
+    end
+    
+    return "unknown device"
+end
+
+function lib.getFullInfoParts(address)
+    local proxy = component.proxy(address)
+    return "RW: " .. (proxy.isReadOnly() and "R" or "R/W"), "label: " .. (proxy.getLabel() or "noLabel"), "address: " .. address:sub(1, 5),
+    "mount: " .. (lib.getMountPoint(address) or "none"), "type: " .. lib.getType(address)
+end
+
+function lib.getFullInfo(address)
+    local proxy = component.proxy(address)
+    local str = "RW: " .. (proxy.isReadOnly() and "R" or "R/W") .. ", label: " .. (proxy.getLabel() or "noLabel") .. ", address: " .. address:sub(1, 5) .. ", mount: " .. (lib.getMountPoint(address) or "none") .. ", type: " .. lib.getType(address)
+    return str
+end
+
 return lib

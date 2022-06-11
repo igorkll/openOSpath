@@ -8,8 +8,24 @@ local computer = require("computer")
 local shell = require("shell")
 local uuid = require("uuid")
 local colorPic = require("colorPic")
+local cryptoData = require("cryptoData")
 
 local colors = colorPic.getColors()
+
+if term.isAvailable() then
+    local function depthFilter(address, func, _, ...)
+        local depth = ...
+        event.push("depthChanged", address, depth)
+        return func(...)
+    end
+    local function setFilter()
+        cryptoData.addFilterMethod(term.gpu().address, "setDepth", depthFilter)
+    end
+    setFilter()
+    event.listen("term_available", function()
+        setFilter()
+    end)
+end
 
 ------------------------------------
 
@@ -91,8 +107,12 @@ if not _G.recoveryMod then
     local shutdownPart = 8
 
     local computer_energy = computer.energy
+    local computer_maxEnergy = computer.maxEnergy
     function computer.energy()
-        return su.mapClip(computer_energy(), computer.maxEnergy() / shutdownPart, computer.maxEnergy(), 0, computer.maxEnergy())
+        return su.mapClip(computer_energy(), computer_maxEnergy() / shutdownPart, computer_maxEnergy(), 0, computer_maxEnergy())
+    end
+    function computer.maxEnergy()
+        return computer_maxEnergy() - (computer_maxEnergy() / shutdownPart)
     end
 
     function _G.lowPowerDraw()
@@ -141,6 +161,14 @@ if not _G.recoveryMod then
     timerID = event.timer(1, check, math.huge)
 end
 
+function _G.getEnergyPercentages()
+    return math.floor(su.mapClip(computer.energy(), 0, computer.maxEnergy(), 0, 100) + 0.5)
+end
+
+function _G.updateAllow()
+    return _G.getEnergyPercentages() >= 50
+end
+
 ------------------------------------
 
 local function createSystemCfg()
@@ -153,13 +181,17 @@ function _G.saveSystemConfig()
     su.saveFile("/etc/system.cfg", serialization.serialize(_G.systemCfg or created))
 end
 
+function _G.loadSystemConfig()
+    if fs.exists("/etc/system.cfg") then
+        _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
+    else
+        _G.systemCfg = created
+    end
+end
+
 if not fs.exists("/etc/system.cfg") then saveSystemConfig() end
 
-if fs.exists("/etc/system.cfg") then
-    _G.systemCfg = assert(serialization.unserialize(assert(su.getFile("/etc/system.cfg"))))
-else
-    _G.systemCfg = created
-end
+_G.loadSystemConfig()
 
 if _G.recoveryMod then
     _G.systemCfg = created
@@ -181,10 +213,7 @@ function _G.updateNoInternetScreen()
     event.superHook = false
     if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown("fast") end
 
-    local rx, ry = 50, 16
-    if component.isAvailable("tablet") then
-        rx, ry = term.gpu().maxResolution()
-    end
+    local rx, ry = su.getTargetResolution()
 
     local gui = require("simpleGui2").create(rx, ry)
     local color = 0x6699FF
@@ -194,6 +223,24 @@ function _G.updateNoInternetScreen()
     gui.status("подлючите internet card, чтобы все исправить", 0xFFFFFF, color)
     os.sleep(2)
     gui.status("убедитесь что реальный пк подключен к интернету", 0xFFFFFF, color)
+    os.sleep(2)
+    computer.shutdown("fast")
+end
+
+local function updateLowPowerScreen()
+    event.superHook = false
+    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown() end
+
+    local rx, ry = su.getTargetResolution()
+
+    local gui = require("simpleGui2").create(rx, ry)
+    local color = 0x6699FF
+
+    gui.status("при предидушем обновлениия произошла ошибка", 0xFFFFFF, color)
+    os.sleep(2)
+    gui.status("для повторной попытки обновления мало энергии", 0xFFFFFF, color)
+    os.sleep(2)
+    gui.status("необходимо хотябы 50% у вас " .. tostring(getEnergyPercentages()) .. "%", 0xFFFFFF, color)
     os.sleep(2)
     computer.shutdown("fast")
 end
@@ -245,7 +292,11 @@ if not _G.recoveryMod and not _G.readonly then
     if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
         if fs.exists("/free/flags/updateStart") then
             if isInternet then
-                os.execute("fastupdate -f")
+                if _G.updateAllow() then
+                    os.execute("fastupdate -f")
+                else
+                    updateLowPowerScreen()
+                end
             else
                 _G.updateNoInternetScreen()
             end

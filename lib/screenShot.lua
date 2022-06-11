@@ -1,14 +1,14 @@
 local term = require("term")
 local su = require("superUtiles")
 
-local gpu = term.gpu()
-
 -------------------------------------------
 
 local lib = {}
 
 function lib.pull(x, y, sx, sy)
     local buffer = {}
+
+    local gpu = term.gpu()
 
     for cx = x, (x + sx) - 1 do
         for cy = y, (y + sy) - 1 do

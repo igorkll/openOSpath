@@ -4,29 +4,17 @@ local sides = require("sides")
 local robot = {}
 
 -------------------------------------------------------------------------------
--- Functions
-
-local count = 0
-_G.robotInterruptAt = 1
-_G.robotInterruptOff = false
-_G.robotInterruptTime = 0.1
-local function interrupt()
-    count = count + 1
-    if not _G.robotInterruptOff and (count % _G.robotInterruptAt == 0) then
-        os.sleep(_G.robotInterruptTime)
-    end
-end
-
--------------------------------------------------------------------------------
 -- General
 
 robot.component = component.robot
 
 function robot.name()
+    interrupt()
     return component.robot.name()
 end
 
 function robot.level()
+    interrupt()
     if component.isAvailable("experience") then
         local level = 0
         for address in component.list("experience") do
@@ -39,10 +27,12 @@ function robot.level()
 end
 
 function robot.getLightColor()
+    interrupt()
     return component.robot.getLightColor()
 end
 
 function robot.setLightColor(value)
+    interrupt()
     return component.robot.setLightColor(value)
 end
 
@@ -68,26 +58,32 @@ end
 -- Inventory
 
 function robot.inventorySize()
+    interrupt()
     return component.robot.inventorySize()
 end
 
 function robot.select(...)
+    interrupt()
     return component.robot.select(...)
 end
 
 function robot.count(...)
+    interrupt()
     return component.robot.count(...)
 end
 
 function robot.space(...)
+    interrupt()
     return component.robot.space(...)
 end
 
 function robot.compareTo(...)
+    interrupt()
     return component.robot.compareTo(...)
 end
 
 function robot.transferTo(...)
+    interrupt()
     return component.robot.transferTo(...)
 end
 
@@ -167,6 +163,7 @@ end
 -- Tool
 
 function robot.durability()
+    interrupt()
     return component.robot.durability()
 end
 
@@ -252,26 +249,32 @@ end
 -- Tank
 
 function robot.tankCount()
+    interrupt()
     return component.robot.tankCount()
 end
 
 function robot.selectTank(tank)
+    interrupt()
     return component.robot.selectTank(tank)
 end
 
 function robot.tankLevel(...)
+    interrupt()
     return component.robot.tankLevel(...)
 end
 
 function robot.tankSpace(...)
+    interrupt()
     return component.robot.tankSpace(...)
 end
 
 function robot.compareFluidTo(...)
+    interrupt()
     return component.robot.compareFluidTo(...)
 end
 
 function robot.transferFluidTo(...)
+    interrupt()
     return component.robot.transferFluidTo(...)
 end
 

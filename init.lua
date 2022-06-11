@@ -15,11 +15,12 @@ computer.superRawPullSignal = computer.pullSignal
 do --прирывания
     local uptime = computer.uptime
     local oldInterruptTime = uptime()
-    _G.interruptTime = 1
+    _G.interruptAtTime = 2
+    _G.interruptTime = 0.2
 
     function _G.interrupt()
-        if uptime() - oldInterruptTime > _G.interruptTime then
-            os.sleep() --на данный момент в _G его нет но он появиться после полной загрузки
+        if uptime() - oldInterruptTime > _G.interruptAtTime then
+            os.sleep(_G.interruptTime) --на данный момент в _G его нет но он появиться после полной загрузки
             oldInterruptTime = uptime()
         end
     end
@@ -129,6 +130,52 @@ do --спяший режим
     end
 end
 
+do --чтоб админ в комп заприваченый не тыкал
+    local computer = computer
+    local table = table
+    local computer_pullSignal = computer.pullSignal
+    function computer.pullSignal(time)
+        local term = require("term")
+        if not term.isAvailable() then return computer_pullSignal(time) end
+
+        local su = require("superUtiles")
+        local frames = require("frames")
+        local colorPic = require("colorPic")
+        local colors = colorPic.getColors()
+
+        local oldUptime = -math.huge
+
+        ::ret::
+        local inTime = computer.uptime()
+
+        local waitTime = time - (computer.uptime() - inTime)
+        if waitTime < 0 then return end
+        local eventData = {computer_pullSignal(waitTime)}
+
+        local users = {computer.users()}
+
+        local function splash()
+            if not term.isAvailable() or not _G.inited then return end
+            if computer.uptime() - oldUptime > 5 then
+                frames.splash(1, 5, 47, 3, "Я ПОД АДМИНОВ НЕ ПРОГИБАЮСЬ, ПРИВАТ ЕСТЬ ПРИВАТ", 1, su.selectColor(nil, colors.red, nil, false), su.selectColor(nil, colors.orange, nil, true))
+                oldUptime = computer.uptime()
+            end
+        end
+
+        if (eventData[1] == "touch" or eventData[1] == "drag" or eventData[1] == "drop" or eventData[1] == "scroll") and #users > 0 and not su.inTable(users, eventData[6]) then
+            splash()
+            goto ret
+        end
+
+        if (eventData[1] == "key_up" or eventData[1] == "key_down") and #users > 0 and not su.inTable(users, eventData[5]) then
+            splash()
+            goto ret
+        end
+
+        return table.unpack(eventData)
+    end
+end
+
 do --для запуска древнючего софта
     local component = component
     local computer = computer
@@ -174,6 +221,28 @@ local component = require("component")
 local computer = require("computer")
 local su = require("superUtiles")
 
+event.listen("init", function()
+    _G.inited = true
+    return false
+end)
+
+do --оптимизация computer.getDeviceInfo
+    local computer_getDeviceInfo = computer.getDeviceInfo
+    local deviveinfo
+
+    function computer.getDeviceInfo()
+        return deviveinfo
+    end
+
+    function computer.refreshDeviveInfo()
+        deviveinfo = computer_getDeviceInfo()
+    end
+    computer.refreshDeviveInfo()
+
+    event.listen("component_added", computer.refreshDeviveInfo)
+    event.listen("component_removed", computer.refreshDeviveInfo)
+end
+
 -----------------------------------
 
 local autorunspath = "/autoruns" --блок упровления автозагрузкой
@@ -204,7 +273,10 @@ end
 
 if fs.exists(systemautoruns) then --системная автозагрузка
     for _, data in list(systemautoruns) do
-        os.execute(fs.concat(systemautoruns, data))
+        local ok, err = xdofile(fs.concat(systemautoruns, data))
+        if not ok then
+            su.logTo("/free/logs/systemAutorunsErrors.log", (err or "unkown") .. "\n")
+        end
     end
 end
 

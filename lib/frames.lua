@@ -4,14 +4,16 @@ local su = require("superUtiles")
 local event = require("event")
 local unicode = require("unicode")
 local process = require("process")
-
-local gpu = term.gpu()
-local screen = term.screen()
-local keyboard = term.keyboard()
+local computer = require("computer")
+local colorPic = require("colorPic")
 
 -------------------------------------------
 
 local function runCallback(func, exitFunc, ...)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+
     local oldSignal = process.info().data.signal
     process.info().data.signal = function()
         error("windowClosing", 0)
@@ -41,6 +43,10 @@ end
 local frames = {}
 
 function frames.createButton(x, y, sx, sy, text, back, fore, noAutoredraw)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+
     local obj = {}
     function obj.draw()
         gpu.setBackground(back)
@@ -64,6 +70,10 @@ function frames.createButton(x, y, sx, sy, text, back, fore, noAutoredraw)
 end
 
 function frames.yesno(x, y, sx, sy, text, yesFunc, noFunc)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+
     local oldFrame = screenShot.pull(x, y, sx, sy)
     local savedGpu = su.saveGpu()
 
@@ -98,6 +108,10 @@ function frames.yesno(x, y, sx, sy, text, yesFunc, noFunc)
 end
 
 function frames.pointsMenu(x, y, sx, sy, label, options)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+
     local oldFrame = screenShot.pull(x, y, sx, sy)
     local savedGpu = su.saveGpu()
 
@@ -116,6 +130,33 @@ function frames.pointsMenu(x, y, sx, sy, label, options)
     gpu.set(cx, y, label)
 
     
+end
+
+function frames.splash(x, y, sx, sy, text, time, colorFore, colorBack)
+    local gpu = term.gpu()
+    local screen = term.screen()
+    local keyboard = term.keyboard()
+    local colors = colorPic.getColors()
+
+    local oldFrame = screenShot.pull(x, y, sx, sy)
+    local savedGpu = su.saveGpu()
+
+    local function exitFunc()
+        savedGpu()
+        oldFrame()
+    end
+
+    gpu.setBackground(colorBack or su.selectColor(nil, colors.gray, nil, true))
+    gpu.setForeground(colorFore or 0)
+    gpu.fill(x, y, sx, sy, gpu.getDepth() == 1 and "▒" or " ")
+
+    text = unicode.sub(text, 1, sx)
+    local cx, cy = ((sx // 2) + x) - (unicode.len(text) // 2), (sy // 2) + y
+    gpu.set(cx, cy, text)
+
+    computer.delay(time or 1)
+
+    exitFunc()
 end
 
 return frames

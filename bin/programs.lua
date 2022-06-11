@@ -6,9 +6,9 @@ local args, options = shell.parse(...)
 
 if #args == 0 then
     print("Usage:")
-    print("programs list")
-    print("programs userList")
-    print("programs allList")
+    print("programs list - выводит список программ зарегистрированые в ос")
+    print("programs allList - выводит список всех программ которые можно открыть в данный момент, повторяюшиеся имена игнорируються")
+    print("programs userList - работает аналогичьно allList однако игнорирует все программы чье имя содержиться в /bin даже если сама программа не лежит в bin")
     print("programs command name command(uninstall/run/lalala/blablabla/any)")
     return
 end

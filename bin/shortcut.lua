@@ -1,23 +1,33 @@
-local simpleGui = require("simpleGui")
+local gui = require("simpleGui3").create()
 local term = require("term")
 local computer = require("computer")
 local fs = require("filesystem")
 
 -----------------------------------------
 
-local num = simpleGui.menu("select", {"back", "shutdown", "reboot", "lua", "event.log"})
-term.clear()
-if num == 2 then
-    computer.shutdown()
-elseif num == 3 then
-    computer.shutdown(true)
-elseif num == 4 then
-    os.execute("lua")
-elseif num == 5 then
-    if fs.exists("/tmp/event.log") then
-        os.execute("edit /tmp/event.log")
-    else
-        simpleGui.splash("event.log is not found")
+local num
+while true do
+    num = gui.menu("Shortcut Menu", {"Back", "Settings", "Shutdown", "Reboot", "Event.log", "Dmesg", "Lua"}, num)
+    gui.gpu.setBackground(0)
+    gui.gpu.setForeground(0xFFFFFF)
+    term.clear()
+    if num == 1 then
+        gui.exit()
+    elseif num == 2 then
+        os.execute("settings")
+    elseif num == 3 then
+        computer.shutdown()
+    elseif num == 4 then
+        computer.shutdown(true)
+    elseif num == 5 then
+        if fs.exists("/tmp/event.log") then
+            os.execute("edit /tmp/event.log")
+        else
+            gui.status("event.log is not found", true)
+        end
+    elseif num == 6 then
+        os.execute("dmesg")
+    elseif num == 7 then
+        os.execute("lua")
     end
 end
-term.clear()

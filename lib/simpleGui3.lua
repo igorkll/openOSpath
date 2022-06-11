@@ -68,7 +68,9 @@ return {create = function()
     end
 
     function lib.setText(text, posY)
-        lib.gpu.set(((lib.rx // 2) - (unicode.len(text) // 2)) + 1, posY, text)
+        local x = ((lib.rx // 2) - (unicode.len(text) // 2)) + 1
+        lib.gpu.set(x, posY, text)
+        return x
     end
 
     lib.isControl = lib.screen and (lib.keyboard or (math.floor(computer.getDeviceInfo()[lib.screen].width) ~= 1))
@@ -229,7 +231,10 @@ return {create = function()
                     pos = pos - eventData[5]
                 elseif eventData[1] == "touch" and eventData[2] == lib.screen and eventData[5] == 0 then
                     local ty = (eventData[4] - posY) + startpos
-                    if ty >= 2 and ty <= #strs and eventData[3] >= poss[ty] and eventData[3] < (poss[ty] + unicode.len(strs[ty])) then
+                    if ty >= 2 and
+                    ty <= #strs and
+                    eventData[3] >= poss[ty] and
+                    eventData[3] < (poss[ty] + unicode.len(strs[ty])) then
                         pos = ty
                         break
                     end

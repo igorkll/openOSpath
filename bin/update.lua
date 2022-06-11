@@ -54,6 +54,13 @@ end
 
 --------------------------------------------------
 
+if _G.getEnergyPercentages() < 50 then
+    io.stderr:write("для обновления необходим заряд минимум 50% у вас " .. tostring(_G.getEnergyPercentages()) .. "%")
+    return
+end
+
+--------------------------------------------------
+
 if outData.version > inData.version then
     print("ваша версия "..tostring(inData.version)..", продолжив бедет устоновленна "..tostring(outData.version))
 elseif outData.version <= inData.version then
@@ -70,7 +77,7 @@ print(inData.info or "отсутствует")
 print("продолжить? [Y/n]")
 local read = io.read()
 
-if read and read ~= "n" then
+if read and (read == "Y" or read == "y") then
     --os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
     --os.execute("/tmp/getinstaller " .. url .. " / -q")
     os.execute("fastupdate -f -n " .. url .. " " .. versionPath)
