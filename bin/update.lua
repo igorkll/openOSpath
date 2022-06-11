@@ -63,8 +63,10 @@ end
 
 if outData.version > inData.version then
     print("ваша версия "..tostring(inData.version)..", продолжив бедет устоновленна "..tostring(outData.version))
-elseif outData.version <= inData.version then
+elseif outData.version == inData.version then
     print("у вас устоновленна актуальная версия ("..tostring(inData.version).."), обновления имеет смысл только если файлы поврежденны")
+elseif outData.version < inData.version then
+    print("ваша версия ("..tostring(inData.version)..") выше актуальной предусмотреной вышим перозиториям update ("..tostring(outData.version)..") продолжив обновления произойдет downgrade")
 end
 
 print("информациа о обновлении:")

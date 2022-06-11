@@ -81,7 +81,6 @@ local function getFs(str)
             else
                 print("invalid number")
             end
-            break
         else
             print("invalid input")
         end
@@ -90,8 +89,12 @@ end
 
 local from = getFs("FROM")
 local to = getFs("TO")
+if from.address == to.address then
+    print("drive equals.")
+    return
+end
 
-print("check data! input [Y/n]")
+io.write("check data! input [Y/n]")
 local data = input()
 if data == "Y" or data == "y" or data == "" then
     install(from, to, "/")
