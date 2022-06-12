@@ -16,7 +16,7 @@ computer.shutdown = function(reboot)
   _G.runlevel = reboot and 6 or 0
   if os.sleep then
     computer.pushSignal("shutdown")
-    os.sleep(0.1) -- Allow shutdown processing.
+    os.sleep(1) -- Allow shutdown processing.
   end
   shutdown(reboot)
 end

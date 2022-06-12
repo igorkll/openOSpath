@@ -130,10 +130,13 @@ do --спяший режим
     end
 end
 
-do --чтоб админ в комп заприваченый не тыкал
+if component.invoke(computer.getBootAddress(), "exists", "/free/flags/adminprotect") then --чтоб админ в комп заприваченый не тыкал
     local computer = computer
     local table = table
     local computer_pullSignal = computer.pullSignal
+
+    _G.oldUptime = -math.huge
+
     function computer.pullSignal(time)
         local term = require("term")
         if not term.isAvailable() then return computer_pullSignal(time) end
@@ -143,11 +146,9 @@ do --чтоб админ в комп заприваченый не тыкал
         local colorPic = require("colorPic")
         local colors = colorPic.getColors()
 
-        local oldUptime = -math.huge
-
-        ::ret::
         local inTime = computer.uptime()
 
+        ::ret::
         local waitTime = time - (computer.uptime() - inTime)
         if waitTime < 0 then return end
         local eventData = {computer_pullSignal(waitTime)}
@@ -157,7 +158,7 @@ do --чтоб админ в комп заприваченый не тыкал
         local function splash()
             if not term.isAvailable() or not _G.inited then return end
             if computer.uptime() - oldUptime > 5 then
-                frames.splash(1, 5, 47, 3, "Я ПОД АДМИНОВ НЕ ПРОГИБАЮСЬ, ПРИВАТ ЕСТЬ ПРИВАТ", 1, su.selectColor(nil, colors.red, nil, false), su.selectColor(nil, colors.orange, nil, true))
+                frames.splash(1, 5, 49, 3, "ADMIN PROTECT вкл, админ тоже должен быть добален", 2, su.selectColor(nil, colors.red, nil, false), su.selectColor(nil, colors.orange, nil, true))
                 oldUptime = computer.uptime()
             end
         end
@@ -168,6 +169,11 @@ do --чтоб админ в комп заприваченый не тыкал
         end
 
         if (eventData[1] == "key_up" or eventData[1] == "key_down") and #users > 0 and not su.inTable(users, eventData[5]) then
+            splash()
+            goto ret
+        end
+
+        if (eventData[1] == "clipboard") and #users > 0 and not su.inTable(users, eventData[4]) then
             splash()
             goto ret
         end
@@ -366,6 +372,7 @@ local function waitFoEnter()
 end
 
 event.push("full_load")
+_G.full_load = true
 while _G.shellAllow or _G.recoveryMod do --запуск shell
     local result, reason = xpcall(require("shell").getShell(), function(msg)
         return tostring(msg) .. "\n" .. debug.traceback()

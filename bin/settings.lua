@@ -52,6 +52,7 @@ while true do
     "звук при загрузки",
     "ctrl+atl+c прирывания",
     "ctrl+c прирывания",
+    "admin protect & reboot",
     "выход"},
     num)
     if num == 1 then
@@ -94,6 +95,17 @@ while true do
         assert(su.saveTable("/etc/system.cfg", cfg))
         event.hook = cfg.hook
     elseif num == 8 then
+        local oldstate = fs.exists("/free/flags/adminprotect")
+        local newstate = gui.yesno("admin protect не даст админу залезть в комп", true, oldstate and 2 or 1)
+        if newstate ~= oldstate then
+            if newstate then
+                su.saveFile("/free/flags/adminprotect", "")
+            else
+                fs.remove("/free/flags/adminprotect")
+            end
+            computer.shutdown(true)
+        end
+    elseif num == 9 then
         gui.exit()
     end
 end

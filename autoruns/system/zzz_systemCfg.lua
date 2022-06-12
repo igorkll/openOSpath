@@ -9,6 +9,7 @@ local shell = require("shell")
 local uuid = require("uuid")
 local colorPic = require("colorPic")
 local cryptoData = require("cryptoData")
+local frames = require("frames")
 
 local colors = colorPic.getColors()
 
@@ -103,76 +104,10 @@ event.listen("shutdown", function()
     updateValue("/free/data/likePowerOffCount")
 end)
 
-if not _G.recoveryMod then
-    local shutdownPart = 8
-
-    local computer_energy = computer.energy
-    local computer_maxEnergy = computer.maxEnergy
-    function computer.energy()
-        return su.mapClip(computer_energy(), computer_maxEnergy() / shutdownPart, computer_maxEnergy(), 0, computer_maxEnergy())
-    end
-    function computer.maxEnergy()
-        return computer_maxEnergy() - (computer_maxEnergy() / shutdownPart)
-    end
-
-    function _G.lowPowerDraw()
-        if term.isAvailable() then
-            local targetPath = "/system/images/lowPower.pic"
-            if math.floor(term.gpu().getDepth()) == 1 then
-                targetPath = "/system/images/lowPowerBW.pic"
-            end
-
-            if fs.exists(targetPath) then
-                local imageDrawer = require("imageDrawer")
-                local img = imageDrawer.loadimage(targetPath)
-                term.clear()
-
-                local ix, iy = img.getSize()
-                local rx, ry = term.gpu().getResolution()
-                local cx, cy = rx // 2, ry // 2
-                local dx, dy = math.ceil(cx - (ix / 2)), math.ceil(cy - (iy / 2))
-                img.draw(dx, dy)
-                computer.delay(2)
-            else
-                computer.pullSignal = function()
-                    error("not enough energy", 0)
-                end
-                computer.pullSignal()
-            end
-        else
-            computer.pullSignal = function()
-                error("not enough energy", 0)
-            end
-            computer.pullSignal()
-        end
-    end
-
-    local timerID
-    local function check()
-        if computer.energy() <= 0 then
-            if timerID then
-                event.cancel(timerID)
-            end
-            lowPowerDraw()
-            computer.shutdown()
-        end
-    end
-    check()
-    timerID = event.timer(1, check, math.huge)
-end
-
-function _G.getEnergyPercentages()
-    return math.floor(su.mapClip(computer.energy(), 0, computer.maxEnergy(), 0, 100) + 0.5)
-end
-
-function _G.updateAllow()
-    return _G.getEnergyPercentages() >= 50
-end
-
 ------------------------------------
 
 local function createSystemCfg()
-    return {updateErrorScreen = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}
+    return {updateErrorScreen = true, lowPowerSplash = true, lowPowerSound = true, lowPowerOffSplash = true, lowPowerOffSound = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}
 end
 
 local created = createSystemCfg()
@@ -205,6 +140,83 @@ else
     if serialization.serialize(_G.systemCfg) ~= oldTable then
         _G.saveSystemConfig()
     end
+end
+
+------------------------------------
+
+function _G.getEnergyPercentages()
+    return math.floor(su.mapClip(computer.energy(), 0, computer.maxEnergy(), 0, 100) + 0.5)
+end
+
+if not _G.recoveryMod then
+    local shutdownPart = 8
+
+    local computer_energy = computer.energy
+    local computer_maxEnergy = computer.maxEnergy
+    function computer.energy()
+        return su.mapClip(computer_energy(), computer_maxEnergy() / shutdownPart, computer_maxEnergy(), 0, computer_maxEnergy())
+    end
+    function computer.maxEnergy()
+        return computer_maxEnergy() - (computer_maxEnergy() / shutdownPart)
+    end
+
+    function _G.lowPowerDraw()
+        if term.isAvailable() then
+            local targetPath = "/system/images/lowPower.pic"
+            if math.floor(term.gpu().getDepth()) == 1 then
+                targetPath = "/system/images/lowPowerBW.pic"
+            end
+
+            if fs.exists(targetPath) then
+                local imageDrawer = require("imageDrawer")
+                local img = imageDrawer.loadimage(targetPath)
+                term.clear()
+
+                local ix, iy = img.getSize()
+                local rx, ry = term.gpu().getResolution()
+                local cx, cy = rx // 2, ry // 2
+                local dx, dy = math.ceil(cx - (ix / 2)), math.ceil(cy - (iy / 2))
+                img.draw(dx, dy)
+                return true
+            end
+        end
+    end
+
+    local timerID
+    local oldtime = -math.huge
+
+    local function check()
+        local pow = getEnergyPercentages()
+        if pow <= 20 and _G.full_load then
+            if computer.uptime() - oldtime > ((pow <= 10) and ((pow <= 3) and 1 or 5) or 25) then
+                if systemCfg.lowPowerSound then computer.beep(100, 0.5) end
+                if systemCfg.lowPowerSplash and term.isAvailable() then
+                    frames.splash(1, 5, 30, 3, "низкий заряд батареи " .. tostring(pow) .. "%", 1, su.selectColor(nil, colors.red, nil, false), su.selectColor(nil, colors.orange, nil, true))
+                end
+                oldtime = computer.uptime()
+            end
+        end
+        if pow <= 0 then
+            if timerID then
+                event.cancel(timerID)
+            end
+            local isDelay
+            if systemCfg.lowPowerOffSplash then isDelay = lowPowerDraw() end
+            if systemCfg.lowPowerOffSound then
+                computer.beep(100, 0.1)
+                computer.beep(80, 0.1)
+                computer.beep(50, 0.5)
+            end
+            if isDelay then computer.delay(2) end
+            computer.shutdown()
+        end
+    end
+    check()
+    timerID = event.timer(1, check, math.huge)
+end
+
+function _G.updateAllow()
+    return _G.getEnergyPercentages() >= 50
 end
 
 ------------------------------------

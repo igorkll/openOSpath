@@ -3,22 +3,34 @@ local fs = require("filesystem")
 local su = require("superUtiles")
 local computer = require("computer")
 local serialization = require("serialization")
+local event = require("event")
+local shell = require("shell")
 
 local deviceinfo = computer.getDeviceInfo()
+local args, options = shell.parse(...)
 
 -------------------------------------------------
 
 local loots = {}
 local targets = {}
 
-for address in component.list("filesystem") do
-    local proxy = component.proxy(address)
-    local perms = su.getPerms(proxy)
-    local loot = su.isLoot(address)
-    if loot then
+if options.a then
+    for address in component.list("filesystem") do
         table.insert(loots, address)
-    elseif not perms.nonTarget and not proxy.isReadOnly() then
-        table.insert(targets, address)
+        if not component.invoke(address, "isReadOnly") then
+            table.insert(targets, address)
+        end
+    end
+else
+    for address in component.list("filesystem") do
+        local proxy = component.proxy(address)
+        local perms = su.getPerms(proxy)
+        local loot = su.isLoot(address)
+        if loot then
+            table.insert(loots, address)
+        elseif not perms.nonTarget and not proxy.isReadOnly() then
+            table.insert(targets, address)
+        end
     end
 end
 
@@ -56,6 +68,8 @@ while true do
     end
     print("ошибка ввода, ввидите номер диска или нажмите ctrl + c чтобы покинуть устоновшик")
 end
+
+su.tableRemove(targets, from)
 
 print("-----------------")
 print("диск куда может быть произведена устоновка")
@@ -103,6 +117,8 @@ print("-----------------")
 -----------------------------------------
 
 _G.installFlag = true
+local oldhook = event.superHook
+event.superHook = false
 
 local oldfiles
 if not fromProxy.exists("/.uninstall") then oldfiles = su.getFsFiles(target) end
@@ -111,8 +127,6 @@ os.execute("oldinstall --from=" .. from .. " --to=" .. target .. " -y")
 
 local newfiles
 if not fromProxy.exists("/.uninstall") then newfiles = su.getFsFiles(target) end
-
-_G.installFlag = false
 
 -----------------------------------------
 
@@ -150,3 +164,6 @@ end
 if uninstall then
     su.saveFile(fs.concat(su.getMountPoint(target), "free/uninstallers", driveName), uninstall)
 end
+
+_G.installFlag = false
+event.superHook = oldhook

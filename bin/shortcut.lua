@@ -7,27 +7,27 @@ local fs = require("filesystem")
 
 local num
 while true do
-    num = gui.menu("Shortcut Menu", {"Back", "Settings", "Shutdown", "Reboot", "Event.log", "Dmesg", "Lua"}, num)
+    num = gui.menu("Shortcut Menu", {"Shutdown", "Reboot", "Settings", "Event.log", "Dmesg", "Lua", "Back"}, num)
     gui.gpu.setBackground(0)
     gui.gpu.setForeground(0xFFFFFF)
     term.clear()
     if num == 1 then
-        gui.exit()
-    elseif num == 2 then
-        os.execute("settings")
-    elseif num == 3 then
         computer.shutdown()
-    elseif num == 4 then
+    elseif num == 2 then
         computer.shutdown(true)
-    elseif num == 5 then
+    elseif num == 3 then
+        os.execute("settings")
+    elseif num == 4 then
         if fs.exists("/tmp/event.log") then
             os.execute("edit /tmp/event.log")
         else
             gui.status("event.log is not found", true)
         end
-    elseif num == 6 then
+    elseif num == 5 then
         os.execute("dmesg")
-    elseif num == 7 then
+    elseif num == 6 then
         os.execute("lua")
+    elseif num == 7 then
+        gui.exit()
     end
 end

@@ -439,7 +439,7 @@ function lib.createEnv()
 end
 
 function lib.getPerms(path)
-    --if _G.recoveryMod then return {} end
+    if _G.recoveryMod then return {} end
     local back
     if type(path) == "table" then
         fs.mount(path, "/free/tempMounts/perms")

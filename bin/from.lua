@@ -94,7 +94,7 @@ if from.address == to.address then
     return
 end
 
-io.write("check data! input [Y/n]")
+term.write("check data! input [Y/n]")
 local data = input()
 if data == "Y" or data == "y" or data == "" then
     install(from, to, "/")
