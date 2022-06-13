@@ -138,6 +138,8 @@ if component.invoke(computer.getBootAddress(), "exists", "/free/flags/adminprote
     _G.oldUptime = -math.huge
 
     function computer.pullSignal(time)
+        if not time then time = math.huge end
+
         local term = require("term")
         if not term.isAvailable() then return computer_pullSignal(time) end
 

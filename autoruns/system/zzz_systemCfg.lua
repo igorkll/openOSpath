@@ -174,8 +174,8 @@ if not _G.recoveryMod then
 
                 local ix, iy = img.getSize()
                 local rx, ry = term.gpu().getResolution()
-                local cx, cy = rx // 2, ry // 2
-                local dx, dy = math.ceil(cx - (ix / 2)), math.ceil(cy - (iy / 2))
+                local cx, cy = rx / 2, ry / 2
+                local dx, dy = math.floor((cx - (ix / 2)) + 0.5), math.floor((cy - (iy / 2)) + 0.5)
                 img.draw(dx, dy)
                 return true
             end
