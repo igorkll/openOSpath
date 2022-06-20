@@ -114,7 +114,7 @@ function box_thread:attach(parent)
   if mt.attached then
     -- registration happens on the attached proc, unregister before reparenting
     waiting_handler = mt.unregister()
-    process.removeHandle(self, mt.attached)
+    mt.attached.data.handles[self] = nil
   end
 
   -- fix close
@@ -122,7 +122,7 @@ function box_thread:attach(parent)
 
   -- attach to parent or the current process
   mt.attached = proc
-  process.addHandle(self, proc)
+  process.closeOnExit(self, proc)
 
   -- register on the new parent
   if waiting_handler then -- event-waiting
@@ -137,7 +137,7 @@ function thread.current()
   local thread_root
   while proc do
     if thread_root then
-      for _,handle in ipairs(proc.data.handles) do
+      for handle in pairs(proc.data.handles) do
         if handle.pco and handle.pco.root == thread_root then
           return handle
         end
@@ -264,7 +264,7 @@ function thread.create(fp, ...)
   function mt.close()
     local old_status = t:status()
     mt.__status = "dead"
-    process.removeHandle(t, mt.attached)
+    mt.attached.data.handles[t] = nil
     if old_status ~= "dead" then
       event.push("thread_exit")
     end

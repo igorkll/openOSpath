@@ -35,5 +35,3 @@ for i = 1, #args do
     end
   end
 end
-
-io.stdout:close()
