@@ -19,8 +19,8 @@ if not su.isRealInternet() then
 end
 
 if getEnergyPercentages() < 80 then
-    print("для переустоновки ос необходим заряд не мения 80%")
-    print("у вас" .. tostring(getEnergyPercentages()))
+    io.stderr:write("для переустоновки ос необходим заряд не мения 80%\n")
+    io.stderr:write("у вас " .. tostring(getEnergyPercentages()) .. "%\n")
     return
 end
 
@@ -129,31 +129,6 @@ end
 ----------------------------------------------------
 
 do
-    local filelist, err = getInternetFile("https://raw.githubusercontent.com/igorkll/openOS/main/filelist.txt")
-    if not filelist then error(err) end
-    filelist = split(filelist, "\n")
-
-    for i = 1, #filelist do
-        interrupt()
-        local fullPath = filelist[i]
-        local filedata, err = getInternetFile("https://raw.githubusercontent.com/igorkll/openOS/main" .. fullPath)
-        if filedata then
-            fs.makeDirectory(fs_path(fullPath))
-            local file, err = fs.open(fullPath, "wb")
-            if file then
-                status("saving: " .. fullPath)
-                fs.write(file, filedata)
-                fs.close(file)
-            else
-                status("err to save: " .. fullPath .. ", " .. (err or "unkown"))
-            end
-        else
-            status("err to get: " .. fullPath .. ", " .. (err or "unkown"))
-        end
-    end
-end
-
-do
     local filelist, err = getInternetFile(repo .. "/filelist.txt")
     if not filelist then error(err) end
     filelist = split(filelist, "\n")
@@ -177,6 +152,11 @@ do
         end
     end
 end
+
+fs.makeDirectory("/etc")
+local file = fs.open("/etc/system.cfg", "wb")
+fs.write(file, "{updateRepo = \"" .. repo .. "\"}")
+fs.close(file)
 
 computer.shutdown("fast")
 ]])

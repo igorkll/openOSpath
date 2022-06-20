@@ -292,6 +292,8 @@ end
 
 if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then 
     --удаления лишних файлов
+    local fileremoved = false
+
     local fs = require("filesystem")
     if fs.exists("/filelist.txt") then
         local su = require("superUtiles")
@@ -299,17 +301,34 @@ if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then
         local filelist = assert(su.split(assert(su.getFile("/filelist.txt")), "\n"))
 
         local function listFor(dir)
+            local ok = false
             for file in fs.list(dir) do
                 local full_path = fs.concat(dir, file)
-                if not su.inTable(filelist, fs.canonical(full_path)) then
-                    fs.remove(full_path)
+                if fs.isDirectory(full_path) then
+                    if listFor(full_path) then
+                        ok = true
+                    end
+                    local count = 0
+                    for _ in fs.list(full_path) do
+                        count = count + 1
+                    end
+                    if count == 0 then
+                        fs.remove(full_path)
+                        ok = true
+                    end
+                else
+                    if not su.inTable(filelist, fs.canonical(full_path)) then
+                        fs.remove(full_path)
+                        ok = true
+                    end
                 end
             end
+            return ok
         end
-        listFor("/bin")
-        listFor("/lib")
-        listFor("/autoruns/system")
-        listFor("/system/images")
+        if listFor("/bin") then fileremoved = true end
+        if listFor("/lib") then fileremoved = true end
+        if listFor("/autoruns/system") then fileremoved = true end
+        if listFor("/system/images") then fileremoved = true end
     end
 
     local afterUpdate = false --запуска файла дополнения обновления(для оболочек)
@@ -323,7 +342,7 @@ if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then
         afterUpdate = true
     end
     fs.remove("/free/flags/updateEnd")
-    if afterUpdate then
+    if afterUpdate and fileremoved then
         computer.shutdown("fast")
         return
     end

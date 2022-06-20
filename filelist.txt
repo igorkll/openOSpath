@@ -152,10 +152,12 @@
 /usr/midi/midi1.mid
 /usr/midi/midi2.mid
 /usr/misc/greetings.txt
+/system/images/recoveryLogoBW.pic
+/system/images/logoBW.pic
 /system/images/logo.pic
 /system/images/lowPowerBW.pic
+/system/images/recoveryLogo.pic
 /system/images/lowPower.pic
-/system/images/logoBW.pic
 /lib/vt100.lua
 /lib/frames.lua
 /lib/gui_new.lua

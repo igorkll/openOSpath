@@ -26,16 +26,14 @@ end
 local oldb = gpu.getBackground()
 local oldf = gpu.getForeground()
 local depth = gpu.getDepth()
+local colors = require("colorPic").getColors()
 
-if depth == 8 then
-    gpu.setBackground(0x777777)
-    gpu.setForeground(0xFFFFFF)
-elseif depth == 4 then
-    gpu.setBackground(0xAAAAAA)
-    gpu.setForeground(0xFFFFFF)
+if depth == 1 then
+    gpu.setBackground(colors.white)
+    gpu.setForeground(colors.black)
 else
-    gpu.setBackground(0xFFFFFF)
-    gpu.setForeground(0)
+    gpu.setBackground(colors.lightGray)
+    gpu.setForeground(colors.white)
 end
 
 ----------------------------------------------------------

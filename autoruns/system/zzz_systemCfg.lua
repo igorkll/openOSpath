@@ -270,20 +270,36 @@ local function drawLogo()
             gpu.setBackground(su.selectColor(nil, colors.lightGray, nil, false))
             gpu.setForeground(0xFFFFFF)
             gpu.fill(1, 1, rx, ry, " ")
-            if fs.exists("/system/images/logo.pic") then
-                img = require("imageDrawer").loadimage("/system/images/logo.pic")
-            elseif fs.exists("/system/images/logoBW.pic") then
-                img = require("imageDrawer").loadimage("/system/images/logoBW.pic")
+            if recoveryMod then
+                if fs.exists("/system/images/recoveryLogo.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/recoveryLogo.pic")
+                elseif fs.exists("/system/images/recoveryLogoBW.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/recoveryLogoBW.pic")
+                end
+            else
+                if fs.exists("/system/images/logo.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/logo.pic")
+                elseif fs.exists("/system/images/logoBW.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/logoBW.pic")
+                end
             end
         else
             gpu.setBackground(0)
             gpu.setForeground(0xFFFFFF)
             gpu.fill(1, 1, rx, ry, "▒")
 
-            if fs.exists("/system/images/logoBW.pic") then
-                img = require("imageDrawer").loadimage("/system/images/logoBW.pic")
-            elseif fs.exists("/system/images/logo.pic") then
-                img = require("imageDrawer").loadimage("/system/images/logo.pic")
+            if recoveryMod then
+                if fs.exists("/system/images/recoveryLogoBW.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/recoveryLogoBW.pic")
+                elseif fs.exists("/system/images/recoveryLogo.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/recoveryLogo.pic")
+                end
+            else
+                if fs.exists("/system/images/logoBW.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/logoBW.pic")
+                elseif fs.exists("/system/images/logo.pic") then
+                    img = require("imageDrawer").loadimage("/system/images/logo.pic")
+                end
             end
         end
         if img then
@@ -354,11 +370,19 @@ if _G.systemCfg.startSound then
         end
         require("midi2").create("/etc/startSound.mid", {beep}).play()
     else
-        computer.beep(2000, 0.5)
-        for i = 1, 4 do
-            computer.beep(500, 0.01)
+        if recoveryMod then
+            computer.beep(500, 0.5)
+            for i = 1, 3 do
+                computer.beep(125, 0.1)
+            end
+            computer.beep(250, 1)
+        else
+            computer.beep(2000, 0.5)
+            for i = 1, 4 do
+                computer.beep(500, 0.01)
+            end
+            computer.beep(1000, 1)
         end
-        computer.beep(1000, 1)
     end
 elseif term.isAvailable() and _G.systemCfg.logo then
     os.sleep(2)
