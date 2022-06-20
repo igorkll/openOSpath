@@ -53,6 +53,7 @@ while true do
     "ctrl+atl+c прирывания",
     "ctrl+c прирывания",
     "admin protect & reboot",
+    "выбрать канал обновлений",
     "выход"},
     num)
     if num == 1 then
@@ -75,14 +76,17 @@ while true do
     elseif num == 3 then
         local cfg = assert(su.getTable("/etc/system.cfg"))
         cfg.autoupdate = gui.yesno("автообновления", true, cfg.autoupdate and 2 or 1)
+        _G.systemCfg.autoupdate = cfg.autoupdate
         assert(su.saveTable("/etc/system.cfg", cfg))
     elseif num == 4 then
         local cfg = assert(su.getTable("/etc/system.cfg"))
         cfg.logo = gui.yesno("логотип при загрузке", true, cfg.logo and 2 or 1)
+        _G.systemCfg.logo = cfg.logo
         assert(su.saveTable("/etc/system.cfg", cfg))
     elseif num == 5 then
         local cfg = assert(su.getTable("/etc/system.cfg"))
         cfg.startSound = gui.yesno("звук при загрузки", true, cfg.startSound and 2 or 1)
+        _G.systemCfg.startSound = cfg.startSound
         assert(su.saveTable("/etc/system.cfg", cfg))
     elseif num == 6 then
         local cfg = assert(su.getTable("/etc/system.cfg"))
@@ -106,6 +110,33 @@ while true do
             computer.shutdown(true)
         end
     elseif num == 9 then
+        local cfg = assert(su.getTable("/etc/system.cfg"))
+        local channel
+        local channelNum
+        if cfg.updateRepo == "https://raw.githubusercontent.com/igorkll/openOSpath/main" then
+            channel = "main"
+            channelNum = 1
+        elseif cfg.updateRepo == "https://raw.githubusercontent.com/igorkll/openOSpath/dev" then
+            channel = "dev"
+            channelNum = 2
+        end
+
+        local num = gui.menu("ваш канал обновлений: " .. (channel or "custom"), {"main(рекомендуеться)", "dev(тестовый канал, может быть нестабилен)"}, channelNum)
+        if num ~= channelNum then
+            if su.isInternet() then
+                if num == 1 then
+                    cfg.updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main"
+                elseif num == 2 then
+                    cfg.updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/dev"
+                end
+                _G.systemCfg.updateRepo = cfg.updateRepo
+                assert(su.saveTable("/etc/system.cfg", cfg))
+                os.execute("fastupdate -f")
+            else
+                gui.status("нет соенденения с интернетом", true)
+            end
+        end
+    elseif num == 10 then
         gui.exit()
     end
 end

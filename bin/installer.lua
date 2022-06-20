@@ -1,9 +1,11 @@
 local component = component or require("component")
 local computer = computer or require("computer")
 local unicode = unicode or require("unicode")
+
+local serialization = require("serialization")
 local event = require("event")
 local term = require("term")
-local fs = require("filesystem") 
+local fs = require("filesystem")
 
 ------------------------------------------------------init
 
@@ -46,6 +48,14 @@ local function saveFile(path, data)
     file:write(data)
     file:close()
     return true
+end
+
+local function getTable(path)
+    return assert(serialization.unserialize(assert(getFile(path))))
+end
+
+local function saveTable(path, tbl)
+    return assert(saveFile(path, assert(serialization.serialize(tbl))))
 end
 
 local function split(str, sep)
@@ -288,12 +298,14 @@ end
 
 local states = {_G._OSVERSION ~= "OpenOS 1.7.5", not _G.smartEfi, not _G._MODVERSION}
 local active = {}
-local names = {"обновить openOS до версии 1.7.5", "устоновить smart efi", "устоновить мод для openOS"}
+local names = {"обновить openOS до версии 1.7.5", "устоновить micro bios", "устоновить мод для openOS"}
 
 if not eeprom then
     table.remove(names, 2)
     table.remove(states, 2)
 end
+table.remove(names, 1) --обновлять openOS нет слысла вся openOS нужной версии теперь содержиться в репозитории
+table.remove(states, 1)
 
 local maxStrLen = 0
 for i, v in ipairs(names) do
@@ -338,65 +350,26 @@ for i, v in ipairs(names) do
     num = i
 end
 
-local installers = {function() --updata
+local installers = {function() --update
     install("https://raw.githubusercontent.com/igorkll/openOS/main")
 end, function() --efi
-    status("downloading efi")
-    local efiCode = assert(wget("https://raw.githubusercontent.com/igorkll/topBiosV5/main/smartEfi.bin"))
-    local efiLoader = assert(wget("https://raw.githubusercontent.com/igorkll/topBiosV5/main/smartEfiLoader.bin"))
+    status("downloading bios")
+    local biosCode = assert(wget("https://raw.githubusercontent.com/igorkll/topBiosV5/main/microBios.bin"))
     
-    status("installing efi")
-    saveFile("/.efi", efiCode)
-    saveFile("/.efiData", fs.get("/").address)
-    eeprom.setData(fs.get("/").address)
-    eeprom.set(efiLoader)
+    status("installing bios")
+    eeprom.setData(fs.get("/").address .. "\n\n" .. "/init.lua")
+    eeprom.set(biosCode)
+    eeprom.setLabel("micro bios")
 end, function() --install mod
     install(mainurl)
     status("saving config file")
-    saveFile("/autoruns/user/set.lua", "local mainurl = \"" .. mainurl .. "\"\n" .. [[
-local fs = require("filesystem")
-local computer = computer or require("computer")
-local serialization = require("serialization")
-
-local function getFile(path)
-    local file, err = io.open(path, "rb")
-    if not file then return nil, err end
-    local data = file:read("*a")
-    file:close()
-    return data
-end
-
-local function saveFile(path, data)
-    fs.makeDirectory(fs.path(path))
-    local file, err = io.open(path, "wb")
-    if not file then return nil, err end
-    file:write(data)
-    file:close()
-    return true
-end
-
-local function getTable(path)
-    return assert(serialization.unserialize(assert(getFile(path))))
-end
-
-local function saveTable(path, tbl)
-    return assert(saveFile(path, assert(serialization.serialize(tbl))))
-end
-
-local tbl = getTable("/etc/system.cfg")
-tbl.updateRepo = mainurl
-
-fs.remove(require("superUtiles").getPath())
-if serialization.serialize(getTable("/etc/system.cfg")) ~= serialization.serialize(tbl) then
-    saveTable("/etc/system.cfg", tbl)
-    computer.shutdown("fast")
-end
-    ]])
+    saveTable("/etc/system.cfg", {updateRepo = mainurl})
 end}
 
 if not eeprom then
     table.remove(installers, 2)
 end
+table.remove(installers, 1) --обновлять openOS нет слысла вся openOS нужной версии теперь содержиться в репозитории
 
 do
     local branchs = {"main", "dev"}
@@ -448,7 +421,8 @@ do
                 installers[i]()
             end
         end
-        computer.shutdown(true)
+        pcall(computer.setArchitecture, "Lua 5.3")--зашита от моих биосов которые удаляют setArchitecture
+        computer.shutdown("fast")
     end
 
     table.insert(objs, obj)

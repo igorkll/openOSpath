@@ -11,14 +11,43 @@ local unicode = unicode
 -- Runlevel information.
 _G.runlevel = "S"
 local shutdown = computer.shutdown
+local table = table
+
 computer.runlevel = function() return _G.runlevel end
 computer.shutdown = function(reboot)
-  _G.runlevel = reboot and 6 or 0
-  if os.sleep then
-    computer.pushSignal("shutdown")
-    os.sleep(1) -- Allow shutdown processing.
-  end
-  shutdown(reboot)
+  local event = require("event")
+  local oldRunLevel = _G.runlevel
+  
+
+  event.push("shutdownCanceled", pcall(function()
+    _G.runlevel = reboot and 6 or 0
+    if os.sleep then
+      local su = require("superUtiles")
+      event.push("shutdown")
+
+      local blocks = {}
+      local inTime = computer.uptime()
+      
+      while true do
+        local eventData = {event.pull(1)} -- Allow shutdown processing.
+        if eventData[1] == "postponeShutdown" then
+          table.insert(blocks, eventData[2]) --добовляю случайный код
+        elseif eventData[1] == "allowShutdown" then
+          su.tableRemove(blocks, eventData[2]) --удаляю случайный код
+        end
+
+        if computer.uptime() - inTime > 1 then
+          inTime = computer.uptime()
+          if #blocks == 0 then
+            break
+          end
+        end
+      end
+    end
+    shutdown(reboot)
+  end))
+
+  _G.runlevel = oldRunLevel
 end
 
 --[[
@@ -47,7 +76,11 @@ local uptime = computer.uptime
 local pull = computer.pullSignal
 local last_sleep = uptime()
 local function status(msg, time)
-  if _G.smartEfi and _G.status then _G.status(msg, time or -1) end
+  if _G.smartEfi and _G.status then
+    _G.status(msg, time or -1)
+  elseif _G.statusAllow and _G.status then
+    _G.status(msg)
+  end
   --[[
   if gpu and false then
     gpu.set(1, y, msg)

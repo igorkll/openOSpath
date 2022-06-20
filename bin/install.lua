@@ -70,9 +70,10 @@ while true do
 end
 
 su.tableRemove(targets, from)
+targets = su.tablePress(targets)
 
 print("-----------------")
-print("диск куда может быть произведена устоновка")
+print("диски куда может быть произведена устоновка")
 for i, address in ipairs(targets) do
     local proxy = component.proxy(address)
     local label = proxy.getLabel() or address:sub(1, 5)

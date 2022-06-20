@@ -107,7 +107,7 @@ end)
 ------------------------------------
 
 local function createSystemCfg()
-    return {updateErrorScreen = true, lowPowerSplash = true, lowPowerSound = true, lowPowerOffSplash = true, lowPowerOffSound = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true}
+    return {updateErrorScreen = true, lowPowerSplash = true, lowPowerSound = true, lowPowerOffSplash = true, lowPowerOffSound = true, superHook = true, hook = true, shellAllow = true, autoupdate = false, updateRepo = "https://raw.githubusercontent.com/igorkll/openOSpath/main", updateVersionCfg = "/version.cfg", logo = true, startSound = true, doNotPerms = false}
 end
 
 local created = createSystemCfg()
@@ -304,16 +304,33 @@ if not _G.recoveryMod and not _G.readonly then
     if systemCfg.autoupdate or fs.exists("/free/flags/updateStart") then
         if fs.exists("/free/flags/updateStart") then
             if isInternet then
-                if _G.updateAllow() then
-                    os.execute("fastupdate -f")
+                if su.isRealInternet() then
+                    if _G.updateAllow() then
+                        os.execute("fastupdate -f")
+                    else
+                        updateLowPowerScreen()
+                    end
                 else
-                    updateLowPowerScreen()
+                    event.superHook = false
+                    if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown() end
+
+                    local rx, ry = su.getTargetResolution()
+
+                    local gui = require("simpleGui2").create(rx, ry)
+                    local color = 0x6699FF
+
+                    gui.status("при предидушем обновлениия произошла ошибка", 0xFFFFFF, color)
+                    os.sleep(2)
+                    gui.status("интернет карта виртуальная и неможет быть", 0xFFFFFF, color)
+                    os.sleep(2)
+                    gui.status("использована для продолжения обновления", 0xFFFFFF, color)
+                    computer.shutdown("fast")
                 end
             else
                 _G.updateNoInternetScreen()
             end
         else
-            if isInternet then
+            if isInternet and su.isRealInternet() then
                 os.execute("fastupdate")
             end
         end
@@ -346,10 +363,12 @@ if _G.systemCfg.startSound then
 elseif term.isAvailable() and _G.systemCfg.logo then
     os.sleep(2)
 end
+--[[
 if term.isAvailable() then
     term.gpu().setBackground(0)
     term.gpu().setForeground(0xFFFFFF)
     term.clear()
 end
+]]
 
 if fs.exists("/etc/runCommand.dat") then os.execute(su.getFile("/etc/runCommand.dat")) end

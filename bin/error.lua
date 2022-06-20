@@ -87,7 +87,7 @@ end
 
 while true do
     local eventData = {event.pull()}
-    if eventData[1] == "key_down" and eventData[2] == term.keyboard() and eventData[4] == 28 then
+    if eventData[1] == "key_down" and su.inTable(term.keyboards(), eventData[2]) and eventData[4] == 28 then
         break
     elseif eventData[1] == "touch" and eventData[2] == term.screen() then
         break

@@ -439,7 +439,7 @@ function lib.createEnv()
 end
 
 function lib.getPerms(path)
-    if _G.recoveryMod then return {} end
+    if _G.recoveryMod or systemCfg.doNotPerms then return {} end
     local back
     if type(path) == "table" then
         fs.mount(path, "/free/tempMounts/perms")
@@ -482,7 +482,7 @@ end
 function lib.tablePress(tbl)
     local newtbl = {}
     for k, v in pairs(tbl) do
-        if tonumber(v) then
+        if tonumber(k) then
             table.insert(newtbl, v)
         end
     end
@@ -571,8 +571,30 @@ function lib.getType(address)
     if lib.isLoot(address) then return "loot disk" end
 
     local path = lib.getMountPoint(address)
-    local filepath = fs.concat(path, "free/current/deviceType")
-    if fs.exists(filepath) then
+    local devicetype = "unknown devive"
+    local isMineOS = fs.exists(fs.concat(path, "OS.lua"))
+    local isOpenOSmod = fs.exists(fs.concat(path, "lib/superUtiles.lua"))
+    local mainOS = isOpenOSmod and "openOSmod" or (fs.exists(fs.concat(path, "init.lua")) and "otherOS")
+
+    if isOpenOSmod then
+        local filepath = fs.concat(path, "free/current/deviceType")
+        if fs.exists(filepath) then
+            devicetype = assert(lib.getFile(filepath))
+        end
+    end
+
+    local tbl = {mainOS, isMineOS and "mineOS", devicetype}
+    local newtbl = {}
+    for k, v in pairs(tbl) do
+        if type(v) == "string" then
+            table.insert(newtbl, v)
+        end
+    end
+
+    return table.concat(newtbl, " & ")
+    
+    --[[
+    if 
         local deviceType = assert(lib.getFile(filepath))
         local str = "openOSmod"
         if fs.exists(fs.concat(path, "OS.lua")) then
@@ -585,11 +607,14 @@ function lib.getType(address)
         return "otherOS & mineOS & unknown devive"
     elseif fs.exists(fs.concat(path, "OS.lua")) then
         return "mineOS & unknown devive"
+    elseif fs.exists(fs.concat(path, "init.lua")) and fs.exists(fs.concat(path, "lib/superUtiles.lua")) then
+        return "openOSmod & unknown devive"
     elseif fs.exists(fs.concat(path, "init.lua")) then
         return "otherOS & unknown devive"
     end
     
     return "unknown device"
+    ]]
 end
 
 function lib.getFullInfoParts(address)
@@ -602,6 +627,22 @@ function lib.getFullInfo(address)
     local proxy = component.proxy(address)
     local str = "RW: " .. (proxy.isReadOnly() and "R" or "R/W") .. ", label: " .. (proxy.getLabel() or "noLabel") .. ", address: " .. address:sub(1, 5) .. ", mount: " .. (lib.getMountPoint(address) or "none") .. ", type: " .. lib.getType(address)
     return str
+end
+
+function lib.isVirtualComponent(address)
+    local vcomponent = require("vcomponent")
+    local list = vcomponent.list()
+    for i, v in ipairs(list) do
+        if v[1] == address then
+            return true
+        end
+    end
+    return false
+end
+
+function lib.isRealInternet()
+    return component.isAvailable("internet") and
+    not lib.isVirtualComponent(component.isAvailable("internet") and component.internet.address or "*")
 end
 
 return lib

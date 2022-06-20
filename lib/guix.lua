@@ -287,7 +287,7 @@ return {create = function(minTier)
 
         obj.thread = lib.createThread(function()
             while true do
-                obj.draw()
+                obj.setBlick(true)
                 ::tonew::
                 local eventName, uuid, char, code, nikname = event.pull(0.5)
                 if not su.inTable(lib.keyboards, uuid) then goto tonew end
@@ -351,6 +351,7 @@ return {create = function(minTier)
                         end
                     end
                 end
+                obj.setBlick(false)
             end
         end)
     

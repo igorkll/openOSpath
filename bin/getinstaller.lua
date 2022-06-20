@@ -36,19 +36,22 @@ local function getInternetFile(url)
 end
 
 local function split(str, sep)
-    local parts, count = {}, 1
-    for i = 1, unicode.len(str) do
-        local char = unicode.sub(str, i, i)
+    local parts, count, i = {}, 1, 1
+    while 1 do
+        if i > #str then break end
+        local char = str:sub(i, #sep + (i - 1))
         if not parts[count] then parts[count] = "" end
         if char == sep then
             count = count + 1
+            i = i + #sep
         else
-            parts[count] = parts[count] .. char
+            parts[count] = parts[count] .. str:sub(i, i)
+            i = i + 1
         end
     end
+    if str:sub(#str - (#sep - 1), #str) == sep then table.insert(parts, "") end
     return parts
 end
-
 ----------------------------------------------------
 
 local filelist, err = getInternetFile(url.."/filelist.txt")
@@ -58,7 +61,7 @@ filelist = split(filelist, "\n")
 local ignoreList = {}
 
 local function isIgnore(path)
-    return su.inTable(ignoreList, fs.canonical(path))
+    return su.inTable(ignoreList, fs.canonical(path)) and options.i
 end
 
 if fs.exists("/ignoreUpdate.txt") then

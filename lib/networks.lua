@@ -4,6 +4,7 @@ local serialization = require("serialization")
 local su = require("superUtiles")
 local computer = require("computer")
 local bigModem = require("bigModem")
+local netSerialization = require("netSerialization")
 
 -------------------------------------------
 
@@ -127,7 +128,7 @@ function lib.create(devices, name, resend)
         elseif device["resend"] == true then
             resendPack()
         end
-        local out = serialization.unserialize(data)
+        local out = assert(netSerialization.unserialize(data))
         event.push("network_message", obj.name, su.unpack(out))
     end
     table.insert(obj.listens, event.listen("big_message", listen))
@@ -135,7 +136,7 @@ function lib.create(devices, name, resend)
     --------------------------------------------------
 
     function obj.send(...)
-        local data = serialization.serialize({...})
+        local data = netSerialization.serialize({...}, nil, obj.name)
         raw_send(obj.devices, obj.name, addcode(), data, obj)
     end
 

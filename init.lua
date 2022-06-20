@@ -11,6 +11,8 @@ _G.startEepromAddress = component.list("eeprom")()
 _G.origCoroutine = coroutine
 
 computer.superRawPullSignal = computer.pullSignal
+computer.superRawPushSignal = computer.pushSignal
+computer.rawShutdown = computer.shutdown
 
 do --прирывания
     local uptime = computer.uptime
@@ -288,8 +290,29 @@ if fs.exists(systemautoruns) then --системная автозагрузка
     end
 end
 
-if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then --запуска файла дополнения обновления(для оболочек)
-    local afterUpdate = false
+if fs.exists("/free/flags/updateEnd") and not _G.recoveryMod then 
+    --удаления лишних файлов
+    local fs = require("filesystem")
+    if fs.exists("/filelist.txt") then
+        local su = require("superUtiles")
+
+        local filelist = assert(su.split(assert(su.getFile("/filelist.txt")), "\n"))
+
+        local function listFor(dir)
+            for file in fs.list(dir) do
+                local full_path = fs.concat(dir, file)
+                if not su.inTable(filelist, fs.canonical(full_path)) then
+                    fs.remove(full_path)
+                end
+            end
+        end
+        listFor("/bin")
+        listFor("/lib")
+        listFor("/autoruns/system")
+        listFor("/system/images")
+    end
+
+    local afterUpdate = false --запуска файла дополнения обновления(для оболочек)
     if fs.exists("/afterUpdate.lua") then
         local ok, err = sdofile("/afterUpdate.lua")
         if not ok then

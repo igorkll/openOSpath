@@ -71,8 +71,7 @@ local threads = {}
 local isUpdate = false
 if options.f or outData.version > inData.version then
     if term.isAvailable() and not options.t then
-        local mx, my = 50, 16
-        if component.isAvailable("tablet") then mx, my = term.gpu().maxResolution() end
+        local mx, my = su.getTargetResolution()
         local gui = require("simpleGui2").create(mx, my)
 
         table.insert(threads, thread.create(function()
@@ -111,7 +110,7 @@ if options.f or outData.version > inData.version then
 
     if not options.a then su.saveFile("/free/flags/updateStart", "") end
     --os.execute("wget https://raw.githubusercontent.com/igorkll/fastOS/main/getinstaller.lua /tmp/getinstaller.lua -f -Q")
-    local ok, err = pcall(dofile, "/bin/getinstaller.lua", url, "/", "-q") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
+    local ok, err = pcall(dofile, "/bin/getinstaller.lua", url, "/", "-q", "-i") --в моем моде для openOS dofile МОЖЕТ принимать аргументы
     if not ok then
         if not err then err = "unkown" end
         su.logTo("/free/logs/updateError.log", err)

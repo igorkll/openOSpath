@@ -44,19 +44,30 @@ end
 
 --------------------------------------------------
 
+if not su.isRealInternet() then
+    print("интернет карта подключена по сети, производите обновления на свой страх и риск")
+    print("с высокой доляй вероятности особенно если у вас стоит какая либо оболочька")
+    print("используяшия api обновления для окончания обновления может потребоваться реальная интернет карта")
+    io.write("продолжить? [Y/n] ")
+    local read = io.read()
+    if read ~= "Y" and read ~= "y" then
+        return
+    end
+end
+
+if _G.getEnergyPercentages() < 50 then
+    io.stderr:write("для обновления необходим заряд минимум 50% у вас " .. tostring(_G.getEnergyPercentages()) .. "%")
+    return
+end
+
+--------------------------------------------------
+
 local inData
 local outData = assert(serialization.unserialize(assert(getInternetFile(url .. versionPath))))
 if fs.exists(versionPath) then
     inData = assert(serialization.unserialize(assert(su.getFile(versionPath))))
 else
     inData = {version = 0}
-end
-
---------------------------------------------------
-
-if _G.getEnergyPercentages() < 50 then
-    io.stderr:write("для обновления необходим заряд минимум 50% у вас " .. tostring(_G.getEnergyPercentages()) .. "%")
-    return
 end
 
 --------------------------------------------------
