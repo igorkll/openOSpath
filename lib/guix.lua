@@ -151,7 +151,7 @@ return {create = function(minTier)
                 obj.times = obj.times - 1
                 if obj.killed or not obj.on or lib.startTime > computer.uptime() then return end
 
-                if obj.times <= 0 then obj.kill() return false end --досрочьный kill вдруг функйия будет блокируюшия
+                if obj.times <= 0 then obj.kill() end --досрочьный kill вдруг функйия будет блокируюшия
 
                 local stopState = callback(...)
 
