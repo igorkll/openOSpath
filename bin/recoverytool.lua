@@ -177,7 +177,7 @@ while true do
                 end
                 print("прошивка...")
                 su.saveTable(fs.concat(mountpath, "etc/system.cfg"), {updateRepo = repo})
-                os.execute("getinstaller https://raw.githubusercontent.com/igorkll/openOS/main -q " .. mountpath)
+                --os.execute("getinstaller https://raw.githubusercontent.com/igorkll/openOS/main -q " .. mountpath)
                 os.execute("getinstaller " .. repo .. " -q " .. mountpath)
                 print("прошивка зевершена.")
             else

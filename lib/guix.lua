@@ -22,7 +22,7 @@ local function runCallback(callback, ...)
 end
 
 local function table_remove(tbl, obj)
-    for i = 1, #tbl do
+    for i = #tbl, 1, -1 do
         if tbl[i] == obj then
             table.remove(tbl, i)
         end
@@ -101,11 +101,15 @@ return {create = function(minTier)
         end
         return touchX >= obj.posX and touchX < (obj.posX + obj.sizeX) and touchY >= obj.posY and touchY < (obj.posY + obj.sizeY)
     end
-    local function optimizeBeep(n ,d)
+    local function optimizeBeep(n, d, fast)
         if component.isAvailable("beep") then
             component.beep.beep({[n] = d})
         else
-            computer.beep(n, d)
+            if fast then
+                --computer.beep("-") очень противный звук, хоть и не блокирует выполнения кода
+            else
+                computer.beep(n, d)
+            end
         end
     end
     local function soundNum(num)
@@ -115,7 +119,7 @@ return {create = function(minTier)
             elseif num == 1 then
                 optimizeBeep(400, 0.01)
             elseif num == 2 then
-                optimizeBeep(40, 0.01)
+                optimizeBeep(40, 0.01, true)
             end
         end
     end
@@ -142,23 +146,25 @@ return {create = function(minTier)
             local obj = {}
             obj.on = not scene or lib.scene == scene
             obj.times = times or math.huge
+            obj.killed = false
             obj.id = event.timer(time, function(...)
                 obj.times = obj.times - 1
-                if not obj.on or lib.startTime > computer.uptime() then return end
+                if obj.killed or not obj.on or lib.startTime > computer.uptime() then return end
 
-                local killed = false
-                if obj.times <= 0 then obj.kill() killed = true end --досрочьный kill вдруг функйия будет блокируюшия
+                if obj.times <= 0 then obj.kill() return false end --досрочьный kill вдруг функйия будет блокируюшия
 
                 local stopState = callback(...)
 
                 if stopState == false or obj.times <= 0 then
-                    if not killed then obj.kill() end
+                    obj.kill()
                     return false
                 end
             end, math.huge) --и да я сам реализовываю каунтер
             function obj.kill()
-                event.cancel(obj.id)
+                if obj.killed then return end
+                obj.killed = true
                 obj.on = false
+                event.cancel(obj.id)
                 table_remove(mainObj.timers, obj)
             end
 
@@ -168,9 +174,10 @@ return {create = function(minTier)
 
         function mainObj.createListen(eventType, callback)
             local obj = {}
+            obj.killed = false
             obj.on = not scene or lib.scene == scene
             obj.id = event.register(eventType, function(inputEventType, ...)
-                if not obj.on or (eventType and inputEventType ~= eventType) or not inputEventType or lib.startTime > computer.uptime() then return end
+                if obj.killed or not obj.on or (eventType and inputEventType ~= eventType) or not inputEventType or lib.startTime > computer.uptime() then return end
                 local stopState = callback(inputEventType, ...)
 
                 if stopState == false then
@@ -179,8 +186,10 @@ return {create = function(minTier)
                 end
             end, math.huge, math.huge)
             function obj.kill()
-                event.cancel(obj.id)
+                if obj.killed then return end
+                obj.killed = true
                 obj.on = false
+                event.cancel(obj.id)
                 table_remove(mainObj.listens, obj)
             end
 
