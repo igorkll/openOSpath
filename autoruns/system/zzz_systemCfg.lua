@@ -160,7 +160,7 @@ if not _G.recoveryMod then
         return computer_maxEnergy() - (computer_maxEnergy() / shutdownPart)
     end
 
-    function _G.lowPowerDraw()
+    local function lowPowerDraw()
         if term.isAvailable() then
             local targetPath = "/system/images/lowPower.pic"
             if math.floor(term.gpu().getDepth()) == 1 then
@@ -168,6 +168,9 @@ if not _G.recoveryMod then
             end
 
             if fs.exists(targetPath) then
+                term.gpu().setBackground(0)
+                term.gpu().setForeground(0xFFFFFF)
+
                 local imageDrawer = require("imageDrawer")
                 local img = imageDrawer.loadimage(targetPath)
                 term.clear()
@@ -221,7 +224,7 @@ end
 
 ------------------------------------
 
-function _G.updateNoInternetScreen()
+local function updateNoInternetScreen()
     event.superHook = false
     if not term.isAvailable() or not _G.systemCfg.updateErrorScreen then computer.shutdown("fast") end
 

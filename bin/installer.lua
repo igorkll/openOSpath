@@ -354,7 +354,7 @@ local installers = {function() --update
     install("https://raw.githubusercontent.com/igorkll/openOS/main")
 end, function() --efi
     status("downloading bios")
-    local biosCode = assert(wget("https://raw.githubusercontent.com/igorkll/topBiosV5/main/microBios.bin"))
+    local biosCode = assert(wget("https://raw.githubusercontent.com/igorkll/microBios/main/compressed.bin"))
     
     status("installing bios")
     eeprom.setData(fs.get("/").address .. "\n\n" .. "/init.lua")
